@@ -1,0 +1,54 @@
+:root {
+  --bg-main: #22272e;
+  --bg-sidebar: #1c2128;
+  --bg-header: #22272e;
+  --text-main: #cdd9e5;
+  --text-header: #e6edf3;
+  --text-muted: #768390;
+  --border: #2d333b;
+  --accent: #58a6ff;
+  --accent-hover: #316dca;
+  --sidebar-active: #2d4052;
+  --card-bg: #2d333b;
+  --input-bg: #22272e;
+}
+
+body.theme-light {
+  --bg-main: #ffffff;
+  --bg-sidebar: #f6f8fa;
+  --bg-header: #ffffff;
+  --text-main: #24292f;
+  --text-header: #1f2328;
+  --text-muted: #57606a;
+  --border: #d0d7de;
+  --accent: #0969da;
+  --accent-hover: #0550ae;
+  --sidebar-active: #eaeff2;
+  --card-bg: #ffffff;
+  --input-bg: #f6f8fa;
+}
+
+body.theme-shade {
+  --bg-main: #2d333b;
+  --bg-sidebar: #22272e;
+  --bg-header: #2d333b;
+  --text-main: #adbac7;
+  --text-header: #e6edf3;
+  --text-muted: #768390;
+  --border: #444c56;
+  --accent: #539bf5;
+  --accent-hover: #316dca;
+  --sidebar-active: #394452;
+  --card-bg: #22272e;
+  --input-bg: #2d333b;
+}
+
+body, html, #root {
+  margin: 0;
+  padding: 0;
+  width: 100%;
+  height: 100%;
+  background-color: var(--bg-main);
+  color: var(--text-main);
+  transition: background-color 0.3s, color 0.3s;
+}

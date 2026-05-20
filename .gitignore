@@ -1,0 +1,11 @@
+node_modules/
+logs/
+*.log
+*.tar.gz
+*.ppk
+dist/
+.env
+.DS_Store
+backend/node_modules/
+metapharsic-frontend/node_modules/
+metapharsic-frontend/dist/
