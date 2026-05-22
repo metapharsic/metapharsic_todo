@@ -129,17 +129,27 @@ INSERT INTO role_permissions (role_id, permission_id) VALUES
 --  5. USERS
 -- ════════════════════════════════════════════════════════════
 CREATE TABLE users (
-  id            SERIAL       PRIMARY KEY,
-  name          VARCHAR(100) NOT NULL,
-  avatar        VARCHAR(4)   NOT NULL,
-  email         VARCHAR(255) NOT NULL UNIQUE,
-  password      VARCHAR(255) NOT NULL DEFAULT 'user123',
-  require_password_change BOOLEAN NOT NULL DEFAULT false,
-  role_id       VARCHAR(30)  NOT NULL REFERENCES roles(id),
-  department_id VARCHAR(30)  NOT NULL REFERENCES departments(id),
-  color         VARCHAR(7)   NOT NULL,
-  active        BOOLEAN      NOT NULL DEFAULT true,
-  join_date     DATE         NOT NULL
+  id                      SERIAL        PRIMARY KEY,
+  name                    VARCHAR(100)  NOT NULL,
+  avatar                  VARCHAR(4)    NOT NULL,
+  email                   VARCHAR(255)  NOT NULL UNIQUE,
+  password                VARCHAR(255)  NOT NULL DEFAULT 'user123',
+  require_password_change BOOLEAN       NOT NULL DEFAULT false,
+  role_id                 VARCHAR(30)   NOT NULL REFERENCES roles(id),
+  department_id           VARCHAR(30)   NOT NULL REFERENCES departments(id),
+  color                   VARCHAR(7)    NOT NULL,
+  active                  BOOLEAN       NOT NULL DEFAULT true,
+  join_date               DATE          NOT NULL,
+  -- Notification channels
+  phone                   VARCHAR(20),
+  phone_verified          BOOLEAN       NOT NULL DEFAULT false,
+  whatsapp_otp            VARCHAR(6),
+  otp_expires_at          TIMESTAMPTZ,
+  callmebot_apikey        VARCHAR(50),
+  notification_email      BOOLEAN       NOT NULL DEFAULT true,
+  notification_whatsapp   BOOLEAN       NOT NULL DEFAULT false,
+  -- Custom per-user permissions (overrides role defaults)
+  custom_permissions      JSONB         NOT NULL DEFAULT '[]'::jsonb
 );
 
 INSERT INTO users (id, name, avatar, email, password, require_password_change, role_id, department_id, color, active, join_date) VALUES
@@ -224,7 +234,8 @@ CREATE TABLE issues (
   epic_id       VARCHAR(10)  REFERENCES epics(id) ON DELETE SET NULL,
   sprint_id     INTEGER      REFERENCES sprints(id) ON DELETE SET NULL,
   due_date      DATE,
-  created_at    DATE         NOT NULL DEFAULT CURRENT_DATE,
+  created_at    TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
+  updated_at    TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
   recurrence    VARCHAR(20)  NOT NULL DEFAULT 'none'
                   CHECK (recurrence IN ('none','daily','weekly','biweekly','monthly','yearly')),
   notification  BOOLEAN      NOT NULL DEFAULT true,

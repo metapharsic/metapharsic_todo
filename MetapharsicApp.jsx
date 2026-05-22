@@ -1,7 +1,7 @@
 import { useState, useRef, useMemo, useCallback, useEffect } from "react";
 
 // ─── DEPARTMENTS ─────────────────────────────────────────────────────────────
-const DEPARTMENTS = {
+let DEPARTMENTS = {
   hr:          { label: "Human Resources",        icon: "👥", color: "#ec4899", purpose: "Employee lifecycle & talent governance", roles: "HR Manager, Recruiter, Payroll Lead", kpis: "Retention Rate · Time-to-Hire · Training ROI" },
   finance:     { label: "Finance",                icon: "💰", color: "#f59e0b", purpose: "Fiscal integrity & strategic budgeting", roles: "Finance Manager, Accountant, Finance Analyst", kpis: "Budget Variance · Cash Flow · Tax Compliance" },
   it:          { label: "Information Technology", icon: "💻", color: "#3b82f6", purpose: "Enterprise infra & digital assets",      roles: "IT Manager, DBA, DevOps Engineer", kpis: "System Uptime · MTTR · Backup Success %" },
@@ -17,7 +17,7 @@ const DEPARTMENTS = {
 };
 
 // ─── ROLES ────────────────────────────────────────────────────────────────────
-const ROLES = {
+let ROLES = {
   admin:        { label: "Admin",          permissions: ["create","edit","delete","assign","manage_users","view_all","manage_roles","approve"] },
   manager:      { label: "Manager",        permissions: ["create","edit","assign","view_all","approve"] },
   developer:    { label: "Developer",      permissions: ["create","edit","view_own"] },
@@ -152,149 +152,157 @@ const SEED = [
 
 // ─── ROOT ─────────────────────────────────────────────────────────────────────
 const S = {
-  root: { display:"flex", height:"100vh", background:"#22272e", color:"#cdd9e5", fontFamily:"'DM Sans','Segoe UI',system-ui,sans-serif", fontSize:14, overflow:"hidden" },
+  root: { display: "flex", height: "100vh", background: "var(--bg-main)", color: "var(--text-main)", fontFamily: "'DM Sans','Segoe UI',system-ui,sans-serif", fontSize: 14, overflow: "hidden" },
 
-  sidebar: { width:220, background:"#1c2128", borderRight:"1px solid #2d333b", display:"flex", flexDirection:"column", flexShrink:0, overflow:"auto" },
-  sidebarTop: { display:"flex", alignItems:"center", gap:12, padding:"18px 16px", borderBottom:"1px solid #2d333b" },
-  logoImg: { width:46, height:46, borderRadius:"50%", objectFit:"contain", flexShrink:0, background:"#fff", padding:3, boxShadow:"0 2px 8px rgba(0,0,0,0.2)" },
-  watermark: { position:"absolute", inset:0, display:"flex", alignItems:"center", justifyContent:"center", pointerEvents:"none", zIndex:0, opacity:0.04, mixBlendMode:"screen" },
-  watermarkImg: { width:"50vw", maxWidth:600, objectFit:"contain", filter:"invert(1) grayscale(100%)" },
-  projName: { fontWeight:800, fontSize:15, color:"#e6edf3", letterSpacing:"-0.02em" },
-  projType: { fontSize:11, color:"#adbac7", marginTop:2 },
-  navDivider: { height:1, background:"#2d333b", margin:"6px 0" },
-  sidebarSection: { fontSize:10, color:"#768390", padding:"4px 12px", fontWeight:700, letterSpacing:"0.08em", textTransform:"uppercase" },
-  navItem: { display:"flex", alignItems:"center", gap:9, padding:"8px 10px", cursor:"pointer", borderRadius:6, margin:"1px 6px", color:"#909dab", fontSize:13, transition:"all 0.15s" },
-  navActive: { background:"#2d4052", color:"#7dc3db" },
-  navIcon: { fontSize:14, width:18, textAlign:"center", flexShrink:0 },
-  userSelect: { background:"#22272e", color:"#adbac7", border:"1px solid #2d333b", borderRadius:6, padding:"5px 8px", fontSize:12, cursor:"pointer", width:"100%" },
-  rolePill: { borderRadius:4, padding:"2px 7px", fontSize:10, fontWeight:700, display:"inline-flex", alignItems:"center", gap:4 },
+  sidebar: { width: 240, background: "var(--bg-sidebar)", borderRight: "1px solid var(--border)", display: "flex", flexDirection: "column", flexShrink: 0, overflow: "auto", transition: "all 0.3s ease", zIndex: 1000 },
+  sidebarOverlay: { position: "fixed", inset: 0, background: "rgba(0,0,0,0.5)", zIndex: 999 },
+  sidebarMobile: { width: "100%", height: "auto", borderRight: "none", borderBottom: "1px solid var(--border)", position: "relative", zIndex: 100 },
+  sidebarTop: { display: "flex", alignItems: "center", gap: 12, padding: "18px 16px", borderBottom: "1px solid var(--border)" },
+  logoImg: { width: 46, height: 46, borderRadius: "50%", objectFit: "contain", flexShrink: 0, background: "#fff", padding: 3, boxShadow: "0 2px 8px rgba(0,0,0,0.2)" },
+  watermark: { position: "absolute", inset: 0, display: "flex", alignItems: "center", justifyContent: "center", pointerEvents: "none", zIndex: 0, opacity: 0.04, mixBlendMode: "screen" },
+  watermarkImg: { width: "50vw", maxWidth: 600, objectFit: "contain", filter: "invert(1) grayscale(100%)" },
+  projName: { fontWeight: 800, fontSize: 15, color: "var(--text-header)", letterSpacing: "-0.02em" },
+  projType: { fontSize: 11, color: "var(--text-muted)", marginTop: 2 },
+  navDivider: { height: 1, background: "var(--border)", margin: "6px 0" },
+  sidebarSection: { fontSize: 10, color: "var(--text-muted)", padding: "4px 12px", fontWeight: 700, letterSpacing: "0.08em", textTransform: "uppercase" },
+  navItem: { display: "flex", alignItems: "center", gap: 9, padding: "8px 10px", cursor: "pointer", borderRadius: 6, margin: "1px 6px", color: "var(--text-muted)", fontSize: 13, transition: "all 0.15s" },
+  navActive: { background: "var(--sidebar-active)", color: "var(--accent)" },
+  navIcon: { fontSize: 14, width: 18, textAlign: "center", flexShrink: 0 },
+  userSelect: { background: "var(--input-bg)", color: "var(--text-main)", border: "1px solid var(--border)", borderRadius: 6, padding: "5px 8px", fontSize: 12, cursor: "pointer", width: "100%" },
+  rolePill: { borderRadius: 4, padding: "2px 7px", fontSize: 10, fontWeight: 700, display: "inline-flex", alignItems: "center", gap: 4 },
 
-  main: { flex:1, display:"flex", flexDirection:"column", overflow:"hidden" },
-  topBar: { height:48, borderBottom:"1px solid #2d333b", display:"flex", alignItems:"center", justifyContent:"space-between", padding:"0 20px", background:"#1c2128", flexShrink:0 },
-  breadcrumb: { display:"flex", alignItems:"center", gap:6, fontSize:13 },
-  breadProj: { color:"#768390" }, breadSep: { color:"#444c56" }, breadPage: { color:"#cdd9e5", fontWeight:600 },
-  page: { flex:1, overflow:"auto", padding:"18px 22px" },
-  pageH2: { fontSize:18, fontWeight:700, color:"#e6edf3", margin:"0 0 4px" },
+  main: { flex: 1, display: "flex", flexDirection: "column", overflow: "hidden", minWidth: 0 },
+  topBar: { minHeight: 48, borderBottom: "1px solid var(--border)", display: "flex", alignItems: "center", justifyContent: "space-between", padding: "0 20px", background: "var(--bg-header)", flexShrink: 0, flexWrap: "wrap", gap: 10 },
+  breadcrumb: { display: "flex", alignItems: "center", gap: 6, fontSize: 13 },
+  breadProj: { color: "var(--text-muted)" }, breadSep: { color: "var(--border)" }, breadPage: { color: "var(--text-main)", fontWeight: 600 },
+  page: { flex: 1, overflow: "auto", padding: "18px 22px" },
+  pageMobile: { padding: "12px 14px" },
+  pageH2: { fontSize: 18, fontWeight: 700, color: "var(--text-header)", margin: "0 0 4px" },
 
-  toolbar: { display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:12, gap:10, flexWrap:"wrap" },
-  searchBox: { background:"#2d333b", border:"1px solid #444c56", borderRadius:6, padding:"6px 10px", color:"#cdd9e5", fontSize:13, width:190, outline:"none" },
-  sel: { background:"#2d333b", border:"1px solid #444c56", borderRadius:6, padding:"6px 8px", color:"#adbac7", fontSize:12, cursor:"pointer" },
-  clearBtn: { background:"#ef444418", border:"1px solid #ef4444", color:"#f87171", borderRadius:6, padding:"5px 10px", fontSize:12, cursor:"pointer" },
-  createBtn: { background:"#338ba8", color:"#fff", border:"none", borderRadius:6, padding:"8px 16px", fontWeight:600, fontSize:13, cursor:"pointer" },
+  toolbar: { display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12, gap: 10, flexWrap: "wrap" },
+  searchBox: { background: "var(--card-bg)", border: "1px solid var(--border)", borderRadius: 6, padding: "6px 10px", color: "var(--text-main)", fontSize: 13, width: "100%", maxWidth: 190, outline: "none" },
+  sel: { background: "var(--card-bg)", border: "1px solid var(--border)", borderRadius: 6, padding: "6px 8px", color: "var(--text-muted)", fontSize: 12, cursor: "pointer" },
+  clearBtn: { background: "#ef444418", border: "1px solid #ef4444", color: "#f87171", borderRadius: 6, padding: "5px 10px", fontSize: 12, cursor: "pointer" },
+  createBtn: { background: "var(--accent)", color: "#fff", border: "none", borderRadius: 6, padding: "8px 16px", fontWeight: 600, fontSize: 13, cursor: "pointer" },
 
-  sprintBar: { display:"flex", alignItems:"center", gap:12, marginBottom:14, padding:"9px 14px", background:"#2d333b", borderRadius:8, border:"1px solid #444c56" },
-  sprintName: { fontWeight:700, color:"#7dc3db", fontSize:13 },
-  sprintMeta: { color:"#768390", fontSize:12 },
-  miniProgress: { width:80, height:4, background:"#444c56", borderRadius:2, overflow:"hidden" },
-  miniProgressFill: { height:"100%", background:"#22c55e", borderRadius:2, transition:"width 0.3s" },
+  sprintBar: { display: "flex", alignItems: "center", gap: 12, marginBottom: 14, padding: "9px 14px", background: "var(--card-bg)", borderRadius: 8, border: "1px solid var(--border)", flexWrap: "wrap" },
+  sprintName: { fontWeight: 700, color: "var(--accent)", fontSize: 13 },
+  sprintMeta: { color: "var(--text-muted)", fontSize: 12 },
+  miniProgress: { width: 80, height: 4, background: "var(--border)", borderRadius: 2, overflow: "hidden" },
+  miniProgressFill: { height: "100%", background: "#22c55e", borderRadius: 2, transition: "width 0.3s" },
 
-  cols: { display:"grid", gridTemplateColumns:"repeat(4,1fr)", gap:10, alignItems:"start" },
-  col: { background:"#2d333b", borderRadius:10, padding:10, border:"2px solid transparent", transition:"border-color 0.15s", minHeight:120 },
-  colOver: { borderColor:"#46b3cf" },
-  colHeader: { display:"flex", alignItems:"center", gap:7, marginBottom:10, paddingBottom:8, borderBottom:"1px solid #444c56" },
-  dot: { width:7, height:7, borderRadius:"50%", flexShrink:0 },
-  colTitle: { fontSize:11, fontWeight:700, textTransform:"uppercase", letterSpacing:"0.05em", flex:1 },
-  colCount: { background:"#444c56", color:"#909dab", borderRadius:4, padding:"1px 6px", fontSize:11, fontWeight:700 },
-  colBody: { display:"flex", flexDirection:"column", gap:8, minHeight:40 },
-  emptyCol: { color:"#444c56", fontSize:11, textAlign:"center", padding:"16px 0", border:"2px dashed #444c56", borderRadius:8 },
+  cols: { display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))", gap: 10, alignItems: "start" },
+  col: { background: "var(--card-bg)", borderRadius: 10, padding: 10, border: "2px solid transparent", transition: "border-color 0.15s", minHeight: 120 },
+  colOver: { borderColor: "var(--accent)" },
+  colHeader: { display: "flex", alignItems: "center", gap: 7, marginBottom: 10, paddingBottom: 8, borderBottom: "1px solid var(--border)" },
+  dot: { width: 7, height: 7, borderRadius: "50%", flexShrink: 0 },
+  colTitle: { fontSize: 11, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.05em", flex: 1 },
+  colCount: { background: "var(--border)", color: "var(--text-muted)", borderRadius: 4, padding: "1px 6px", fontSize: 11, fontWeight: 700 },
+  colBody: { display: "flex", flexDirection: "column", gap: 8, minHeight: 40 },
+  emptyCol: { color: "var(--border)", fontSize: 11, textAlign: "center", padding: "16px 0", border: "2px dashed var(--border)", borderRadius: 8 },
 
-  card: { background:"#22272e", borderRadius:8, padding:10, cursor:"pointer", border:"1px solid #444c56", transition:"border-color 0.15s" },
-  cardTitle: { fontSize:12, fontWeight:500, color:"#cdd9e5", lineHeight:1.45, marginBottom:7 },
-  cardFoot: { display:"flex", justifyContent:"space-between", alignItems:"center", marginTop:6 },
-  issueKey: { fontSize:10, color:"#768390", fontFamily:"monospace" },
-  epicTag: { fontSize:10, fontWeight:600, padding:"2px 6px", borderRadius:4, marginBottom:6, display:"inline-block" },
-  labelRow: { display:"flex", gap:4, flexWrap:"wrap", marginBottom:6 },
-  labelChip: { background:"#2d333b", border:"1px solid #444c56", color:"#909dab", borderRadius:3, padding:"1px 5px", fontSize:10, fontWeight:500 },
-  cardStat: { color:"#768390", fontSize:10 },
-  spBadge: { background:"#444c56", color:"#adbac7", borderRadius:3, padding:"0 4px", fontSize:10, fontWeight:700 },
-  recBadge: { background:"#2d4052", color:"#7dc3db", borderRadius:3, padding:"0 4px", fontSize:10, fontWeight:700 },
-  unassigned: { width:20, height:20, borderRadius:"50%", background:"#444c56", display:"flex", alignItems:"center", justifyContent:"center", fontSize:9, color:"#768390" },
+  card: { background: "var(--bg-main)", borderRadius: 8, padding: 10, cursor: "pointer", border: "1px solid var(--border)", transition: "border-color 0.15s" },
+  cardTitle: { fontSize: 12, fontWeight: 500, color: "var(--text-main)", lineHeight: 1.45, marginBottom: 7 },
+  cardFoot: { display: "flex", justifyContent: "space-between", alignItems: "center", marginTop: 6 },
+  issueKey: { fontSize: 10, color: "var(--text-muted)", fontFamily: "monospace" },
+  epicTag: { fontSize: 10, fontWeight: 600, padding: "2px 6px", borderRadius: 4, marginBottom: 6, display: "inline-block" },
+  labelRow: { display: "flex", gap: 4, flexWrap: "wrap", marginBottom: 6 },
+  labelChip: { background: "var(--card-bg)", border: "1px solid var(--border)", color: "var(--text-muted)", borderRadius: 3, padding: "1px 5px", fontSize: 10, fontWeight: 500 },
+  cardStat: { color: "var(--text-muted)", fontSize: 10 },
+  spBadge: { background: "var(--border)", color: "var(--text-muted)", borderRadius: 3, padding: "0 4px", fontSize: 10, fontWeight: 700 },
+  recBadge: { background: "var(--sidebar-active)", color: "var(--accent)", borderRadius: 3, padding: "0 4px", fontSize: 10, fontWeight: 700 },
+  unassigned: { width: 20, height: 20, borderRadius: "50%", background: "var(--border)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 9, color: "var(--text-muted)" },
 
-  backlogBox: { background:"#2d333b", borderRadius:10, border:"1px solid #444c56", overflow:"hidden" },
-  backlogHdr: { display:"flex", justifyContent:"space-between", alignItems:"center", padding:"10px 14px", background:"#444c56" },
-  backlogHdrTitle: { fontWeight:700, color:"#cdd9e5", fontSize:13 },
-  backlogCount: { color:"#909dab", fontSize:12 },
-  backlogRow: { display:"flex", alignItems:"center", gap:10, padding:"9px 14px", borderBottom:"1px solid #444c56", cursor:"pointer" },
-  backlogKey: { color:"#46b3cf", fontSize:11, fontFamily:"monospace", flexShrink:0 },
-  backlogTitle: { flex:1, color:"#cdd9e5", fontSize:13, overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap" },
-  emptyBacklog: { padding:32, textAlign:"center", color:"#768390" },
+  backlogBox: { background: "var(--card-bg)", borderRadius: 10, border: "1px solid var(--border)", overflow: "hidden" },
+  backlogHdr: { display: "flex", justifyContent: "space-between", alignItems: "center", padding: "10px 14px", background: "var(--border)", flexWrap: "wrap", gap: 8 },
+  backlogHdrTitle: { fontWeight: 700, color: "var(--text-main)", fontSize: 13 },
+  backlogCount: { color: "var(--text-muted)", fontSize: 12 },
+  backlogRow: { display: "flex", alignItems: "center", gap: 10, padding: "9px 14px", borderBottom: "1px solid var(--border)", cursor: "pointer", flexWrap: "wrap" },
+  backlogKey: { color: "var(--accent)", fontSize: 11, fontFamily: "monospace", flexShrink: 0 },
+  backlogTitle: { flex: 1, color: "var(--text-main)", fontSize: 13, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", minWidth: 150 },
+  emptyBacklog: { padding: 32, textAlign: "center", color: "var(--text-muted)" },
 
-  roadRow: { display:"flex", alignItems:"center", gap:12, cursor:"pointer", padding:"3px 0" },
-  roadLabel: { width:220, flexShrink:0, display:"flex", alignItems:"center", gap:5, overflow:"hidden" },
+  roadRow: { display: "flex", alignItems: "center", gap: 12, cursor: "pointer", padding: "3px 0", flexWrap: "wrap" },
+  roadLabel: { width: "100%", maxWidth: 220, flexShrink: 0, display: "flex", alignItems: "center", gap: 5, overflow: "hidden" },
 
-  peopleGrid: { display:"grid", gridTemplateColumns:"repeat(auto-fill,minmax(220px,1fr))", gap:14 },
-  personCard: { background:"#2d333b", borderRadius:12, padding:18, border:"1px solid #444c56" },
-  progressBar: { height:4, background:"#444c56", borderRadius:2, overflow:"hidden" },
-  progressFill: { height:"100%", background:"#22c55e", borderRadius:2, transition:"width 0.3s" },
+  peopleGrid: { display: "grid", gridTemplateColumns: "repeat(auto-fill,minmax(220px,1fr))", gap: 14 },
+  personCard: { background: "var(--card-bg)", borderRadius: 12, padding: 18, border: "1px solid var(--border)" },
+  progressBar: { height: 4, background: "var(--border)", borderRadius: 2, overflow: "hidden" },
+  progressFill: { height: "100%", background: "#22c55e", borderRadius: 2, transition: "width 0.3s" },
 
-  panelOverlay: { position:"fixed", inset:0, background:"rgba(0,0,0,0.65)", zIndex:100, display:"flex", alignItems:"center", justifyContent:"center" },
-  panel: { width:800, maxWidth:"95vw", background:"#2d333b", maxHeight:"95vh", borderRadius:12, overflow:"auto", display:"flex", flexDirection:"column", boxShadow:"0 24px 64px rgba(0,0,0,0.6)" },
-  panelHdr: { display:"flex", justifyContent:"space-between", alignItems:"center", padding:"14px 20px", borderBottom:"1px solid #444c56", flexShrink:0 },
-  processFlow: { display:"flex", alignItems:"center", padding:"16px 20px", background:"#22272e", borderBottom:"1px solid #444c56" },
-  processStep: { display:"flex", alignItems:"center", gap:8 },
-  processLine: { flex:1, height:2, background:"#444c56", margin:"0 12px" },
-  processLineActive: { background:"#338ba8" },
-  processDot: { width:24, height:24, borderRadius:"50%", display:"flex", alignItems:"center", justifyContent:"center", fontSize:11, fontWeight:700 },
-  panelKey: { color:"#46b3cf", fontFamily:"monospace", fontSize:12 },
-  statusPill: { borderRadius:4, padding:"2px 8px", fontSize:11, fontWeight:700 },
-  panelTitle: { fontSize:17, fontWeight:700, color:"#e6edf3", cursor:"pointer", lineHeight:1.4, margin:0 },
-  titleEdit: { flex:1, background:"#22272e", border:"1px solid #46b3cf", borderRadius:6, padding:"6px 10px", color:"#cdd9e5", fontSize:15, outline:"none" },
-  tabBar: { display:"flex", borderBottom:"1px solid #444c56", paddingLeft:20, flexShrink:0 },
-  tab: { background:"none", border:"none", borderBottom:"2px solid transparent", color:"#909dab", padding:"9px 13px", cursor:"pointer", fontSize:13, fontWeight:500, marginBottom:-1 },
-  tabActive: { color:"#7dc3db", borderBottomColor:"#46b3cf" },
-  panelBody: { flex:1, padding:"18px 20px", overflow:"auto" },
-  detailGrid: { display:"grid", gridTemplateColumns:"1fr 200px", gap:20 },
-  detailRight: { display:"flex", flexDirection:"column", gap:0 },
-  fieldGroup: { marginBottom:16 },
-  fieldLabel: { fontSize:11, fontWeight:700, color:"#909dab", textTransform:"uppercase", letterSpacing:"0.06em", marginBottom:5 },
-  descText: { color:"#adbac7", fontSize:13, lineHeight:1.6, cursor:"pointer", padding:"6px 8px", borderRadius:6, border:"1px solid transparent", minHeight:50 },
-  descArea: { width:"100%", background:"#22272e", border:"1px solid #444c56", borderRadius:6, padding:"8px", color:"#cdd9e5", fontSize:13, outline:"none", resize:"vertical" },
-  rightField: { padding:"7px 0", borderBottom:"1px solid #2d333b", display:"flex", flexDirection:"column", gap:3 },
-  rightLabel: { fontSize:10, color:"#768390", fontWeight:700, textTransform:"uppercase", letterSpacing:"0.05em" },
-  fieldSel: { background:"#22272e", border:"1px solid #444c56", borderRadius:4, padding:"4px 6px", color:"#cdd9e5", fontSize:12, cursor:"pointer", width:"100%" },
-  fieldInput: { background:"#22272e", border:"1px solid #444c56", borderRadius:4, padding:"4px 6px", color:"#cdd9e5", fontSize:12, width:"100%", outline:"none" },
+  panelOverlay: { position: "fixed", inset: 0, background: "rgba(0,0,0,0.65)", zIndex: 100, display: "flex", alignItems: "center", justifyContent: "center" },
+  panel: { width: 800, maxWidth: "95vw", background: "var(--card-bg)", maxHeight: "95vh", borderRadius: 12, overflow: "auto", display: "flex", flexDirection: "column", boxShadow: "0 24px 64px rgba(0,0,0,0.6)" },
+  panelHdr: { display: "flex", justifyContent: "space-between", alignItems: "center", padding: "14px 20px", borderBottom: "1px solid var(--border)", flexShrink: 0, flexWrap: "wrap", gap: 10 },
+  processFlow: { display: "flex", alignItems: "center", padding: "16px 20px", background: "var(--bg-main)", borderBottom: "1px solid var(--border)", overflowX: "auto" },
+  processStep: { display: "flex", alignItems: "center", gap: 8 },
+  processLine: { flex: 1, minWidth: 20, height: 2, background: "var(--border)", margin: "0 12px" },
+  processLineActive: { background: "var(--accent)" },
+  processDot: { width: 24, height: 24, borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 11, fontWeight: 700, flexShrink: 0 },
+  panelKey: { color: "var(--accent)", fontFamily: "monospace", fontSize: 12 },
+  statusPill: { borderRadius: 4, padding: "2px 8px", fontSize: 11, fontWeight: 700 },
+  panelTitle: { fontSize: 17, fontWeight: 700, color: "var(--text-header)", cursor: "pointer", lineHeight: 1.4, margin: 0 },
+  titleEdit: { flex: 1, background: "var(--bg-main)", border: "1px solid var(--accent)", borderRadius: 6, padding: "6px 10px", color: "var(--text-main)", fontSize: 15, outline: "none" },
+  tabBar: { display: "flex", borderBottom: "1px solid var(--border)", paddingLeft: 20, flexShrink: 0, overflowX: "auto" },
+  tab: { background: "none", border: "none", borderBottom: "2px solid transparent", color: "var(--text-muted)", padding: "9px 13px", cursor: "pointer", fontSize: 13, fontWeight: 500, marginBottom: -1, whiteSpace: "nowrap" },
+  tabActive: { color: "var(--accent)", borderBottomColor: "var(--accent)" },
+  panelBody: { flex: 1, padding: "18px 20px", overflow: "auto" },
+  detailGrid: { display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))", gap: 20 },
+  detailRight: { display: "flex", flexDirection: "column", gap: 0 },
+  fieldGroup: { marginBottom: 16 },
+  fieldLabel: { fontSize: 11, fontWeight: 700, color: "var(--text-muted)", textTransform: "uppercase", letterSpacing: "0.06em", marginBottom: 5 },
+  descText: { color: "var(--text-main)", fontSize: 13, lineHeight: 1.6, cursor: "pointer", padding: "6px 8px", borderRadius: 6, border: "1px solid transparent", minHeight: 50 },
+  descArea: { width: "100%", background: "var(--bg-main)", border: "1px solid var(--border)", borderRadius: 6, padding: "8px", color: "var(--text-main)", fontSize: 13, outline: "none", resize: "vertical" },
+  rightField: { padding: "7px 0", borderBottom: "1px solid var(--border)", display: "flex", flexDirection: "column", gap: 3 },
+  rightLabel: { fontSize: 10, color: "var(--text-muted)", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.05em" },
+  fieldSel: { background: "var(--bg-main)", border: "1px solid var(--border)", borderRadius: 4, padding: "4px 6px", color: "var(--text-main)", fontSize: 12, cursor: "pointer", width: "100%" },
+  fieldInput: { background: "var(--bg-main)", border: "1px solid var(--border)", borderRadius: 4, padding: "4px 6px", color: "var(--text-main)", fontSize: 12, width: "100%", outline: "none" },
 
-  comment: { display:"flex", gap:9, marginBottom:14 },
-  emptyComments: { color:"#768390", textAlign:"center", padding:"24px 0" },
-  commentArea: { flex:1, background:"#22272e", border:"1px solid #444c56", borderRadius:6, padding:"8px", color:"#cdd9e5", fontSize:13, outline:"none", resize:"vertical" },
+  comment: { display: "flex", gap: 9, marginBottom: 14 },
+  emptyComments: { color: "var(--text-muted)", textAlign: "center", padding: "24px 0" },
+  commentArea: { flex: 1, background: "var(--bg-main)", border: "1px solid var(--border)", borderRadius: 6, padding: "8px", color: "var(--text-main)", fontSize: 13, outline: "none", resize: "vertical" },
 
-  histRow: { padding:"7px 0", borderBottom:"1px solid #2d333b", fontSize:12, color:"#909dab" },
+  histRow: { padding: "7px 0", borderBottom: "1px solid var(--border)", fontSize: 12, color: "var(--text-muted)" },
 
-  modalOverlay: { position:"fixed", inset:0, background:"rgba(0,0,0,0.7)", zIndex:200, display:"flex", alignItems:"center", justifyContent:"center" },
-  modal: { background:"#2d333b", borderRadius:12, width:580, maxWidth:"95vw", maxHeight:"90vh", overflow:"auto", border:"1px solid #444c56", boxShadow:"0 24px 48px rgba(0,0,0,0.6)" },
-  modalHdr: { display:"flex", justifyContent:"space-between", alignItems:"center", padding:"14px 18px", borderBottom:"1px solid #444c56" },
-  modalBody: { padding:"14px 18px", display:"flex", flexDirection:"column", gap:12 },
-  modalFoot: { display:"flex", justifyContent:"flex-end", gap:8, padding:"12px 18px", borderTop:"1px solid #444c56" },
-  formInput: { background:"#22272e", border:"1px solid #444c56", borderRadius:6, padding:"7px 10px", color:"#cdd9e5", fontSize:13, outline:"none", width:"100%", boxSizing:"border-box" },
-  formSel: { background:"#22272e", border:"1px solid #444c56", borderRadius:6, padding:"7px 10px", color:"#cdd9e5", fontSize:13, cursor:"pointer", width:"100%", boxSizing:"border-box" },
-  formTextarea: { background:"#22272e", border:"1px solid #444c56", borderRadius:6, padding:"7px 10px", color:"#cdd9e5", fontSize:13, outline:"none", resize:"vertical", width:"100%", boxSizing:"border-box" },
-  labelPickBtn: { background:"#2d333b", border:"1px solid #444c56", color:"#adbac7", borderRadius:4, padding:"4px 10px", fontSize:12, cursor:"pointer" },
-  labelPickActive: { background:"#2d4052", border:"1px solid #46b3cf", color:"#7dc3db" },
+  modalOverlay: { position: "fixed", inset: 0, background: "rgba(0,0,0,0.7)", zIndex: 200, display: "flex", alignItems: "center", justifyContent: "center", padding: 10 },
+  modal: { background: "var(--card-bg)", borderRadius: 12, width: 580, maxWidth: "100%", maxHeight: "90vh", overflow: "auto", border: "1px solid var(--border)", boxShadow: "0 24px 48px rgba(0,0,0,0.6)" },
+  modalHdr: { display: "flex", justifyContent: "space-between", alignItems: "center", padding: "14px 18px", borderBottom: "1px solid var(--border)" },
+  modalBody: { padding: "14px 18px", display: "flex", flexDirection: "column", gap: 12 },
+  modalFoot: { display: "flex", justifyContent: "flex-end", gap: 8, padding: "12px 18px", borderTop: "1px solid var(--border)", flexWrap: "wrap" },
+  formInput: { background: "var(--bg-main)", border: "1px solid var(--border)", borderRadius: 6, padding: "7px 10px", color: "var(--text-main)", fontSize: 13, outline: "none", width: "100%", boxSizing: "border-box" },
+  formSel: { background: "var(--bg-main)", border: "1px solid var(--border)", borderRadius: 6, padding: "7px 10px", color: "var(--text-main)", fontSize: 13, cursor: "pointer", width: "100%", boxSizing: "border-box" },
+  formTextarea: { background: "var(--bg-main)", border: "1px solid var(--border)", borderRadius: 6, padding: "7px 10px", color: "var(--text-main)", fontSize: 13, outline: "none", resize: "vertical", width: "100%", boxSizing: "border-box" },
+  labelPickBtn: { background: "var(--card-bg)", border: "1px solid var(--border)", color: "var(--text-muted)", borderRadius: 4, padding: "4px 10px", fontSize: 12, cursor: "pointer" },
+  labelPickActive: { background: "var(--sidebar-active)", border: "1px solid var(--accent)", color: "var(--accent)" },
 
-  iconBtn: { background:"none", border:"none", color:"#909dab", cursor:"pointer", fontSize:15, padding:"4px 7px", borderRadius:4, position:"relative" },
-  btnPrimary: { background:"#338ba8", color:"#fff", border:"none", borderRadius:6, padding:"6px 14px", fontWeight:600, fontSize:12, cursor:"pointer" },
-  btnGhost: { background:"none", border:"1px solid #444c56", color:"#adbac7", borderRadius:6, padding:"5px 13px", fontSize:12, cursor:"pointer" },
+  iconBtn: { background: "none", border: "none", color: "var(--text-muted)", cursor: "pointer", fontSize: 15, padding: "4px 7px", borderRadius: 4, position: "relative" },
+  btnPrimary: { background: "var(--accent)", color: "#fff", border: "none", borderRadius: 6, padding: "6px 14px", fontWeight: 600, fontSize: 12, cursor: "pointer" },
+  btnGhost: { background: "none", border: "1px solid var(--border)", color: "var(--text-muted)", borderRadius: 6, padding: "5px 13px", fontSize: 12, cursor: "pointer" },
 
   // Notification
-  notifBadge: { position:"absolute", top:-2, right:-2, background:"#ef4444", color:"#fff", borderRadius:"50%", width:16, height:16, display:"flex", alignItems:"center", justifyContent:"center", fontSize:9, fontWeight:700 },
-  notifPanel: { position:"absolute", top:44, right:0, width:360, background:"#2d333b", border:"1px solid #444c56", borderRadius:12, boxShadow:"0 16px 40px rgba(0,0,0,0.5)", zIndex:300 },
-  notifPanelHdr: { display:"flex", justifyContent:"space-between", alignItems:"center", padding:"12px 14px", borderBottom:"1px solid #444c56" },
-  notifItem: { display:"flex", alignItems:"flex-start", gap:10, padding:"10px 14px", borderBottom:"1px solid #2d333b", cursor:"pointer", transition:"background 0.15s" },
+  notifBadge: { position: "absolute", top: -2, right: -2, background: "#ef4444", color: "#fff", borderRadius: "50%", width: 16, height: 16, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 9, fontWeight: 700 },
+  notifPanel: { position: "absolute", top: 44, right: 0, width: "90vw", maxWidth: 360, background: "var(--card-bg)", border: "1px solid var(--border)", borderRadius: 12, boxShadow: "0 16px 40px rgba(0,0,0,0.5)", zIndex: 300 },
+  notifPanelHdr: { display: "flex", justifyContent: "space-between", alignItems: "center", padding: "12px 14px", borderBottom: "1px solid var(--border)" },
+  notifItem: { display: "flex", alignItems: "flex-start", gap: 10, padding: "10px 14px", borderBottom: "1px solid var(--border)", cursor: "pointer", transition: "background 0.15s" },
 
   // Todo
-  statCard: { background:"#2d333b", border:"1px solid #444c56", borderRadius:10, padding:"12px 14px", textAlign:"center" },
-  overdueAlert: { background:"#ef444418", border:"1px solid #ef444440", borderRadius:8, padding:"10px 14px", marginBottom:16, fontSize:13, color:"#fca5a5", display:"flex", alignItems:"center", gap:6, flexWrap:"wrap" },
-  todoSection: { background:"#2d333b", border:"1px solid #444c56", borderRadius:10, padding:16 },
-  todoSectionHdr: { display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:14, paddingBottom:10, borderBottom:"1px solid #444c56", fontWeight:700, color:"#e6edf3", fontSize:13 },
-  todoIssueRow: { display:"flex", alignItems:"center", gap:10, padding:"8px 10px", borderRadius:7, cursor:"pointer", marginBottom:5, border:"1px solid #444c56", background:"#22272e" },
-  checklistRow: { display:"flex", alignItems:"center", gap:9, padding:"7px 0", cursor:"pointer", borderBottom:"1px solid #22272e" },
-  checkbox: { width:16, height:16, borderRadius:4, border:"2px solid", display:"flex", alignItems:"center", justifyContent:"center", flexShrink:0, transition:"all 0.15s" },
+  statGrid: { display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(100px, 1fr))", gap: 10, marginBottom: 20 },
+  statCard: { background: "var(--card-bg)", border: "1px solid var(--border)", borderRadius: 10, padding: "12px 14px", textAlign: "center" },
+  overdueAlert: { background: "#ef444418", border: "1px solid #ef444440", borderRadius: 8, padding: "10px 14px", marginBottom: 16, fontSize: 13, color: "#fca5a5", display: "flex", alignItems: "center", gap: 6, flexWrap: "wrap" },
+  todoGrid: { display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(300px, 1fr))", gap: 18 },
+  todoSection: { background: "var(--card-bg)", border: "1px solid var(--border)", borderRadius: 10, padding: 16 },
+  todoSectionHdr: { display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 14, paddingBottom: 10, borderBottom: "1px solid var(--border)", fontWeight: 700, color: "var(--text-header)", fontSize: 13 },
+  todoIssueRow: { display: "flex", alignItems: "center", gap: 10, padding: "8px 10px", borderRadius: 7, cursor: "pointer", marginBottom: 5, border: "1px solid var(--border)", background: "var(--bg-main)" },
+  checklistRow: { display: "flex", alignItems: "center", gap: 9, padding: "7px 0", cursor: "pointer", borderBottom: "1px solid var(--bg-main)" },
+  checkbox: { width: 16, height: 16, borderRadius: 4, border: "2px solid", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, transition: "all 0.15s" },
 
   // User management
-  userTable: { background:"#2d333b", borderRadius:10, border:"1px solid #444c56", overflow:"hidden" },
-  userTableHdr: { display:"grid", gridTemplateColumns:"2fr 1.2fr 1fr 1.5fr 0.6fr 0.8fr 1.2fr", gap:12, padding:"10px 16px", background:"#444c56" },
-  userTableRow: { display:"grid", gridTemplateColumns:"2fr 1.2fr 1fr 1.5fr 0.6fr 0.8fr 1.2fr", gap:12, padding:"12px 16px", borderBottom:"1px solid #444c56", alignItems:"center" },
-  permTag: { background:"#2d4052", color:"#7dc3db", borderRadius:4, padding:"1px 6px", fontSize:10, fontWeight:600 },
+  userTableWrapper: { overflowX: "auto", borderRadius: 10, border: "1px solid var(--border)", background: "var(--card-bg)" },
+  userTable: { width: "100%", borderCollapse: "collapse", minWidth: 700 },
+  userTableHdr: { background: "var(--border)" },
+  userTableHdrCell: { padding: "10px 16px", textAlign: "left", fontSize: 11, fontWeight: 700, color: "var(--text-muted)", textTransform: "uppercase", letterSpacing: "0.06em" },
+  userTableRow: { borderBottom: "1px solid var(--border)" },
+  userTableCell: { padding: "12px 16px", color: "var(--text-main)", verticalAlign: "middle" },
+  permTag: { background: "var(--sidebar-active)", color: "var(--accent)", borderRadius: 4, padding: "1px 6px", fontSize: 10, fontWeight: 600, whiteSpace: "nowrap" },
 };
 
 export default function App() {
@@ -305,38 +313,24 @@ export default function App() {
   };
 
   const [loggedIn, setLoggedIn]         = useState(false);
+  const [forcePasswordChange, setForcePasswordChange] = useState(false);
   const [currentUser, setCurrentUser]   = useState(null);
-  const [issues, setIssues]             = useState(SEED);
+  const [theme, setTheme] = useState(() => localStorage.getItem("theme") || "dark");
 
   useEffect(() => {
-    // Fetch users from database on boot
-    fetch('/api/users')
-      .then(r => r.json())
-      .then(dbUsers => {
-        if (dbUsers && dbUsers.length > 0) {
-          setUsers(dbUsers);
-        }
-      })
-      .catch(err => console.error("Could not load users from DB", err));
+    document.body.className = theme === "dark" ? "" : `theme-${theme}`;
+    localStorage.setItem("theme", theme);
+  }, [theme]);
 
-    // Fetch comments from database on boot
-    fetch('/api/comments')
-      .then(r => r.json())
-      .then(dbComments => {
-        setIssues(prev => prev.map(issue => {
-          const issueComments = dbComments.filter(c => c.issueKey === issue.key);
-          if (issueComments.length > 0) {
-            return { ...issue, comments: issueComments };
-          }
-          return issue;
-        }));
-      }).catch(err => console.error("Could not load comments from DB", err));
-  }, []);
+  const [issues, setIssues]             = useState(SEED);
+
+  const [isRefreshing, setIsRefreshing] = useState(false);
 
   const [users, setUsers]             = useState(INITIAL_USERS);
   const [view, setView]               = useState("board");
   const [selected, setSelected]       = useState(null);
   const [showCreate, setShowCreate]   = useState(false);
+  const [initialCreateStatus, setInitialCreateStatus] = useState("To Do");
   const [sprint, setSprint]           = useState("Sprint 1");
   const [search, setSearch]           = useState("");
   const [filters, setFilters]         = useState({ type:"all", priority:"all", assignee:"all", epic:"all" });
@@ -352,8 +346,30 @@ export default function App() {
   });
   const dragKey = useRef(null);
 
+  // ── Viewport Response State ──
+  const [windowWidth, setWindowWidth] = useState(window.innerWidth);
+  const isMobile = windowWidth < 768;
+  const isTablet = windowWidth >= 768 && windowWidth < 1024;
+  const isSmallScreen = windowWidth < 1024;
+  const [sidebarOpen, setSidebarOpen] = useState(windowWidth >= 1024);
+
+  useEffect(() => {
+    const handleResize = () => {
+      const width = window.innerWidth;
+      setWindowWidth(width);
+      if (width >= 1024) setSidebarOpen(true);
+      else if (width < 768) setSidebarOpen(false);
+    };
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
+  }, []);
+
   const role = currentUser?.role;
-  const hasPermission = (perm) => currentUser?.permissions ? currentUser.permissions.includes(perm) : ROLES[role]?.permissions.includes(perm);
+  const hasPermission = (perm) => {
+    if (currentUser?.permissions) return currentUser.permissions.includes(perm);
+    if (role && ROLES[role]?.permissions) return ROLES[role].permissions.includes(perm);
+    return false;
+  };
   const isAdmin = role === "admin";
   const unreadCount = notifications.filter(n => !n.read && (isAdmin || n.userId === currentUser?.id)).length;
 
@@ -369,17 +385,53 @@ export default function App() {
         return { error: data.error || 'Login failed.' };
       }
       setCurrentUser(data);
-      setLoggedIn(true);
+      if (data.requirePasswordChange) {
+        setForcePasswordChange(true);
+      } else {
+        setLoggedIn(true);
+      }
       setView("board");
       return { ok: true };
     } catch (err) {
-      console.error("Login failed:", err);
-      return { error: 'Network or database server is offline. Please try again.' };
+      console.warn("Login API failed or network offline, falling back to local login verification:", err);
+      const matchedUser = users.find(u => u.email.toLowerCase() === email.toLowerCase() && u.password === password);
+      if (matchedUser) {
+        setCurrentUser(matchedUser);
+        setLoggedIn(true);
+        setView("board");
+        return { ok: true };
+      } else {
+        return { error: 'Invalid credentials. (Offline mode active)' };
+      }
+    }
+  };
+
+  const handleChangePassword = async (newPassword) => {
+    try {
+      const response = await fetch('/api/auth/change-password', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ userId: currentUser.id, newPassword })
+      });
+      if (response.ok) {
+        setForcePasswordChange(false);
+        setLoggedIn(true);
+      } else {
+        return { error: 'Failed to update password.' };
+      }
+    } catch (err) {
+      console.warn("Change password API offline, changing password locally.", err);
+      setUsers(p => p.map(u => u.id === currentUser.id ? { ...u, password: newPassword, requirePasswordChange: false } : u));
+      setCurrentUser(p => ({ ...p, password: newPassword, requirePasswordChange: false }));
+      setForcePasswordChange(false);
+      setLoggedIn(true);
+      return { ok: true };
     }
   };
 
   const handleLogout = () => {
     setLoggedIn(false);
+    setForcePasswordChange(false);
     setCurrentUser(null);
     setView("board");
   };
@@ -387,6 +439,8 @@ export default function App() {
   const switchUser = (id) => {
     const u = users.find(u => u.id === +id);
     setCurrentUser(u);
+    setForcePasswordChange(u.requirePasswordChange || false);
+    if (!u.requirePasswordChange) setLoggedIn(true);
     setShowNotifs(false);
   };
 
@@ -411,73 +465,243 @@ export default function App() {
 
   // ── Define addNotification FIRST so all functions below can reference it ──
   const addNotification = (n) => {
-    setNotifs(p => [{ id: Date.now(), ...n, time:"just now", read:false }, ...p]);
+    const localId = Date.now();
+    setNotifs(p => [{ id: localId, ...n, time: "just now", read: false }, ...p]);
+
+    fetch('/api/notifications', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(n)
+    })
+    .then(r => r.json())
+    .then(saved => {
+      if (saved && saved.id) {
+        setNotifs(p => p.map(notif => notif.id === localId ? { ...notif, id: saved.id } : notif));
+      }
+    })
   };
 
-  const updateIssue = useCallback((key, patch) => {
-    setIssues(p => {
-      const orig = p.find(i => i.key === key);
-      if (currentUser && orig) {
-        if (patch.status && patch.status !== orig.status) {
-          fetch(`/api/issues/${key}/history`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              userId: currentUser.id,
-              eventType: 'status_changed',
-              oldValue: orig.status,
-              newValue: patch.status
-            })
-          }).catch(err => console.error("Could not log status history", err));
-        }
-        if (patch.assignee !== undefined && patch.assignee !== orig.assignee) {
-          const origUser = users.find(u => u.id === Number(orig.assignee));
-          const newUser = users.find(u => u.id === Number(patch.assignee));
-          fetch(`/api/issues/${key}/history`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              userId: currentUser.id,
-              eventType: 'assigned',
-              oldValue: origUser?.name || 'Unassigned',
-              newValue: newUser?.name || 'Unassigned'
-            })
-          }).catch(err => console.error("Could not log assignment history", err));
-        }
+  const refreshData = async () => {
+    setIsRefreshing(true);
+    
+    const pMeta = Promise.all([
+      fetch('/api/departments').then(r => r.json()).catch(() => null),
+      fetch('/api/roles').then(r => r.json()).catch(() => null)
+    ]).then(([depts, roles]) => {
+      if (depts && depts.length > 0) {
+        const map = {};
+        depts.forEach(d => {
+          map[d.id] = {
+            ...(DEPARTMENTS[d.id] || {}),
+            ...d
+          };
+        });
+        DEPARTMENTS = map;
       }
+      if (roles && roles.length > 0) {
+        const map = {};
+        roles.forEach(r => {
+          map[r.id] = {
+            ...(ROLES[r.id] || {}),
+            ...r
+          };
+        });
+        ROLES = map;
+      }
+    });
+
+    const pUsers = pMeta.then(() => fetch('/api/users')
+      .then(r => r.json())
+      .then(dbUsers => {
+        if (dbUsers && dbUsers.length > 0) {
+          setUsers(dbUsers);
+        }
+      })
+      .catch(err => console.warn("Could not load users from DB, using initial users seed.", err)));
+
+    const pIssues = fetch('/api/issues')
+      .then(r => {
+        if (!r.ok) throw new Error("Server error");
+        return r.json();
+      })
+      .then(dbIssues => {
+        if (dbIssues && dbIssues.length > 0) {
+          const normalized = dbIssues.map(i => ({
+            ...i,
+            assignee: i.assignee ? Number(i.assignee) : null,
+            reporter: i.reporter ? Number(i.reporter) : 1,
+            sp: i.sp ? Number(i.sp) : 0,
+            notification: !!i.notification,
+            watchers: Array.isArray(i.watchers) ? i.watchers.map(Number) : [],
+            labels: Array.isArray(i.labels) ? i.labels : [],
+            comments: Array.isArray(i.comments) ? i.comments.map(c => ({
+              ...c,
+              userId: Number(c.userId)
+            })) : []
+          }));
+          setIssues(normalized);
+          setSelected(prevSelected => {
+            if (!prevSelected) return null;
+            const updated = normalized.find(i => i.key === prevSelected.key);
+            return updated || prevSelected;
+          });
+        }
+      })
+      .catch(err => {
+        console.warn("Could not load issues from DB, falling back to local memory seed.", err);
+        return fetch('/api/comments')
+          .then(r => r.json())
+          .then(dbComments => {
+            setIssues(prev => prev.map(issue => {
+              const issueComments = dbComments.filter(c => c.issueKey === issue.key);
+              if (issueComments.length > 0) {
+                return { ...issue, comments: issueComments };
+              }
+              return issue;
+            }));
+          })
+          .catch(e => console.warn("Could not load comments fallback", e));
+      });
+
+    const pNotifs = fetch('/api/notifications')
+      .then(r => {
+        if (!r.ok) throw new Error("Server error");
+        return r.json();
+      })
+      .then(dbNotifs => {
+        if (dbNotifs && dbNotifs.length > 0) {
+          setNotifs(dbNotifs.map(n => ({
+            ...n,
+            userId: Number(n.userId),
+            read: !!n.read
+          })));
+        }
+      })
+      .catch(err => console.warn("Could not load notifications from DB, using seed notifications.", err));
+
+    const pTodos = fetch('/api/todos')
+      .then(r => {
+        if (!r.ok) throw new Error("Server error");
+        return r.json();
+      })
+      .then(dbTodos => {
+        if (dbTodos && Object.keys(dbTodos).length > 0) {
+          setTodos(dbTodos);
+        }
+      })
+      .catch(err => console.warn("Could not load todos from DB, using local checklists.", err));
+
+    try {
+      await Promise.all([pUsers, pIssues, pNotifs, pTodos, pMeta]).finally(() => {
+        setIsRefreshing(false);
+      });
+    } catch (e) {
+      console.warn("Error running batch refresh:", e);
+    }
+    
+    setTimeout(() => {
+      setIsRefreshing(false);
+      if (currentUser) {
+        addNotification({
+          type: "system",
+          userId: currentUser.id,
+          message: "Synchronized board with database",
+          issueKey: null
+        });
+      }
+    }, 600);
+  };
+
+  useEffect(() => {
+    refreshData();
+  }, []);
+
+  const updateIssue = useCallback((key, patch) => {
+    // 1. Synchronously update local state (fully functional immediately)
+    setIssues(p => {
       return p.map(i => i.key === key ? { ...i, ...patch } : i);
     });
 
     setSelected(p => p?.key === key ? { ...p, ...patch } : p);
 
     if (patch.status && currentUser) {
-      setNotifs(p => [{ id: Date.now(), type:"status", userId: currentUser.id,
-        message:`${currentUser.name} moved ${key} to ${patch.status}`, issueKey: key, time:"just now", read:false }, ...p]);
+      addNotification({
+        type: "status",
+        userId: currentUser.id,
+        message: `${currentUser.name} moved ${key} to ${patch.status}`,
+        issueKey: key
+      });
     }
-  }, [currentUser, users]);
+
+    // 2. Perform background database update
+    fetch(`/api/issues/${key}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ ...patch, updaterId: currentUser?.id })
+    })
+    .then(res => {
+      if (res.ok) {
+        refreshData();
+      }
+    })
+    .catch(err => console.warn("Database issue update failed in background, running in local mode.", err));
+  }, [currentUser, users, refreshData]);
 
   const createIssue = (data) => {
     if (!currentUser) return;
     const issue = {
-      key: genKey(), type: data.type||"task", title: data.title,
-      status: "To Do", priority: data.priority||"medium",
-      assignee: data.assignee||null, reporter: currentUser.id, sp: data.sp||0,
-      epic: data.epic||null, labels: data.labels||[], desc: data.desc||"",
-      dueDate: data.dueDate||"", sprint: data.sprint||"Sprint 1",
-      created: getCurrentDateTime(), recurrence: data.recurrence||"none",
-      notification: true, comments: [], watchers: [currentUser.id], attach: 0,
+      key: data.key || genKey(),
+      type: data.type || "task",
+      title: data.title,
+      status: "To Do",
+      priority: data.priority || "medium",
+      assignee: data.assignee || null,
+      reporter: currentUser.id,
+      sp: data.sp || 0,
+      epic: data.epic || null,
+      labels: data.labels || [],
+      desc: data.desc || "",
+      dueDate: data.dueDate || "",
+      sprint: data.sprint || "Sprint 1",
+      created: getCurrentDateTime(),
+      recurrence: data.recurrence || "none",
+      notification: true,
+      comments: [],
+      watchers: [currentUser.id],
+      attach: 0,
       department: data.department || currentUser.department,
     };
+
+    // 1. Synchronously update local state
     setIssues(p => [issue, ...p]);
     if (data.assignee) {
-      addNotification({ type:"assignment", userId: +data.assignee, message:`You were assigned ${issue.key}: ${issue.title}`, issueKey: issue.key });
+      addNotification({
+        type: "assignment",
+        userId: +data.assignee,
+        message: `You were assigned ${issue.key}: ${issue.title}`,
+        issueKey: issue.key
+      });
     }
+
+    // 2. Perform background database creation
+    fetch('/api/issues', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(issue)
+    }).catch(err => console.warn("Database issue creation failed in background, running in local mode.", err));
   };
 
   const deleteIssue = (key) => {
     if (!hasPermission("delete")) return;
+    
+    // 1. Synchronously update local state
     setIssues(p => p.filter(i => i.key !== key));
     setSelected(null);
+
+    // 2. Perform background database deletion
+    fetch(`/api/issues/${key}`, {
+      method: 'DELETE'
+    }).catch(err => console.warn("Database issue deletion failed in background, running in local mode.", err));
   };
 
   const addComment = async (key, text) => {
@@ -492,18 +716,32 @@ export default function App() {
         const c = await res.json();
         setIssues(p => p.map(i => i.key === key ? { ...i, comments: [...i.comments, c] } : i));
         setSelected(p => p?.key === key ? { ...p, comments: [...p.comments, c] } : p);
-        addNotification({ type:"comment", userId: currentUser.id, message:`${currentUser.name} commented on ${key}`, issueKey: key });
+        addNotification({ type: "comment", userId: currentUser.id, message: `${currentUser.name} commented on ${key}`, issueKey: key });
+      } else {
+        throw new Error("HTTP error " + res.status);
       }
-    } catch(e) {
-      console.error(e);
+    } catch (e) {
+      console.warn("Could not save comment in DB, adding to local state only.", e);
       const c = { id: Date.now(), userId: currentUser.id, text, date: getCurrentDateTime() };
       setIssues(p => p.map(i => i.key === key ? { ...i, comments: [...i.comments, c] } : i));
       setSelected(p => p?.key === key ? { ...p, comments: [...p.comments, c] } : p);
     }
   };
 
-  const markAllRead = () => setNotifs(p => p.map(n => ({ ...n, read: true })));
-  const dismissNotif = (id) => setNotifs(p => p.filter(n => n.id !== id));
+  const markAllRead = () => {
+    setNotifs(p => p.map(n => ({ ...n, read: true })));
+    fetch('/api/notifications/read', {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' }
+    }).catch(err => console.warn("Could not update notifications read status in DB", err));
+  };
+
+  const dismissNotif = (id) => {
+    setNotifs(p => p.filter(n => n.id !== id));
+    fetch(`/api/notifications/${id}`, {
+      method: 'DELETE'
+    }).catch(err => console.warn("Could not delete notification in DB", err));
+  };
 
   const onDragStart = (e, key) => { dragKey.current = key; e.dataTransfer.effectAllowed = "move"; };
   const onDrop = (e, status) => {
@@ -532,29 +770,43 @@ export default function App() {
   // Set default view per role
   const resolvedView = (!isAdmin && !hasPermission("view_all") && view === "board") ? "mytasks" : view;
 
-  if (!loggedIn) {
+  if (!loggedIn && !forcePasswordChange) {
     return <LoginScreen users={users} onLogin={handleLogin} />;
   }
 
+  if (forcePasswordChange) {
+    return <ChangePasswordScreen user={currentUser} onChange={handleChangePassword} onLogout={handleLogout} />;
+  }
+
+  const currentSidebarStyle = isSmallScreen
+    ? { ...S.sidebar, ...S.sidebarMobile, display: sidebarOpen ? "flex" : "none", position: "fixed", top: 0, left: 0, bottom: 0, width: "280px", boxShadow: "10px 0 30px rgba(0,0,0,0.5)" }
+    : S.sidebar;
+
   return (
-    <div style={S.root}>
+    <div style={{ ...S.root, flexDirection: isMobile ? "column" : "row" }}>
       {/* ── WATERMARK ── */}
       <div style={S.watermark}>
         <img src="/logo.png" style={S.watermarkImg} alt="" />
       </div>
 
+      {/* ── SIDEBAR OVERLAY ── */}
+      {isSmallScreen && sidebarOpen && (
+        <div style={S.sidebarOverlay} onClick={() => setSidebarOpen(false)} />
+      )}
+
       {/* ── SIDEBAR ── */}
-      <aside style={S.sidebar}>
+      <aside style={currentSidebarStyle}>
         <div style={S.sidebarTop}>
           <img src="/logo.png" alt="Logo" style={S.logoImg} />
           <div>
             <div style={S.projName}>Metapharsic To Do</div>
             <div style={S.projType}>{isAdmin ? "Admin Portal" : "Team Portal"}</div>
           </div>
+          {isSmallScreen && <button style={{ ...S.iconBtn, marginLeft: "auto" }} onClick={() => setSidebarOpen(false)}>✕</button>}
         </div>
         <nav style={{ padding:"6px 0" }}>
           {navItems.map(n => (
-            <div key={n.id} style={{ ...S.navItem, ...(resolvedView===n.id?S.navActive:{}) }} onClick={() => setView(n.id)}>
+            <div key={n.id} style={{ ...S.navItem, ...(resolvedView===n.id?S.navActive:{}) }} onClick={() => { setView(n.id); if(isSmallScreen) setSidebarOpen(false); }}>
               <span style={S.navIcon}>{n.icon}</span>
               <span>{n.label}</span>
             </div>
@@ -563,13 +815,38 @@ export default function App() {
         <div style={S.navDivider} />
         <div style={S.sidebarSection}>Project</div>
         {hasPermission("manage_users") && (
-          <div style={S.navItem} onClick={() => setView("settings")}>
+          <div style={{ ...S.navItem, ...(resolvedView==="settings"?S.navActive:{}) }} onClick={() => { setView("settings"); if(isSmallScreen) setSidebarOpen(false); }}>
             <span style={S.navIcon}>⚙</span><span>Settings</span>
           </div>
         )}
         <div style={S.navItem}><span style={S.navIcon}>◈</span><span>Components</span></div>
 
+        <div style={{ flex: 1 }} />
+
+        <div style={{ margin:"8px 10px", padding:"8px 10px", background:"var(--card-bg)", borderRadius:8, border:"1px solid var(--border)" }}>
+          <div style={{ fontSize:10, color:"var(--text-muted)", fontWeight:700, marginBottom:8, textTransform:"uppercase" }}>App Theme</div>
+          <div style={{ display:"flex", gap:4, background:"var(--bg-main)", padding:3, borderRadius:6 }}>
+            {[
+              { id:"dark",  label:"Dark",  icon:"🌙" },
+              { id:"light", label:"Light", icon:"☀️" },
+              { id:"shade", label:"Shade", icon:"☁️" },
+            ].map(t => (
+              <button key={t.id} onClick={() => setTheme(t.id)}
+                style={{
+                  flex:1, display:"flex", flexDirection:"column", alignItems:"center", gap:2, padding:"6px 0",
+                  background: theme === t.id ? "var(--sidebar-active)" : "transparent",
+                  border:"none", borderRadius:4, cursor:"pointer", color: theme === t.id ? "var(--accent)" : "var(--text-muted)",
+                  transition:"all 0.2s"
+                }}>
+                <span style={{ fontSize:14 }}>{t.icon}</span>
+                <span style={{ fontSize:9, fontWeight:600 }}>{t.label}</span>
+              </button>
+            ))}
+          </div>
+        </div>
+
         {/* Role badge */}
+
         <div style={{ margin:"8px 10px", padding:"8px 10px", background:"#2d333b", borderRadius:8, border:"1px solid #444c56" }}>
           <div style={{ fontSize:10, color:"#768390", fontWeight:700, marginBottom:4, textTransform:"uppercase" }}>Logged in as</div>
           <div style={{ display:"flex", alignItems:"center", gap:8, marginBottom:6 }}>
@@ -602,12 +879,31 @@ export default function App() {
       <div style={S.main}>
         {/* Top bar */}
         <header style={S.topBar}>
-          <div style={S.breadcrumb}>
-            <span style={S.breadProj}>Metapharsic To Do</span>
-            <span style={S.breadSep}>/</span>
-            <span style={S.breadPage}>{navItems.find(n=>n.id===resolvedView)?.label || resolvedView.charAt(0).toUpperCase()+resolvedView.slice(1)}</span>
+          <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+            {isSmallScreen && (
+              <button style={{ ...S.iconBtn, fontSize: 20 }} onClick={() => setSidebarOpen(true)}>☰</button>
+            )}
+            <div style={S.breadcrumb}>
+              {!isMobile && <span style={S.breadProj}>Metapharsic To Do</span>}
+              {!isMobile && <span style={S.breadSep}>/</span>}
+              <span style={S.breadPage}>{navItems.find(n=>n.id===resolvedView)?.label || resolvedView.charAt(0).toUpperCase()+resolvedView.slice(1)}</span>
+            </div>
           </div>
           <div style={{ display:"flex", alignItems:"center", gap:12 }}>
+            {/* Refresh Button */}
+            <button 
+              style={{ ...S.iconBtn, fontSize:16, display:"flex", alignItems:"center", justifyContent:"center" }} 
+              onClick={refreshData}
+              disabled={isRefreshing}
+              title="Sync with database"
+            >
+              <span style={{ 
+                display: "inline-block", 
+                animation: isRefreshing ? "spin 1s linear infinite" : "none"
+              }}>
+                🔄
+              </span>
+            </button>
             {/* Notification Bell */}
             <div style={{ position:"relative" }}>
               <button style={{ ...S.iconBtn, position:"relative", fontSize:18 }} onClick={() => setShowNotifs(p => !p)}>
@@ -627,27 +923,35 @@ export default function App() {
               )}
             </div>
             <Avatar user={currentUser} size={30} />
-            <span style={{ fontSize:13, color:"#adbac7" }}>{currentUser.name}</span>
+            {!isMobile && <span style={{ fontSize:13, color:"#adbac7" }}>{currentUser.name}</span>}
           </div>
         </header>
 
         {/* Page */}
-        <div style={S.page}>
+        <div style={{ ...S.page, ...(isMobile ? S.pageMobile : {}) }}>
           {view === "board" && (
             <BoardView
               issues={visibleIssues} sprints={sprints} sprint={sprint} setSprint={setSprint}
               search={search} setSearch={setSearch} filters={filters} setFilters={setFilters}
               onDragStart={onDragStart} onDrop={onDrop} dragOver={dragOver} setDragOver={setDragOver}
-              onSelect={setSelected} onCreate={() => setShowCreate(true)}
-              allIssues={issues} canCreate={hasPermission("create")} users={users}
+              onSelect={setSelected}
+              onCreate={(status) => {
+                setInitialCreateStatus(typeof status === 'string' ? status : "To Do");
+                setShowCreate(true);
+              }}
+              allIssues={issues} canCreate={hasPermission("create")} users={users} isMobile={isMobile}
             />
           )}
           {view === "backlog" && (
             <BacklogView
               issues={visibleIssues} search={search} setSearch={setSearch}
               filters={filters} setFilters={setFilters}
-              onSelect={setSelected} onCreate={() => setShowCreate(true)}
-              canCreate={hasPermission("create")} users={users}
+              onSelect={setSelected}
+              onCreate={(status) => {
+                setInitialCreateStatus(typeof status === 'string' ? status : "To Do");
+                setShowCreate(true);
+              }}
+              canCreate={hasPermission("create")} users={users} isMobile={isMobile}
             />
           )}
           {view === "roadmap" && <RoadmapView issues={issues} onSelect={setSelected} />}
@@ -657,11 +961,26 @@ export default function App() {
               currentUser={currentUser}
               isAdmin={isAdmin}
               todos={todos[role] || []}
-              setTodos={(updated) => setTodos(p => ({ ...p, [role]: updated }))}
+              setTodos={(updated) => {
+                const currentRoleTodos = todos[role] || [];
+                const changed = updated.find((item, idx) => item.done !== currentRoleTodos[idx]?.done);
+                if (changed) {
+                  fetch(`/api/todos/${changed.id}/toggle`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ done: changed.done })
+                  }).catch(err => console.warn("Could not toggle todo in DB", err));
+                }
+                setTodos(p => ({ ...p, [role]: updated }));
+              }}
               issues={issues}
               users={users}
               onSelectIssue={setSelected}
-              onCreateIssue={() => setShowCreate(true)}
+              onCreateIssue={(status) => {
+                setInitialCreateStatus(typeof status === 'string' ? status : "To Do");
+                setShowCreate(true);
+              }}
+              isMobile={isMobile}
             />
           )}
           {view === "users" && hasPermission("manage_users") && (
@@ -669,6 +988,9 @@ export default function App() {
               users={users} setUsers={setUsers}
               currentUser={currentUser} setCurrentUser={setCurrentUser} issues={issues}
               addNotification={addNotification}
+              isMobile={isMobile}
+              setView={setView}
+              setFilters={setFilters}
             />
           )}
           {view === "architecture" && <ArchitectureView />}
@@ -694,6 +1016,7 @@ export default function App() {
       {/* ── CREATE MODAL ── */}
       {showCreate && hasPermission("create") && (
         <CreateModal
+          initialStatus={initialCreateStatus}
           onClose={() => setShowCreate(false)}
           onCreate={data => { createIssue(data); setShowCreate(false); }}
           currentUser={currentUser}
@@ -866,7 +1189,7 @@ function TodoView({ currentUser, todos, setTodos, issues, users, onSelectIssue }
 }
 
 // ─── USER MANAGEMENT ──────────────────────────────────────────────────────────
-function UserManagement({ users, setUsers, currentUser, setCurrentUser, issues, addNotification }) {
+function UserManagement({ users, setUsers, currentUser, setCurrentUser, issues, addNotification, isMobile, setView, setFilters }) {
   const [editUser, setEditUser] = useState(null);
   const [showAdd, setShowAdd]   = useState(false);
   const [filterDept, setFilterDept] = useState("all");
@@ -880,30 +1203,33 @@ function UserManagement({ users, setUsers, currentUser, setCurrentUser, issues, 
   const updateUser = async (id, patch) => {
     const prev = users.find(u => u.id === id);
     const updatedUser = { ...prev, ...patch };
+    
+    // 1. Optimistically update local state immediately
+    setUsers(p => p.map(u => u.id === id ? { ...u, ...patch } : u));
+    if (patch.role && prev.role !== patch.role) {
+      addNotification({ type:"role_change", userId: id, message:`Your role was updated to ${ROLES[patch.role]?.label}`, issueKey: null });
+    }
+    if (id === currentUser.id) {
+      setCurrentUser(p => ({ ...p, ...patch }));
+    }
+    setEditUser(null);
+
+    // 2. Perform background API call
     try {
-      const response = await fetch(`/api/users/${id}`, {
+      await fetch(`/api/users/${id}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(updatedUser)
       });
-      if (response.ok) {
-        setUsers(p => p.map(u => u.id === id ? { ...u, ...patch } : u));
-        if (patch.role && prev.role !== patch.role) {
-          addNotification({ type:"role_change", userId: id, message:`Your role was updated to ${ROLES[patch.role]?.label}`, issueKey: null });
-        }
-        if (id === currentUser.id) {
-          setCurrentUser(p => ({ ...p, ...patch }));
-        }
-      }
     } catch (err) {
-      console.error("Failed to update user:", err);
+      console.warn("Failed to update user in DB, running in local mode:", err);
     }
-    setEditUser(null);
   };
 
   const addUser = async (data) => {
     const color = ["#46b3cf","#10b981","#f59e0b","#ef4444","#a855f7","#ec4899"][Math.floor(Math.random()*6)];
     const avatar = data.name.slice(0,2).toUpperCase();
+    const tempId = Date.now();
     const payload = {
       ...data,
       avatar,
@@ -911,43 +1237,66 @@ function UserManagement({ users, setUsers, currentUser, setCurrentUser, issues, 
       active: true,
       password: data.password || 'user123'
     };
+    const localNewUser = {
+      id: tempId,
+      ...payload,
+      joinDate: new Date().toISOString().split('T')[0],
+      permissions: data.permissions || ROLES[data.role]?.permissions || []
+    };
+
+    // 1. Optimistically add to local state immediately
+    setUsers(p => [...p, localNewUser]);
+    setShowAdd(false);
+
+    // 2. Background API call
     try {
       const response = await fetch('/api/users', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload)
       });
-      const resData = await response.json();
       if (response.ok) {
-        const newUser = {
-          id: resData.id,
-          ...payload,
-          joinDate: new Date().toISOString().split('T')[0],
-          permissions: data.permissions || ROLES[data.role]?.permissions || []
-        };
-        setUsers(p => [...p, newUser]);
+        const resData = await response.json();
+        // Swap tempId with final database ID
+        setUsers(p => p.map(u => u.id === tempId ? { ...u, id: resData.id } : u));
       }
     } catch (err) {
-      console.error("Failed to add user:", err);
+      console.warn("Failed to add user in DB, running in local mode:", err);
     }
-    setShowAdd(false);
   };
 
   const toggleActive = async (id) => {
     const user = users.find(u => u.id === id);
     if (!user) return;
     const updatedUser = { ...user, active: !user.active };
+
+    // 1. Optimistically toggle locally first
+    setUsers(p => p.map(u => u.id === id ? { ...u, active: !u.active } : u));
+
+    // 2. Background API call
     try {
-      const response = await fetch(`/api/users/${id}`, {
+      await fetch(`/api/users/${id}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(updatedUser)
       });
-      if (response.ok) {
-        setUsers(p => p.map(u => u.id === id ? { ...u, active: !u.active } : u));
-      }
     } catch (err) {
-      console.error("Failed to toggle user active status:", err);
+      console.warn("Failed to toggle user active status in DB, running in local mode:", err);
+    }
+  };
+
+  const deleteUser = async (id) => {
+    if (!window.confirm("Are you sure you want to permanently delete this user? This action cannot be undone.")) return;
+    
+    // 1. Optimistic local update
+    setUsers(p => p.filter(u => u.id !== id));
+    addNotification({ type: "system", userId: currentUser.id, message: `User deleted from the roster`, issueKey: null });
+    
+    // 2. Background API call
+    try {
+      await fetch(`/api/users/${id}`, { method: 'DELETE' });
+    } catch (err) {
+      console.warn("Failed to delete user in DB, running locally:", err);
     }
   };
 
@@ -955,28 +1304,28 @@ function UserManagement({ users, setUsers, currentUser, setCurrentUser, issues, 
 
   return (
     <div>
-      <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:20 }}>
-        <div>
+      <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:20, flexDirection: isMobile ? "column" : "row", gap: 14 }}>
+        <div style={{ textAlign: isMobile ? "center" : "left" }}>
           <h2 style={S.pageH2}>User Management</h2>
           <div style={{ fontSize:13, color:"#909dab" }}>{users.length} total · {users.filter(u=>u.active).length} active</div>
         </div>
-        <button style={S.createBtn} onClick={() => setShowAdd(true)}>+ Add User</button>
+        <button style={{ ...S.createBtn, width: isMobile ? "100%" : "auto" }} onClick={() => setShowAdd(true)}>+ Add User</button>
       </div>
 
       {/* Filters */}
-      <div style={{ display:"flex", gap:8, marginBottom:16 }}>
-        <select style={S.sel} value={filterDept} onChange={e => setFilterDept(e.target.value)}>
+      <div style={{ display:"flex", gap:8, marginBottom:16, flexWrap: "wrap" }}>
+        <select style={{ ...S.sel, flex: isMobile ? 1 : "initial" }} value={filterDept} onChange={e => setFilterDept(e.target.value)}>
           <option value="all">All Departments</option>
           {Object.entries(DEPARTMENTS).map(([k,v]) => <option key={k} value={k}>{v.icon} {v.label}</option>)}
         </select>
-        <select style={S.sel} value={filterRole} onChange={e => setFilterRole(e.target.value)}>
+        <select style={{ ...S.sel, flex: isMobile ? 1 : "initial" }} value={filterRole} onChange={e => setFilterRole(e.target.value)}>
           <option value="all">All Roles</option>
           {Object.entries(ROLES).map(([k,v]) => <option key={k} value={k}>{v.label}</option>)}
         </select>
       </div>
 
       {/* Dept summary cards */}
-      <div style={{ display:"grid", gridTemplateColumns:"repeat(5,1fr)", gap:10, marginBottom:20 }}>
+      <div style={{ display:"grid", gridTemplateColumns: isMobile ? "repeat(auto-fill, minmax(140px, 1fr))" : "repeat(5,1fr)", gap:10, marginBottom:20 }}>
         {Object.entries(DEPARTMENTS).map(([dk, dv]) => {
           const count = users.filter(u => u.department === dk && u.active).length;
           return (
@@ -991,56 +1340,106 @@ function UserManagement({ users, setUsers, currentUser, setCurrentUser, issues, 
       </div>
 
       {/* User Table */}
-      <div style={S.userTable}>
-        <div style={S.userTableHdr}>
-          {["User","Department","Role","Permissions","Issues","Status","Actions"].map(h => (
-            <div key={h} style={{ fontSize:11, fontWeight:700, color:"#909dab", textTransform:"uppercase", letterSpacing:"0.06em" }}>{h}</div>
-          ))}
-        </div>
-        {filtered.map(u => {
-          const dept = DEPARTMENTS[u.department];
-          const roleInfo = ROLES[u.role];
-          const iCount = getUserIssueCount(u.id);
-          const isMe = u.id === currentUser.id;
-          return (
-            <div key={u.id} style={{ ...S.userTableRow, opacity: u.active ? 1 : 0.5 }}>
-              <div style={{ display:"flex", alignItems:"center", gap:10 }}>
-                <Avatar user={u} size={34} />
-                <div>
-                  <div style={{ fontWeight:600, color:"#e6edf3", fontSize:13 }}>{u.name} {isMe && <span style={{ fontSize:10, color:"#46b3cf" }}>(you)</span>}</div>
-                  <div style={{ fontSize:11, color:"#768390" }}>{u.email}</div>
-                </div>
-              </div>
-              <div style={{ display:"flex", alignItems:"center", gap:6 }}>
-                <span style={{ width:8, height:8, borderRadius:"50%", background: dept?.color }} />
-                <span style={{ fontSize:12, color:"#adbac7" }}>{dept?.label}</span>
-              </div>
-              <span style={{ ...S.rolePill, background: "#2d4052", color:"#7dc3db" }}>{roleInfo?.label}</span>
-              <div style={{ display:"flex", flexWrap:"wrap", gap:3 }}>
-                {(u.permissions || roleInfo?.permissions || []).slice(0,3).map(p => (
-                  <span key={p} style={S.permTag}>{p}</span>
-                ))}
-                {(u.permissions || roleInfo?.permissions || []).length > 3 && (
-                  <span style={S.permTag}>+{(u.permissions || roleInfo?.permissions || []).length-3}</span>
-                )}
-              </div>
-              <span style={{ fontWeight:600, color: iCount > 0 ? "#f59e0b" : "#22c55e", fontSize:13 }}>{iCount}</span>
-              <div style={{ display:"flex", alignItems:"center", gap:6 }}>
-                <span style={{ width:7, height:7, borderRadius:"50%", background: u.active ? "#22c55e" : "#ef4444" }} />
-                <span style={{ fontSize:12, color: u.active ? "#4ade80" : "#f87171" }}>{u.active ? "Active" : "Inactive"}</span>
-              </div>
-              <div style={{ display:"flex", gap:6 }}>
-                <button style={{ ...S.btnGhost, fontSize:11, padding:"3px 8px" }} onClick={() => setEditUser(u)}>Edit</button>
-                {!isMe && (
-                  <button style={{ ...S.btnGhost, fontSize:11, padding:"3px 8px", color: u.active ? "#f87171" : "#4ade80" }}
-                    onClick={() => toggleActive(u.id)}>
-                    {u.active ? "Deactivate" : "Activate"}
-                  </button>
-                )}
-              </div>
-            </div>
-          );
-        })}
+      <div style={S.userTableWrapper}>
+        <table style={S.userTable}>
+          <thead style={S.userTableHdr}>
+            <tr>
+              <th style={S.userTableHdrCell}>User</th>
+              <th style={S.userTableHdrCell}>Department</th>
+              <th style={S.userTableHdrCell}>Role</th>
+              {!isMobile && <th style={S.userTableHdrCell}>Permissions</th>}
+              <th style={S.userTableHdrCell}>Issues</th>
+              <th style={S.userTableHdrCell}>Status</th>
+              <th style={S.userTableHdrCell}>Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            {filtered.map(u => {
+              const dept = DEPARTMENTS[u.department];
+              const roleInfo = ROLES[u.role];
+              const iCount = getUserIssueCount(u.id);
+              const isMe = u.id === currentUser.id;
+              return (
+                <tr key={u.id} style={{ ...S.userTableRow, opacity: u.active ? 1 : 0.5 }}>
+                  <td 
+                    style={{ ...S.userTableCell, cursor: "pointer", transition: "background 0.2s" }}
+                    onClick={() => {
+                      setFilters(prev => ({ ...prev, assignee: String(u.id) }));
+                      setView("board");
+                    }}
+                    onMouseEnter={e => e.currentTarget.style.background = 'rgba(88, 166, 255, 0.08)'}
+                    onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
+                    title={`Click to view Kanban board filtered by ${u.name}`}
+                  >
+                    <div style={{ display:"flex", alignItems:"center", gap:10 }}>
+                      <Avatar user={u} size={34} />
+                      <div>
+                        <div style={{ fontWeight:600, color:"var(--accent)", fontSize:13 }}>
+                          {u.name} {isMe && <span style={{ fontSize:10, color:"#46b3cf" }}>(you)</span>}
+                          {u.phoneVerified && <span title="WhatsApp Verified" style={{ fontSize:12, marginLeft:4 }}>📱✅</span>}
+                        </div>
+                        {!isMobile && <div style={{ fontSize:11, color:"#768390" }}>{u.email}</div>}
+                      </div>
+                    </div>
+                  </td>
+                  <td style={S.userTableCell}>
+                    <div style={{ display:"flex", alignItems:"center", gap:6 }}>
+                      <span style={{ width:8, height:8, borderRadius:"50%", background: dept?.color }} />
+                      <span style={{ fontSize:12, color:"#adbac7" }}>{dept?.label}</span>
+                    </div>
+                  </td>
+                  <td style={S.userTableCell}>
+                    <span style={{ ...S.rolePill, background: "#2d4052", color:"#7dc3db" }}>{roleInfo?.label}</span>
+                  </td>
+                  {!isMobile && (
+                    <td style={S.userTableCell}>
+                      <div style={{ display:"flex", flexWrap:"wrap", gap:3 }}>
+                        {(u.permissions || roleInfo?.permissions || []).slice(0,3).map(p => (
+                          <span key={p} style={S.permTag}>{p}</span>
+                        ))}
+                      </div>
+                    </td>
+                  )}
+                  <td 
+                    style={{ ...S.userTableCell, cursor: "pointer", transition: "background 0.2s" }}
+                    onClick={() => {
+                      setFilters(prev => ({ ...prev, assignee: String(u.id) }));
+                      setView("board");
+                    }}
+                    onMouseEnter={e => e.currentTarget.style.background = 'rgba(88, 166, 255, 0.08)'}
+                    onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
+                    title={`Click to see issues assigned to ${u.name}`}
+                  >
+                    <span style={{ fontWeight:600, color: iCount > 0 ? "#f59e0b" : "#22c55e", fontSize:13, textDecoration: "underline", textUnderlineOffset: "3px" }}>{iCount}</span>
+                  </td>
+                  <td style={S.userTableCell}>
+                    <div style={{ display:"flex", alignItems:"center", gap:6 }}>
+                      <span style={{ width:7, height:7, borderRadius:"50%", background: u.active ? "#22c55e" : "#ef4444" }} />
+                      <span style={{ fontSize:12, color: u.active ? "#4ade80" : "#f87171" }}>{u.active ? "Active" : "Inactive"}</span>
+                    </div>
+                  </td>
+                  <td style={S.userTableCell}>
+                    <div style={{ display:"flex", gap:6, flexWrap: "wrap" }}>
+                      <button style={{ ...S.btnGhost, fontSize:11, padding:"3px 8px" }} onClick={() => setEditUser(u)}>Edit</button>
+                      {!isMe && (
+                        <>
+                          <button style={{ ...S.btnGhost, fontSize:11, padding:"3px 8px", color: u.active ? "#f87171" : "#4ade80" }}
+                            onClick={() => toggleActive(u.id)}>
+                            {u.active ? "Off" : "On"}
+                          </button>
+                          <button style={{ ...S.btnGhost, fontSize:11, padding:"3px 8px", borderColor: "rgba(239, 68, 68, 0.4)", color: "#ef4444" }}
+                            onClick={() => deleteUser(u.id)}>
+                            Delete
+                          </button>
+                        </>
+                      )}
+                    </div>
+                  </td>
+                </tr>
+              );
+            })}
+          </tbody>
+        </table>
       </div>
 
       {/* Edit User Modal */}
@@ -1058,11 +1457,23 @@ const ALL_PERMISSIONS = ["create", "edit", "delete", "assign", "manage_users", "
 
 function EditUserModal({ user, onClose, onSave }) {
   const [draft, setDraft] = useState({
-    role: user.role,
-    department: user.department,
-    name: user.name,
-    permissions: user.permissions || ROLES[user.role]?.permissions || []
+    role:                  user.role,
+    department:            user.department,
+    name:                  user.name,
+    email:                 user.email || "",
+    permissions:           user.permissions || ROLES[user.role]?.permissions || [],
+    phone:                 user.phone || "",
+    notificationEmail:     user.notificationEmail !== false,
+    notificationWhatsapp:  user.notificationWhatsapp || false,
+    requirePasswordChange: user.requirePasswordChange || false,
   });
+
+  // WhatsApp OTP state
+  const [waStep, setWaStep]         = useState("idle"); // idle | setup | sent | verified | error
+  const [waApiKey, setWaApiKey]     = useState("");
+  const [waOtp, setWaOtp]           = useState("");
+  const [waError, setWaError]       = useState("");
+  const [waSending, setWaSending]   = useState(false);
 
   const handleRoleChange = (newRole) => {
     setDraft(p => ({
@@ -1072,27 +1483,78 @@ function EditUserModal({ user, onClose, onSave }) {
     }));
   };
 
+  const sendOtp = async () => {
+    if (!draft.phone || !waApiKey) { setWaError("Enter both phone and API key."); return; }
+    setWaSending(true); setWaError("");
+    try {
+      const r = await fetch(`/api/users/${user.id}/send-whatsapp-otp`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ phone: draft.phone, callmebotApikey: waApiKey })
+      });
+      const d = await r.json();
+      if (r.ok) { setWaStep("sent"); }
+      else { setWaError(d.error || "Failed to send OTP."); }
+    } catch { setWaError("Network error. Try again."); }
+    setWaSending(false);
+  };
+
+  const verifyOtp = async () => {
+    if (!waOtp) { setWaError("Enter the OTP code."); return; }
+    setWaSending(true); setWaError("");
+    try {
+      const r = await fetch(`/api/users/${user.id}/verify-whatsapp-otp`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ otp: waOtp })
+      });
+      const d = await r.json();
+      if (r.ok) {
+        setWaStep("verified");
+        setDraft(p => ({ ...p, notificationWhatsapp: true }));
+      } else { setWaError(d.error || "Verification failed."); }
+    } catch { setWaError("Network error. Try again."); }
+    setWaSending(false);
+  };
+
+  const waBoxStyle = {
+    background:"#1c2128", border:"1px solid #30363d",
+    borderRadius:10, padding:14, display:"flex", flexDirection:"column", gap:10
+  };
+  const stepBadge = (txt, color) => (
+    <span style={{ fontSize:10, fontWeight:700, background: color+"20", color, padding:"2px 8px", borderRadius:20, alignSelf:"flex-start" }}>{txt}</span>
+  );
+
   return (
     <div style={S.modalOverlay} onClick={e => e.target===e.currentTarget && onClose()}>
-      <div style={{ ...S.modal, width:440 }}>
+      <div style={{ ...S.modal, width:480, maxHeight:"90vh", overflowY:"auto" }}>
         <div style={S.modalHdr}>
           <span style={{ fontWeight:700, color:"#e6edf3" }}>Edit User — {user.name}</span>
           <button style={S.iconBtn} onClick={onClose}>✕</button>
         </div>
         <div style={{ ...S.modalBody, gap:14 }}>
+          {/* Avatar + info */}
           <div style={{ display:"flex", alignItems:"center", gap:12, padding:"6px 0" }}>
             <Avatar user={user} size={44} />
             <div>
-              <div style={{ fontWeight:600, color:"#e6edf3" }}>{user.name}</div>
-              <div style={{ fontSize:12, color:"#909dab" }}>{user.email}</div>
+              <div style={{ fontWeight:600, color:"#e6edf3" }}>{draft.name}</div>
+              <div style={{ fontSize:12, color:"#909dab" }}>{draft.email}</div>
             </div>
           </div>
-          
+
+          {/* Name */}
           <div>
             <label style={{ fontSize:12, color:"#909dab", fontWeight:600, display:"block", marginBottom:5 }}>Name</label>
             <input style={S.formInput} value={draft.name} onChange={e => setDraft(p => ({ ...p, name: e.target.value }))} />
           </div>
 
+          {/* Email Address */}
+          <div>
+            <label style={{ fontSize:12, color:"#909dab", fontWeight:600, display:"block", marginBottom:5 }}>Email Address</label>
+            <input style={S.formInput} type="email" value={draft.email} onChange={e => setDraft(p => ({ ...p, email: e.target.value }))} />
+          </div>
+
+          {/* Department */}
           <div>
             <label style={{ fontSize:12, color:"#909dab", fontWeight:600, display:"block", marginBottom:5 }}>Department</label>
             <select style={S.formSel} value={draft.department} onChange={e => setDraft(p => ({ ...p, department: e.target.value }))}>
@@ -1100,6 +1562,7 @@ function EditUserModal({ user, onClose, onSave }) {
             </select>
           </div>
 
+          {/* Role */}
           <div>
             <label style={{ fontSize:12, color:"#909dab", fontWeight:600, display:"block", marginBottom:5 }}>Role</label>
             <select style={S.formSel} value={draft.role} onChange={e => handleRoleChange(e.target.value)}>
@@ -1107,6 +1570,14 @@ function EditUserModal({ user, onClose, onSave }) {
             </select>
           </div>
 
+          {/* Force password change */}
+          <label style={{ display:"flex", alignItems:"center", gap:8, cursor:"pointer", userSelect:"none" }}>
+            <input type="checkbox" checked={draft.requirePasswordChange}
+              onChange={e => setDraft(p => ({ ...p, requirePasswordChange: e.target.checked }))} style={{ cursor:"pointer" }} />
+            <span style={{ fontSize:13, color:"#adbac7" }}>Force password change on next login</span>
+          </label>
+
+          {/* Custom Permissions */}
           <div>
             <div style={{ fontSize:12, color:"#909dab", fontWeight:600, marginBottom:8 }}>Configure Custom Permissions</div>
             <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:8, background:"#22272e", padding:12, borderRadius:8, border:"1px solid #444c56" }}>
@@ -1114,21 +1585,164 @@ function EditUserModal({ user, onClose, onSave }) {
                 const has = draft.permissions.includes(p);
                 return (
                   <label key={p} style={{ display:"flex", alignItems:"center", gap:8, fontSize:12, color:"#adbac7", cursor:"pointer", userSelect:"none" }}>
-                    <input
-                      type="checkbox"
-                      checked={has}
+                    <input type="checkbox" checked={has}
                       onChange={() => {
-                        const next = has
-                          ? draft.permissions.filter(x => x !== p)
-                          : [...draft.permissions, p];
+                        const next = has ? draft.permissions.filter(x => x !== p) : [...draft.permissions, p];
                         setDraft(prev => ({ ...prev, permissions: next }));
-                      }}
-                      style={{ cursor:"pointer" }}
-                    />
+                      }} style={{ cursor:"pointer" }} />
                     <span>{p}</span>
                   </label>
                 );
               })}
+            </div>
+          </div>
+
+          {/* ── Notification Settings ── */}
+          <div style={{ borderTop:"1px solid #30363d", paddingTop:14 }}>
+            <div style={{ fontSize:12, color:"#909dab", fontWeight:700, marginBottom:10, letterSpacing:"0.5px", textTransform:"uppercase" }}>📣 Notification Settings</div>
+
+            {/* Email toggle */}
+            <label style={{ display:"flex", alignItems:"center", justifyContent:"space-between", cursor:"pointer", marginBottom:10, padding:"8px 10px", background:"#22272e", borderRadius:8, border:"1px solid #30363d" }}>
+              <div style={{ display:"flex", alignItems:"center", gap:8 }}>
+                <span style={{ fontSize:16 }}>📧</span>
+                <div>
+                  <div style={{ fontSize:13, fontWeight:600, color:"#e6edf3" }}>Email Notifications</div>
+                  <div style={{ fontSize:11, color:"#768390" }}>Receive task alerts via email</div>
+                </div>
+              </div>
+              <div style={{
+                width:36, height:20, borderRadius:20, background: draft.notificationEmail ? "#22c55e" : "#444c56",
+                position:"relative", transition:"background 0.2s", cursor:"pointer"
+              }} onClick={() => setDraft(p => ({ ...p, notificationEmail: !p.notificationEmail }))}>
+                <div style={{
+                  width:14, height:14, borderRadius:"50%", background:"#fff",
+                  position:"absolute", top:3,
+                  left: draft.notificationEmail ? 18 : 3,
+                  transition:"left 0.2s"
+                }} />
+              </div>
+            </label>
+
+            {/* WhatsApp section */}
+            <div style={waBoxStyle}>
+              <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between" }}>
+                <div style={{ display:"flex", alignItems:"center", gap:8 }}>
+                  <span style={{ fontSize:16 }}>📱</span>
+                  <div>
+                    <div style={{ fontSize:13, fontWeight:600, color:"#e6edf3" }}>WhatsApp Notifications</div>
+                    <div style={{ fontSize:11, color:"#768390" }}>Receive task alerts on WhatsApp</div>
+                  </div>
+                </div>
+                {user.phoneVerified
+                  ? stepBadge("✅ Verified", "#22c55e")
+                  : stepBadge("Not Verified", "#f59e0b")
+                }
+              </div>
+
+              {/* Phone number input */}
+              <div>
+                <label style={{ fontSize:11, color:"#768390", display:"block", marginBottom:4 }}>WhatsApp Phone (with country code)</label>
+                <input
+                  style={{ ...S.formInput, fontSize:13 }}
+                  placeholder="+919876543210"
+                  value={draft.phone}
+                  onChange={e => setDraft(p => ({ ...p, phone: e.target.value }))}
+                />
+              </div>
+
+              {/* CallMeBot setup instructions */}
+              {waStep === "idle" && !user.phoneVerified && (
+                <div style={{ background:"#0d1117", border:"1px solid #238636", borderRadius:8, padding:12 }}>
+                  <div style={{ fontSize:11, fontWeight:700, color:"#3fb950", marginBottom:8 }}>📋 One-time CallMeBot Setup (Free)</div>
+                  <ol style={{ margin:0, paddingLeft:16, display:"flex", flexDirection:"column", gap:4 }}>
+                    <li style={{ fontSize:11, color:"#adbac7" }}>Open WhatsApp → message <strong style={{ color:"#7dc3db" }}>+34 644 78 81 73</strong></li>
+                    <li style={{ fontSize:11, color:"#adbac7" }}>Send: <em style={{ color:"#f0f6fc" }}>"I allow callmebot to send me messages"</em></li>
+                    <li style={{ fontSize:11, color:"#adbac7" }}>Wait for reply — it will contain your <strong style={{ color:"#7dc3db" }}>API key</strong></li>
+                    <li style={{ fontSize:11, color:"#adbac7" }}>Paste the API key below and click Send OTP</li>
+                  </ol>
+                </div>
+              )}
+
+              {/* API key input + Send OTP */}
+              {!user.phoneVerified && waStep !== "verified" && (
+                <div style={{ display:"flex", flexDirection:"column", gap:8 }}>
+                  <div>
+                    <label style={{ fontSize:11, color:"#768390", display:"block", marginBottom:4 }}>Your CallMeBot API Key</label>
+                    <input
+                      style={{ ...S.formInput, fontSize:13 }}
+                      placeholder="e.g. 1234567"
+                      value={waApiKey}
+                      onChange={e => setWaApiKey(e.target.value)}
+                    />
+                  </div>
+                  <button
+                    onClick={sendOtp}
+                    disabled={waSending || !draft.phone || !waApiKey}
+                    style={{
+                      background: waSending ? "#22272e" : "linear-gradient(135deg, #25d366, #128c7e)",
+                      color:"#fff", border:"none", borderRadius:8, padding:"9px 16px",
+                      fontSize:13, fontWeight:700, cursor: waSending ? "not-allowed" : "pointer",
+                      opacity: !draft.phone || !waApiKey ? 0.5 : 1
+                    }}
+                  >
+                    {waSending && waStep === "idle" ? "⏳ Sending..." : "📲 Send Verification Code"}
+                  </button>
+                </div>
+              )}
+
+              {/* OTP entry */}
+              {waStep === "sent" && (
+                <div style={{ display:"flex", flexDirection:"column", gap:8 }}>
+                  {stepBadge("Code sent! Check WhatsApp", "#3b82f6")}
+                  <div>
+                    <label style={{ fontSize:11, color:"#768390", display:"block", marginBottom:4 }}>Enter 6-digit OTP</label>
+                    <input
+                      style={{ ...S.formInput, fontSize:18, fontWeight:700, letterSpacing:8, textAlign:"center" }}
+                      placeholder="● ● ● ● ● ●"
+                      maxLength={6}
+                      value={waOtp}
+                      onChange={e => setWaOtp(e.target.value.replace(/\D/g, ""))}
+                    />
+                  </div>
+                  <div style={{ display:"flex", gap:8 }}>
+                    <button
+                      onClick={verifyOtp}
+                      disabled={waSending || waOtp.length !== 6}
+                      style={{
+                        flex:1, background: "linear-gradient(135deg, #6366f1, #4f46e5)",
+                        color:"#fff", border:"none", borderRadius:8, padding:"9px 0",
+                        fontSize:13, fontWeight:700, cursor: waSending ? "not-allowed" : "pointer",
+                        opacity: waOtp.length !== 6 ? 0.5 : 1
+                      }}
+                    >
+                      {waSending ? "⏳ Verifying..." : "✅ Verify Code"}
+                    </button>
+                    <button onClick={sendOtp} disabled={waSending}
+                      style={{ background:"#22272e", color:"#768390", border:"1px solid #30363d", borderRadius:8, padding:"9px 12px", fontSize:12, cursor:"pointer" }}
+                    >
+                      Resend
+                    </button>
+                  </div>
+                </div>
+              )}
+
+              {/* Verified success */}
+              {(waStep === "verified" || user.phoneVerified) && (
+                <div style={{ display:"flex", alignItems:"center", gap:8, background:"rgba(34,197,94,0.1)", border:"1px solid rgba(34,197,94,0.3)", borderRadius:8, padding:"10px 12px" }}>
+                  <span style={{ fontSize:18 }}>✅</span>
+                  <div>
+                    <div style={{ fontSize:12, fontWeight:700, color:"#4ade80" }}>WhatsApp Verified!</div>
+                    <div style={{ fontSize:11, color:"#768390" }}>{draft.phone || user.phone} — Notifications enabled</div>
+                  </div>
+                </div>
+              )}
+
+              {/* Error */}
+              {waError && (
+                <div style={{ background:"rgba(239,68,68,0.1)", border:"1px solid rgba(239,68,68,0.3)", borderRadius:8, padding:"8px 12px", fontSize:12, color:"#f87171" }}>
+                  ⚠️ {waError}
+                </div>
+              )}
             </div>
           </div>
         </div>
@@ -1150,6 +1764,7 @@ function AddUserModal({ onClose, onAdd }) {
     department: "it",
     permissions: ROLES["developer"]?.permissions || []
   });
+  const [copied, setCopied] = useState(false);
   const set = (k,v) => setF(p => ({...p,[k]:v}));
 
   const handleRoleChange = (newRole) => {
@@ -1160,24 +1775,130 @@ function AddUserModal({ onClose, onAdd }) {
     }));
   };
 
+  const generatePassword = () => {
+    const chars = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%^&*()_+";
+    let pass = "";
+    for (let i = 0; i < 12; i++) {
+      pass += chars.charAt(Math.floor(Math.random() * chars.length));
+    }
+    set("password", pass);
+    navigator.clipboard.writeText(pass);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  };
+
+  const isEmailValid = (email) => {
+    const re = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    return re.test(email);
+  };
+
+  const getPasswordStrength = (pass) => {
+    if (!pass) return { score: 0, text: "None", color: "#666" };
+    let score = 0;
+    if (pass.length >= 6) score++;
+    if (pass.length >= 10) score++;
+    if (/[0-9]/.test(pass)) score++;
+    if (/[!@#$%^&*()_+]/.test(pass)) score++;
+    
+    if (score <= 1) return { score, text: "Weak", color: "#ef4444" };
+    if (score <= 3) return { score, text: "Medium", color: "#f59e0b" };
+    return { score, text: "Strong", color: "#10b981" };
+  };
+
+  const strength = getPasswordStrength(f.password);
+
+  const PERMISSION_METADATA = {
+    create:       { label: "Create Issues", desc: "Allow starting new tasks & epics", icon: "➕" },
+    edit:         { label: "Edit Issues", desc: "Allow modifying fields & details", icon: "✏️" },
+    delete:       { label: "Delete Issues", desc: "Allow permanently removing issues", icon: "🗑️" },
+    assign:       { label: "Assign Team", desc: "Allow delegating tasks to members", icon: "👥" },
+    manage_users: { label: "Manage Users", desc: "Allow adding & modifying members", icon: "🛡️" },
+    view_all:     { label: "View All Depts", desc: "Access boards of all departments", icon: "👁️" },
+    manage_roles: { label: "Manage Roles", desc: "Define category security structures", icon: "🔑" },
+    approve:      { label: "Approve Items", desc: "Transition tasks to Done status", icon: "✅" },
+  };
+
   return (
-    <div style={S.modalOverlay} onClick={e => e.target===e.currentTarget && onClose()}>
-      <div style={{ ...S.modal, width:440 }}>
-        <div style={S.modalHdr}>
-          <span style={{ fontWeight:700, color:"#e6edf3" }}>Add New User</span>
+    <div style={{ ...S.modalOverlay, backdropFilter: "blur(12px)", background: "rgba(0,0,0,0.85)" }} onClick={e => e.target===e.currentTarget && onClose()}>
+      <div style={{ 
+        ...S.modal, 
+        width: 500, 
+        background: "linear-gradient(135deg, rgba(28,33,40,0.98), rgba(34,39,46,0.98))",
+        border: "1px solid rgba(255, 255, 255, 0.08)",
+        borderRadius: 16,
+        boxShadow: "0 24px 64px rgba(0, 0, 0, 0.8)",
+        animation: "modalFadeIn 0.3s cubic-bezier(0.16, 1, 0.3, 1)"
+      }}>
+        <div style={{ ...S.modalHdr, borderBottom: "1px solid rgba(255, 255, 255, 0.06)", padding: "16px 24px" }}>
+          <span style={{ fontWeight: 800, fontSize: 16, color: "#fff", letterSpacing: "-0.01em" }}>Add New User</span>
           <button style={S.iconBtn} onClick={onClose}>✕</button>
         </div>
-        <div style={{ ...S.modalBody, gap:12 }}>
-          {[
-            { label:"Full Name", key:"name", type:"input", placeholder:"e.g. Jane Smith" },
-            { label:"Email", key:"email", type:"input", placeholder:"jane@metapharsic.io" },
-            { label:"Password", key:"password", type:"password", placeholder:"••••••••" },
-          ].map(f2 => (
-            <div key={f2.key}>
-              <label style={{ fontSize:12, color:"#909dab", fontWeight:600, display:"block", marginBottom:5 }}>{f2.label}</label>
-              <input type={f2.type} style={S.formInput} placeholder={f2.placeholder} value={f[f2.key]} onChange={e => set(f2.key, e.target.value)} />
+        <div style={{ ...S.modalBody, gap: 14, padding: "20px 24px" }}>
+          <div>
+            <label style={{ fontSize:12, color:"#909dab", fontWeight:600, display:"block", marginBottom:5 }}>Full Name</label>
+            <input type="text" style={S.formInput} placeholder="e.g. Jane Smith" value={f.name} onChange={e => set("name", e.target.value)} />
+          </div>
+          <div>
+            <label style={{ fontSize:12, color:"#909dab", fontWeight:600, display:"block", marginBottom:5 }}>Email</label>
+            <input type="email" style={S.formInput} placeholder="jane@metapharsic.io" value={f.email} onChange={e => set("email", e.target.value)} />
+            {f.email && (
+              <div style={{ fontSize: 11, color: isEmailValid(f.email) ? "#10b981" : "#ef4444", marginTop: 4, display:"flex", alignItems:"center", gap: 4 }}>
+                <span>{isEmailValid(f.email) ? "✓" : "⚠️"}</span>
+                <span>{isEmailValid(f.email) ? "Valid email format" : "Enter a valid email format"}</span>
+              </div>
+            )}
+          </div>
+          <div>
+            <label style={{ fontSize:12, color:"#909dab", fontWeight:600, display:"block", marginBottom:5 }}>WhatsApp Phone <span style={{ fontWeight:400, color:"#768390" }}>(optional, for notifications)</span></label>
+            <input type="tel" style={S.formInput} placeholder="+919876543210" value={f.phone||""} onChange={e => set("phone", e.target.value)} />
+            <div style={{ fontSize:11, color:"#768390", marginTop:4 }}>📱 User can verify their WhatsApp from their profile after login.</div>
+          </div>
+          <div>
+            <label style={{ fontSize:12, color:"#909dab", fontWeight:600, display:"block", marginBottom:5 }}>Password</label>
+            <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
+              <input
+                type="text"
+                style={{ ...S.formInput, flex: 1 }}
+                placeholder="••••••••"
+                value={f.password}
+                onChange={e => set("password", e.target.value)}
+              />
+              <button
+                type="button"
+                onClick={generatePassword}
+                style={{
+                  background: "linear-gradient(135deg, #6366f1, #4f46e5)",
+                  color: "#fff",
+                  border: "none",
+                  borderRadius: 6,
+                  padding: "8px 14px",
+                  fontSize: 12,
+                  fontWeight: 600,
+                  cursor: "pointer",
+                  transition: "all 0.2s",
+                  boxShadow: "0 4px 12px rgba(99, 102, 241, 0.3)",
+                  whiteSpace: "nowrap"
+                }}
+              >
+                ⚡ Auto
+              </button>
             </div>
-          ))}
+            {copied && (
+              <div style={{ fontSize: 11, color: "#10b981", marginTop: 4, display: "flex", alignItems: "center", gap: 4 }}>
+                <span>✓</span> Copied password to clipboard!
+              </div>
+            )}
+            {f.password && (
+              <div style={{ marginTop: 6 }}>
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                  <span style={{ fontSize: 10, color: "#768390" }}>Strength: <strong style={{ color: strength.color }}>{strength.text}</strong></span>
+                </div>
+                <div style={{ width: "100%", height: 4, background: "#22272e", borderRadius: 2, marginTop: 3, overflow: "hidden" }}>
+                  <div style={{ width: `${(strength.score / 4) * 100}%`, height: "100%", background: strength.color, transition: "width 0.3s" }} />
+                </div>
+              </div>
+            )}
+          </div>
           <div>
             <label style={{ fontSize:12, color:"#909dab", fontWeight:600, display:"block", marginBottom:5 }}>Department</label>
             <select style={S.formSel} value={f.department} onChange={e => set("department",e.target.value)}>
@@ -1190,35 +1911,79 @@ function AddUserModal({ onClose, onAdd }) {
               {Object.entries(ROLES).map(([k,v]) => <option key={k} value={k}>{v.label}</option>)}
             </select>
           </div>
+
+          <label style={{ display:"flex", alignItems:"center", gap:8, cursor:"pointer", userSelect:"none", margin: "4px 0" }}>
+            <input
+              type="checkbox"
+              checked={f.requirePasswordChange === undefined ? true : f.requirePasswordChange}
+              onChange={e => set("requirePasswordChange", e.target.checked)}
+              style={{ cursor:"pointer" }}
+            />
+            <span style={{ fontSize:13, color:"#adbac7" }}>Force password change on next login</span>
+          </label>
+
           <div>
             <div style={{ fontSize:12, color:"#909dab", fontWeight:600, marginBottom:8 }}>Configure Custom Permissions</div>
-            <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:8, background:"#22272e", padding:12, borderRadius:8, border:"1px solid #444c56" }}>
+            <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:8, maxHeight:180, overflowY:"auto", paddingRight:4 }}>
               {ALL_PERMISSIONS.map(p => {
                 const has = f.permissions.includes(p);
+                const meta = PERMISSION_METADATA[p] || { label: p, desc: "", icon: "⚙️" };
                 return (
-                  <label key={p} style={{ display:"flex", alignItems:"center", gap:8, fontSize:12, color:"#adbac7", cursor:"pointer", userSelect:"none" }}>
-                    <input
-                      type="checkbox"
-                      checked={has}
-                      onChange={() => {
-                        const next = has
-                          ? f.permissions.filter(x => x !== p)
-                          : [...f.permissions, p];
-                        setF(prev => ({ ...prev, permissions: next }));
+                  <div
+                    key={p}
+                    onClick={() => {
+                      const next = has
+                        ? f.permissions.filter(x => x !== p)
+                        : [...f.permissions, p];
+                      setF(prev => ({ ...prev, permissions: next }));
+                    }}
+                    style={{
+                      background: has ? "rgba(99, 102, 241, 0.1)" : "#22272e",
+                      border: has ? "1px solid rgba(99, 102, 241, 0.5)" : "1px solid rgba(255, 255, 255, 0.06)",
+                      borderRadius: 8,
+                      padding: "8px 12px",
+                      cursor: "pointer",
+                      display: "flex",
+                      alignItems: "center",
+                      gap: 8,
+                      transition: "all 0.2s",
+                      boxShadow: has ? "0 0 10px rgba(99, 102, 241, 0.15)" : "none"
+                    }}
+                  >
+                    <span style={{ fontSize: 15 }}>{meta.icon}</span>
+                    <div style={{ flex: 1 }}>
+                      <div style={{ fontSize: 11, fontWeight: 700, color: has ? "#8c8dfa" : "#adbac7" }}>{meta.label}</div>
+                      <div style={{ fontSize: 9, color: "#768390", marginTop: 1 }}>{meta.desc}</div>
+                    </div>
+                    <div
+                      style={{
+                        width: 12,
+                        height: 12,
+                        borderRadius: "50%",
+                        border: has ? "3.5px solid #6366f1" : "1.5px solid #768390",
+                        background: has ? "#fff" : "transparent",
+                        transition: "all 0.2s"
                       }}
-                      style={{ cursor:"pointer" }}
                     />
-                    <span>{p}</span>
-                  </label>
+                  </div>
                 );
               })}
             </div>
           </div>
         </div>
-        <div style={S.modalFoot}>
+        <div style={{ ...S.modalFoot, borderTop: "1px solid rgba(255, 255, 255, 0.06)", padding: "12px 24px" }}>
           <button style={S.btnGhost} onClick={onClose}>Cancel</button>
-          <button style={S.createBtn} disabled={!f.name.trim() || !f.email.trim()}
-            onClick={() => { if(f.name.trim() && f.email.trim()) onAdd(f); }}>
+          <button 
+            style={{
+              ...S.btnPrimary,
+              background: (!f.name.trim() || !f.email.trim() || !isEmailValid(f.email)) ? "#2d333b" : "linear-gradient(135deg, #10b981, #059669)",
+              color: (!f.name.trim() || !f.email.trim() || !isEmailValid(f.email)) ? "#768390" : "#fff",
+              cursor: (!f.name.trim() || !f.email.trim() || !isEmailValid(f.email)) ? "not-allowed" : "pointer",
+              transition: "all 0.2s",
+              boxShadow: (!f.name.trim() || !f.email.trim() || !isEmailValid(f.email)) ? "none" : "0 4px 12px rgba(16, 185, 129, 0.2)"
+            }} 
+            disabled={!f.name.trim() || !f.email.trim() || !isEmailValid(f.email)}
+            onClick={() => { if(f.name.trim() && f.email.trim() && isEmailValid(f.email)) onAdd(f); }}>
             Add User
           </button>
         </div>
@@ -1229,7 +1994,7 @@ function AddUserModal({ onClose, onAdd }) {
 
 // ─── BOARD VIEW ───────────────────────────────────────────────────────────────
 function BoardView({ issues, sprints, sprint, setSprint, search, setSearch, filters, setFilters,
-                     onDragStart, onDrop, dragOver, setDragOver, onSelect, onCreate, allIssues, canCreate, users }) {
+                     onDragStart, onDrop, dragOver, setDragOver, onSelect, onCreate, allIssues, canCreate, users, isMobile }) {
   const total = issues.length;
   const done  = issues.filter(i => i.status === "Done").length;
   const pts   = issues.reduce((s,i) => s+(i.sp||0), 0);
@@ -1278,6 +2043,8 @@ function BoardView({ issues, sprints, sprint, setSprint, search, setSearch, filt
     }
   };
 
+  const columnLayout = isMobile ? { display: "flex", flexDirection: "column", gap: 16 } : S.cols;
+
   return (
     <div>
       <div style={S.toolbar}>
@@ -1285,7 +2052,7 @@ function BoardView({ issues, sprints, sprint, setSprint, search, setSearch, filt
           <select style={S.sel} value={sprint} onChange={e => setSprint(e.target.value)}>
             {sprints.map(s => <option key={s} value={s}>{s}</option>)}
           </select>
-          <input style={S.searchBox} placeholder="🔍  Search issues…" value={search} onChange={e => setSearch(e.target.value)} />
+          <input style={{ ...S.searchBox, maxWidth: isMobile ? "100%" : 190 }} placeholder="🔍  Search issues…" value={search} onChange={e => setSearch(e.target.value)} />
           <Filters filters={filters} setFilters={setFilters} users={users} />
           
           <button style={{ 
@@ -1302,7 +2069,7 @@ function BoardView({ issues, sprints, sprint, setSprint, search, setSearch, filt
             📅 {showLog ? "Hide Activity Log" : "Daily Activity Log"}
           </button>
         </div>
-        {canCreate && <button style={S.createBtn} onClick={onCreate}>+ Create Issue</button>}
+        {canCreate && <button style={{ ...S.createBtn, width: isMobile ? "100%" : "auto" }} onClick={onCreate}>+ Create Issue</button>}
       </div>
       
       <div style={S.sprintBar}>
@@ -1313,9 +2080,9 @@ function BoardView({ issues, sprints, sprint, setSprint, search, setSearch, filt
         <span style={{ fontSize:11, color:"#909dab" }}>{total ? Math.round((done/total)*100) : 0}%</span>
       </div>
 
-      <div style={{ display:"flex", gap:16, alignItems:"stretch" }}>
+      <div style={{ display:"flex", gap:16, alignItems:"stretch", flexDirection: isMobile ? "column" : "row" }}>
         <div style={{ flex: 1 }}>
-          <div style={S.cols}>
+          <div style={columnLayout}>
             {STATUSES.map(status => {
               const col = issues.filter(i => i.status === status);
               const sc  = STATUS_COLORS[status];
@@ -1324,10 +2091,37 @@ function BoardView({ issues, sprints, sprint, setSprint, search, setSearch, filt
                   onDragOver={e => { e.preventDefault(); setDragOver(status); }}
                   onDragLeave={() => setDragOver(null)}
                   onDrop={e => onDrop(e, status)}>
-                  <div style={S.colHeader}>
-                    <span style={{ ...S.dot, background: sc.dot }} />
-                    <span style={{ ...S.colTitle, color: sc.text }}>{status}</span>
-                    <span style={S.colCount}>{col.length}</span>
+                  <div style={{ ...S.colHeader, display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+                    <div style={{ display: "flex", alignItems: "center" }}>
+                      <span style={{ ...S.dot, background: sc.dot }} />
+                      <span style={{ ...S.colTitle, color: sc.text }}>{status}</span>
+                      <span style={S.colCount}>{col.length}</span>
+                    </div>
+                    {canCreate && (
+                      <button 
+                        onClick={(e) => { e.stopPropagation(); onCreate(status); }}
+                        title={`Create task in ${status}`}
+                        style={{
+                          background: "transparent",
+                          border: "none",
+                          color: "#7dc3db",
+                          cursor: "pointer",
+                          fontSize: 16,
+                          fontWeight: 700,
+                          padding: "2px 6px",
+                          borderRadius: 4,
+                          display: "flex",
+                          alignItems: "center",
+                          justifyContent: "center",
+                          lineHeight: 1,
+                          transition: "all 0.2s"
+                        }}
+                        onMouseEnter={e => { e.target.style.background = "rgba(125,195,219,0.15)"; e.target.style.transform = "scale(1.1)"; }}
+                        onMouseLeave={e => { e.target.style.background = "transparent"; e.target.style.transform = "none"; }}
+                      >
+                        +
+                      </button>
+                    )}
                   </div>
                   <div style={S.colBody}>
                     {col.map(issue => (
@@ -1343,7 +2137,7 @@ function BoardView({ issues, sprints, sprint, setSprint, search, setSearch, filt
 
         {showLog && (
           <div style={{ 
-            width: 320, 
+            width: isMobile ? "100%" : 320, 
             background: "#1c2128", 
             border: "1px solid #444c56", 
             borderRadius: 10, 
@@ -1351,7 +2145,7 @@ function BoardView({ issues, sprints, sprint, setSprint, search, setSearch, filt
             display: "flex", 
             flexDirection: "column",
             gap: 12,
-            maxHeight: "75vh",
+            maxHeight: isMobile ? "none" : "75vh",
             overflowY: "auto"
           }}>
             <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", borderBottom:"1px solid #444c56", paddingBottom:8 }}>
@@ -1767,31 +2561,144 @@ function PeopleView({ users, issues, isAdmin }) {
 function DetailPanel({ issue, onClose, onUpdate, onDelete, onComment, currentUser, isAdmin, hasPermission, users }) {
   const [tab, setTab]         = useState("details");
   const [commentTxt, setCTxt] = useState("");
-  const [editTitle, setET]    = useState(false);
-  const [titleDraft, setTD]   = useState(issue.title);
-  const [editDesc, setED]     = useState(false);
-  const [descDraft, setDD]    = useState(issue.desc);
+  const [isEditing, setIsEditing] = useState(false);
+  const [draft, setDraft]     = useState({ ...issue });
   const [historyList, setHistoryList] = useState([]);
+  const [currentTime, setCurrentTime] = useState(new Date());
+
+  // Keep draft in sync when issue changes or edit mode toggles
+  useEffect(() => {
+    setDraft({ ...issue });
+  }, [issue, isEditing]);
+
+  // Update clock for tickers every second
+  useEffect(() => {
+    const timer = setInterval(() => setCurrentTime(new Date()), 1000);
+    return () => clearInterval(timer);
+  }, []);
+
+  const fetchHistory = useCallback(() => {
+    fetch(`/api/issues/${issue.key}/history`)
+      .then(res => res.json())
+      .then(data => {
+        if (Array.isArray(data)) {
+          setHistoryList(data);
+        }
+      })
+      .catch(err => {
+        console.error("Could not fetch history from DB", err);
+        const fallback = [
+          { eventType: "created", userName: users.find(u=>u.id===issue.reporter)?.name||"Unknown", date: issue.created, userAvatar: users.find(u=>u.id===issue.reporter)?.avatar },
+          ...issue.comments.map(c => ({ eventType: "commented", userName: users.find(u=>u.id===c.userId)?.name||"Unknown", date: c.date, userAvatar: users.find(u=>u.id===c.userId)?.avatar, newValue: c.text }))
+        ];
+        setHistoryList(fallback);
+      });
+  }, [issue.key, issue.created, issue.reporter, issue.comments, users]);
 
   useEffect(() => {
-    if (tab === "history") {
-      fetch(`/api/issues/${issue.key}/history`)
-        .then(res => res.json())
-        .then(data => {
-          if (Array.isArray(data)) {
-            setHistoryList(data);
-          }
-        })
-        .catch(err => {
-          console.error("Could not fetch history from DB", err);
-          const fallback = [
-            { eventType: "created", userName: users.find(u=>u.id===issue.reporter)?.name||"Unknown", date: issue.created, userAvatar: users.find(u=>u.id===issue.reporter)?.avatar },
-            ...issue.comments.map(c => ({ eventType: "commented", userName: users.find(u=>u.id===c.userId)?.name||"Unknown", date: c.date, userAvatar: users.find(u=>u.id===c.userId)?.avatar, newValue: c.text }))
-          ];
-          setHistoryList(fallback);
-        });
+    if (tab === "history" || !isEditing) {
+      fetchHistory();
     }
-  }, [tab, issue.key, issue.comments, issue.created, issue.reporter, users]);
+  }, [tab, isEditing, fetchHistory]);
+
+  const getDurationString = (startDateStr) => {
+    if (!startDateStr) return "0s";
+    // Parse timestamp safely (handle both space and T delimiters)
+    const normalized = startDateStr.replace(' ', 'T');
+    const start = new Date(normalized);
+    const diffMs = currentTime - start;
+    if (isNaN(diffMs) || diffMs < 0) return "0s";
+    
+    const seconds = Math.floor((diffMs / 1000) % 60);
+    const minutes = Math.floor((diffMs / (1000 * 60)) % 60);
+    const hours = Math.floor((diffMs / (1000 * 60 * 60)) % 24);
+    const days = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+    
+    const parts = [];
+    if (days > 0) parts.push(`${days}d`);
+    if (hours > 0) parts.push(`${hours}h`);
+    if (minutes > 0) parts.push(`${minutes}m`);
+    parts.push(`${seconds}s`);
+    return parts.join(' ');
+  };
+
+  const getTimeInStatusString = () => {
+    // Find the latest status change event
+    const statusEvent = [...historyList].reverse().find(h => h.eventType === 'status_changed');
+    const startTimeStr = statusEvent ? statusEvent.date : issue.created;
+    return getDurationString(startTimeStr);
+  };
+
+  const generateReportText = () => {
+    const assignedUser = users.find(u => u.id === issue.assignee)?.name || "Unassigned";
+    const reporterUser = users.find(u => u.id === issue.reporter)?.name || "Unknown";
+    const epicName = EPICS.find(e => e.id === issue.epic)?.name || "None";
+    
+    let report = `==================================================
+METAPHARSIC ERP - TASK SUMMARY REPORT
+==================================================
+Issue Key:     ${issue.key}
+Title:         ${issue.title}
+Status:        ${issue.status}
+Priority:      ${issue.priority.toUpperCase()}
+Type:          ${issue.type.toUpperCase()}
+--------------------------------------------------
+Assignee:      ${assignedUser}
+Reporter:      ${reporterUser}
+Department:    ${DEPARTMENTS[issue.department]?.label || issue.department}
+Story Points:  ${issue.sp}
+Sprint:        ${issue.sprint}
+Epic:          ${epicName}
+Due Date:      ${issue.dueDate || 'None'}
+Recurrence:    ${issue.recurrence}
+Notifications: ${issue.notification ? 'Enabled' : 'Disabled'}
+--------------------------------------------------
+TIMING & AUDITING (Precision Seconds)
+Created At:    ${issue.created}
+Last Updated:  ${issue.updated || issue.created}
+Total Age:     ${getDurationString(issue.created)}
+Time in Status:${issue.status} for ${getTimeInStatusString()}
+--------------------------------------------------
+DESCRIPTION
+${issue.desc || 'No description provided.'}
+--------------------------------------------------
+COMMENTS (${issue.comments.length})
+`;
+    issue.comments.forEach((c) => {
+      const author = users.find(u => u.id === c.userId)?.name || "Unknown";
+      report += `[${c.date}] ${author}: ${c.text}\n`;
+    });
+    
+    report += `--------------------------------------------------
+ACTIVITY HISTORY LOG (${historyList.length})
+`;
+    historyList.forEach((h) => {
+      report += `[${h.date}] ${h.userName || 'System'}: ${getHistoryText(h)}\n`;
+    });
+    
+    report += `==================================================\n`;
+    return report;
+  };
+
+  const handleCopyReport = () => {
+    navigator.clipboard.writeText(generateReportText());
+    alert("📋 Detailed task report copied to clipboard!");
+  };
+
+  const handleDownloadReport = () => {
+    const element = document.createElement("a");
+    const file = new Blob([generateReportText()], {type: 'text/plain'});
+    element.href = URL.createObjectURL(file);
+    element.download = `report-${issue.key}.txt`;
+    document.body.appendChild(element);
+    element.click();
+    document.body.removeChild(element);
+  };
+
+  const handleSaveChanges = () => {
+    onUpdate(draft);
+    setIsEditing(false);
+  };
 
   const getHistoryText = (h) => {
     switch (h.eventType) {
@@ -1804,14 +2711,33 @@ function DetailPanel({ issue, onClose, onUpdate, onDelete, onComment, currentUse
       case 'assigned':
         return `assigned this issue to "${h.newValue || 'Unassigned'}" (was "${h.oldValue || 'Unassigned'}")`;
       case 'edited':
-        return `edited issue details`;
+        return `edited issue details (Title/Description)`;
       case 'labeled':
-        return `updated labels to "${h.newValue}"`;
+        return `updated labels from "${h.oldValue || 'None'}" to "${h.newValue}"`;
       case 'sprint_changed':
-        return `moved sprint to "${h.newValue}"`;
+        return `moved sprint from "${h.oldValue || 'Backlog'}" to "${h.newValue}"`;
+      case 'priority_changed':
+        return `changed priority from "${h.oldValue}" to "${h.newValue}"`;
+      case 'type_changed':
+        return `changed type from "${h.oldValue}" to "${h.newValue}"`;
+      case 'sp_changed':
+        return `changed story points from "${h.oldValue || '0'}" to "${h.newValue}"`;
+      case 'epic_changed':
+        return `changed epic from "${h.oldValue}" to "${h.newValue}"`;
+      case 'duedate_changed':
+        return `changed due date from "${h.oldValue}" to "${h.newValue}"`;
+      case 'recurrence_changed':
+        return `changed recurrence from "${h.oldValue}" to "${h.newValue}"`;
       default:
         return `updated this issue`;
     }
+  };
+
+  const toggleDraftLabel = (lbl) => {
+    setDraft(p => ({
+      ...p,
+      labels: p.labels.includes(lbl) ? p.labels.filter(l => l !== lbl) : [...p.labels, lbl]
+    }));
   };
 
   const ti = ISSUE_TYPES[issue.type];
@@ -1825,14 +2751,34 @@ function DetailPanel({ issue, onClose, onUpdate, onDelete, onComment, currentUse
 
   return (
     <div style={S.panelOverlay} onClick={e => e.target === e.currentTarget && onClose()}>
-      <div style={S.panel}>
+      <div style={{ ...S.panel, display: "flex", flexDirection: "column", background: "var(--card-bg)" }}>
         <div style={S.panelHdr}>
           <div style={{ display:"flex", alignItems:"center", gap:8 }}>
             <span style={{ color: ti.color, fontSize:14 }}>{ti.icon}</span>
             <span style={S.panelKey}>{issue.key}</span>
             <span style={{ ...S.statusPill, background: sc.bg, color: sc.text }}>{issue.status}</span>
           </div>
-          <div style={{ display:"flex", gap:4 }}>
+          <div style={{ display:"flex", alignItems: "center", gap:10 }}>
+            {canEdit && !isEditing && (
+              <button 
+                onClick={() => setIsEditing(true)}
+                style={{ 
+                  background: "#338ba8", 
+                  color: "#fff", 
+                  border: "none", 
+                  borderRadius: 6, 
+                  padding: "4px 10px", 
+                  fontSize: 12, 
+                  fontWeight: 700, 
+                  cursor: "pointer",
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 4
+                }}
+              >
+                ✏️ Edit Task
+              </button>
+            )}
             {isAdmin && <button style={S.iconBtn} onClick={onDelete} title="Delete">🗑</button>}
             <button style={S.iconBtn} onClick={onClose}>✕</button>
           </div>
@@ -1847,8 +2793,8 @@ function DetailPanel({ issue, onClose, onUpdate, onDelete, onComment, currentUse
             const color = isPast ? "#fff" : "#768390";
             return (
               <div key={st} style={{ display:"flex", alignItems:"center", flex:1 }}>
-                <div style={{ display:"flex", alignItems:"center", gap:6, cursor:canEdit?"pointer":"default" }}
-                  onClick={() => canEdit && onUpdate({ status: st })}
+                <div style={{ display:"flex", alignItems:"center", gap:6, cursor:(canEdit && !isEditing)?"pointer":"default" }}
+                  onClick={() => canEdit && !isEditing && onUpdate({ status: st })}
                 >
                   <div style={{ ...S.processDot, background: bg, color }}>
                     {isPast ? "✓" : (i+1)}
@@ -1864,102 +2810,335 @@ function DetailPanel({ issue, onClose, onUpdate, onDelete, onComment, currentUse
         </div>
 
         <div style={{ padding:"16px 20px 12px" }}>
-          {editTitle && canEdit ? (
-            <div style={{ display:"flex", gap:8 }}>
-              <input style={S.titleEdit} value={titleDraft} onChange={e => setTD(e.target.value)} autoFocus />
-              <button style={S.btnPrimary} onClick={() => { onUpdate({ title: titleDraft }); setET(false); }}>Save</button>
-              <button style={S.btnGhost}   onClick={() => setET(false)}>Cancel</button>
+          {isEditing ? (
+            <div style={{ display:"flex", flexDirection:"column", gap:6, width: "100%" }}>
+              <label style={{ fontSize: 11, color: "#909dab", fontWeight: 600 }}>Title</label>
+              <input 
+                style={{ ...S.titleEdit, width: "100%", boxSizing: "border-box" }} 
+                value={draft.title} 
+                onChange={e => setDraft(p => ({ ...p, title: e.target.value }))} 
+                autoFocus 
+              />
             </div>
           ) : (
-            <h2 style={S.panelTitle} onClick={() => canEdit && setET(true)}>{issue.title}</h2>
+            <h2 style={{ ...S.panelTitle, cursor: "default" }}>{issue.title}</h2>
           )}
         </div>
+        
         <div style={S.tabBar}>
-          {["details","comments","history"].map(t => (
+          {["details","comments","history","department"].map(t => (
             <button key={t} style={{ ...S.tab, ...(tab===t?S.tabActive:{}) }} onClick={() => setTab(t)}>
               {t.charAt(0).toUpperCase()+t.slice(1)}
               {t==="comments" && issue.comments.length > 0 && ` (${issue.comments.length})`}
             </button>
           ))}
         </div>
-        <div style={S.panelBody}>
+
+        <div style={{ ...S.panelBody, flex: 1, overflowY: "auto" }}>
+          {tab === "department" && (
+            <div style={{ padding: 16 }}>
+              <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 20, padding: 16, background: "rgba(255,255,255,0.03)", borderRadius: 10, border: "1px solid var(--border)" }}>
+                <div style={{ width: 48, height: 48, borderRadius: 10, background: (DEPARTMENTS[issue.department]?.color || "#768390") + "25", color: DEPARTMENTS[issue.department]?.color || "#768390", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 24 }}>
+                  {DEPARTMENTS[issue.department]?.icon || "🏢"}
+                </div>
+                <div>
+                  <div style={{ fontSize: 18, fontWeight: 700, color: "var(--accent)" }}>{DEPARTMENTS[issue.department]?.label || issue.department}</div>
+                  <div style={{ fontSize: 12, color: "var(--text-muted)" }}>Enterprise Governance Unit</div>
+                </div>
+              </div>
+
+              <div style={{ display: "grid", gap: 20 }}>
+                <div>
+                  <div style={{ fontSize: 11, fontWeight: 700, color: "var(--text-muted)", textTransform: "uppercase", marginBottom: 8, letterSpacing: 1 }}>Purpose & Mission</div>
+                  <div style={{ fontSize: 13, color: "var(--text-main)", lineHeight: 1.6, padding: 12, background: "var(--bg-main)", borderRadius: 8, border: "1px solid var(--border)" }}>
+                    {DEPARTMENTS[issue.department]?.purpose || "No purpose defined for this department."}
+                  </div>
+                </div>
+
+                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16 }}>
+                  <div>
+                    <div style={{ fontSize: 11, fontWeight: 700, color: "var(--text-muted)", textTransform: "uppercase", marginBottom: 8, letterSpacing: 1 }}>Key Performance Indicators</div>
+                    <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
+                      {(DEPARTMENTS[issue.department]?.kpis || "").split("·").map(k => (
+                        <span key={k} style={{ fontSize: 11, color: "#46b3cf", background: "#0c4a6e", padding: "4px 8px", borderRadius: 6 }}>
+                          {k.trim()}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                  <div>
+                    <div style={{ fontSize: 11, fontWeight: 700, color: "var(--text-muted)", textTransform: "uppercase", marginBottom: 8, letterSpacing: 1 }}>Core Roles</div>
+                    <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
+                      {(DEPARTMENTS[issue.department]?.roles || "").split(",").map(r => (
+                        <span key={r} style={{ fontSize: 11, color: "var(--text-main)", background: "rgba(255,255,255,0.05)", border: "1px solid var(--border)", padding: "4px 8px", borderRadius: 6 }}>
+                          {r.trim()}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+
+                <div>
+                  <div style={{ fontSize: 11, fontWeight: 700, color: "var(--text-muted)", textTransform: "uppercase", marginBottom: 8, letterSpacing: 1 }}>Assigned Personnel</div>
+                  <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
+                    {users.filter(u => u.department === issue.department).map(u => (
+                      <div key={u.id} style={{ display: "flex", alignItems: "center", gap: 8, padding: "6px 10px", background: "var(--card-bg)", borderRadius: 8, border: "1px solid var(--border)" }}>
+                        <div style={{ width: 8, height: 8, borderRadius: "50%", background: u.active ? "#10b981" : "#768390" }} />
+                        <span style={{ fontSize: 12, color: "var(--text-main)", fontWeight: 600 }}>{u.name}</span>
+                        <span style={{ fontSize: 10, color: "var(--text-muted)" }}>{ROLES[u.role]?.label}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+
           {tab === "details" && (
             <div style={S.detailGrid}>
-              <div>
+              <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+                {/* Description */}
                 <div style={S.fieldGroup}>
                   <div style={S.fieldLabel}>Description</div>
-                  {editDesc && canEdit ? (
-                    <>
-                      <textarea style={S.descEdit} value={descDraft} onChange={e => setDD(e.target.value)} rows={5} autoFocus />
-                      <div style={{ display:"flex", gap:8, marginTop:8 }}>
-                        <button style={S.btnPrimary} onClick={() => { onUpdate({ desc: descDraft }); setED(false); }}>Save</button>
-                        <button style={S.btnGhost}   onClick={() => setED(false)}>Cancel</button>
-                      </div>
-                    </>
+                  {isEditing ? (
+                    <textarea 
+                      style={{ ...S.descEdit, width: "100%", boxSizing: "border-box" }} 
+                      value={draft.desc} 
+                      onChange={e => setDraft(p => ({ ...p, desc: e.target.value }))} 
+                      rows={5} 
+                    />
                   ) : (
-                    <div style={S.descText} onClick={() => canEdit && setED(true)}>
-                      {issue.desc || <span style={{ color:"#768390" }}>Click to add a description…</span>}
+                    <div style={{ ...S.descText, cursor: "default" }}>
+                      {issue.desc || <span style={{ color:"#768390", fontStyle: "italic" }}>No description provided.</span>}
                     </div>
                   )}
                 </div>
+
+                {/* Labels */}
                 <div style={S.fieldGroup}>
                   <div style={S.fieldLabel}>Labels</div>
-                  <div style={S.labelRow}>
-                    {issue.labels.map(l => <span key={l} style={S.labelChip}>{l}</span>)}
-                    {issue.labels.length === 0 && <span style={{ color:"#768390", fontSize:13 }}>None</span>}
-                  </div>
+                  {isEditing ? (
+                    <div style={{ display:"flex", flexWrap:"wrap", gap:6, marginTop:4 }}>
+                      {ALL_LABELS.map(l => {
+                        const active = draft.labels?.includes(l);
+                        return (
+                          <button 
+                            key={l} 
+                            style={{ 
+                              ...S.labelPickBtn, 
+                              ...(active ? S.labelPickActive : {}),
+                              padding: "4px 8px",
+                              fontSize: 11
+                            }}
+                            onClick={() => toggleDraftLabel(l)}
+                          >
+                            {l}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  ) : (
+                    <div style={S.labelRow}>
+                      {issue.labels.map(l => <span key={l} style={S.labelChip}>{l}</span>)}
+                      {issue.labels.length === 0 && <span style={{ color:"#768390", fontSize:13 }}>None</span>}
+                    </div>
+                  )}
                 </div>
-                {ep && (
+
+                {/* Epic (Only in View Mode if Epic exists; Editable in Edit Mode) */}
+                {isEditing ? (
                   <div style={S.fieldGroup}>
                     <div style={S.fieldLabel}>Epic</div>
-                    <span style={{ ...S.epicTag, background: ep.color+"25", color: ep.color }}>⚡ {ep.name}</span>
+                    <select 
+                      style={S.fieldSel} 
+                      value={draft.epic || ""} 
+                      onChange={e => setDraft(p => ({ ...p, epic: e.target.value || null }))}
+                    >
+                      <option value="">None</option>
+                      {EPICS.map(ep => <option key={ep.id} value={ep.id}>{ep.name}</option>)}
+                    </select>
                   </div>
+                ) : (
+                  ep && (
+                    <div style={S.fieldGroup}>
+                      <div style={S.fieldLabel}>Epic</div>
+                      <span style={{ ...S.epicTag, background: ep.color+"25", color: ep.color }}>⚡ {ep.name}</span>
+                    </div>
+                  )
                 )}
+
+                {/* Recurrence */}
                 <div style={S.fieldGroup}>
                   <div style={S.fieldLabel}>Recurrence</div>
-                  <select style={S.fieldSel} value={issue.recurrence} onChange={e => canEdit && onUpdate({ recurrence: e.target.value })} disabled={!canEdit}>
-                    {RECURRENCE_OPTIONS.map(r => <option key={r} value={r}>{r.charAt(0).toUpperCase()+r.slice(1)}</option>)}
-                  </select>
+                  {isEditing ? (
+                    <select 
+                      style={S.fieldSel} 
+                      value={draft.recurrence} 
+                      onChange={e => setDraft(p => ({ ...p, recurrence: e.target.value }))}
+                    >
+                      {RECURRENCE_OPTIONS.map(r => <option key={r} value={r}>{r.charAt(0).toUpperCase()+r.slice(1)}</option>)}
+                    </select>
+                  ) : (
+                    <span style={{ fontSize:13, color:"#adbac7", textTransform: "capitalize" }}>🔄 {issue.recurrence}</span>
+                  )}
                 </div>
+
+                {/* Notifications Toggle */}
                 <div style={S.fieldGroup}>
                   <div style={S.fieldLabel}>Notifications</div>
-                  <label style={{ display:"flex", alignItems:"center", gap:8, cursor:"pointer" }}>
-                    <input type="checkbox" checked={issue.notification} onChange={() => canEdit && onUpdate({ notification: !issue.notification })} disabled={!canEdit} />
-                    <span style={{ fontSize:13, color:"#adbac7" }}>{issue.notification ? "🔔 Enabled" : "🔕 Disabled"}</span>
-                  </label>
+                  {isEditing ? (
+                    <label style={{ display:"flex", alignItems:"center", gap:8, cursor:"pointer" }}>
+                      <input 
+                        type="checkbox" 
+                        checked={draft.notification} 
+                        onChange={e => setDraft(p => ({ ...p, notification: e.target.checked }))} 
+                      />
+                      <span style={{ fontSize:13, color:"#adbac7" }}>{draft.notification ? "🔔 Enabled" : "🔕 Disabled"}</span>
+                    </label>
+                  ) : (
+                    <span style={{ fontSize:13, color:"#adbac7" }}>{issue.notification ? "🔔 Active" : "🔕 Suppressed"}</span>
+                  )}
                 </div>
+
+                {/* --- TIME TRACKING & METADATA SECTION --- */}
+                {!isEditing && (
+                  <div style={{ background: "#22272e", border: "1px solid #444c56", borderRadius: 8, padding: 12, display: "flex", flexDirection: "column", gap: 10, marginTop: 8 }}>
+                    <div style={{ fontSize: 11, fontWeight: 700, color: "#7dc3db", borderBottom: "1px solid #444c56", paddingBottom: 6, textTransform: "uppercase", letterSpacing: 0.5 }}>
+                      ⏱️ Auditing & Timing Analysis
+                    </div>
+                    <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
+                      <div>
+                        <div style={{ fontSize: 10, color: "#768390" }}>Task Age (Total Duration)</div>
+                        <div style={{ fontSize: 13, fontWeight: 800, color: "#7dc3db", textShadow: "0 0 8px rgba(125,195,219,0.3)", marginTop: 2 }}>
+                          🕒 {getDurationString(issue.created)}
+                        </div>
+                      </div>
+                      <div>
+                        <div style={{ fontSize: 10, color: "#768390" }}>Time in Status ({issue.status})</div>
+                        <div style={{ fontSize: 13, fontWeight: 800, color: "#fbbf24", textShadow: "0 0 8px rgba(251,191,36,0.3)", marginTop: 2 }}>
+                          ⚡ {getTimeInStatusString()}
+                        </div>
+                      </div>
+                    </div>
+                    <div style={{ display: "flex", flexDirection: "column", gap: 4, marginTop: 2, borderTop: "1px solid #22272e", paddingTop: 6 }}>
+                      <div style={{ display: "flex", justifyContent: "space-between", fontSize: 11 }}>
+                        <span style={{ color: "#768390" }}>Created At:</span>
+                        <span style={{ color: "#adbac7", fontFamily: "monospace" }}>{issue.created}</span>
+                      </div>
+                      <div style={{ display: "flex", justifyContent: "space-between", fontSize: 11 }}>
+                        <span style={{ color: "#768390" }}>Last Updated:</span>
+                        <span style={{ color: "#adbac7", fontFamily: "monospace" }}>{issue.updated || issue.created}</span>
+                      </div>
+                    </div>
+                  </div>
+                )}
               </div>
+
+              {/* Sidebar attributes */}
               <div style={S.detailRight}>
                 {[
-                  { label:"Status", el: <select style={S.fieldSel} value={issue.status} onChange={e => canEdit && onUpdate({ status: e.target.value })} disabled={!canEdit}>
-                      {STATUSES.map(s => <option key={s} value={s}>{s}</option>)}
-                    </select> },
-                  { label:"Priority", el: <select style={S.fieldSel} value={issue.priority} onChange={e => canEdit && onUpdate({ priority: e.target.value })} disabled={!canEdit}>
-                      {Object.entries(PRIORITIES).map(([k,v]) => <option key={k} value={k}>{v.label}</option>)}
-                    </select> },
-                  { label:"Type", el: <select style={S.fieldSel} value={issue.type} onChange={e => canEdit && onUpdate({ type: e.target.value })} disabled={!canEdit}>
-                      {Object.entries(ISSUE_TYPES).map(([k,v]) => <option key={k} value={k}>{v.label}</option>)}
-                    </select> },
-                  { label:"Assignee", el: <select style={S.fieldSel} value={issue.assignee||""} onChange={e => canEdit && onUpdate({ assignee: e.target.value ? +e.target.value : null })} disabled={!hasPermission("assign")}>
-                      <option value="">Unassigned</option>
-                      {users.map(u => <option key={u.id} value={u.id}>{u.name}</option>)}
-                    </select> },
-                  { label:"Reporter", el: <span style={{ fontSize:13, color:"#adbac7" }}>{ru?.name}</span> },
-                  { label:"Department", el: <select style={S.fieldSel} value={issue.department||""} onChange={e => isAdmin && onUpdate({ department: e.target.value })} disabled={!isAdmin}>
-                      {Object.entries(DEPARTMENTS).map(([k,v]) => <option key={k} value={k}>{v.label}</option>)}
-                    </select> },
-                  { label:"Story Points", el: <input type="number" style={S.fieldInput} value={issue.sp} min={0} disabled={!canEdit}
-                      onChange={e => canEdit && onUpdate({ sp: +e.target.value||0 })} /> },
-                  { label:"Sprint", el: <select style={S.fieldSel} value={issue.sprint} onChange={e => canEdit && onUpdate({ sprint: e.target.value })} disabled={!canEdit}>
-                      <option>Sprint 1</option><option>Sprint 2</option><option>Backlog</option>
-                    </select> },
-                  { label:"Due Date", el: <input type="date" style={S.fieldInput} value={issue.dueDate} disabled={!canEdit}
-                      onChange={e => canEdit && onUpdate({ dueDate: e.target.value })} /> },
-                  { label:"Created",     el: <span style={{ fontSize:13, color:"#adbac7" }}>{issue.created}</span> },
-                  { label:"Watchers",    el: <span style={{ fontSize:13, color:"#adbac7" }}>{issue.watchers.length}</span> },
-                  { label:"Attachments", el: <span style={{ fontSize:13, color:"#adbac7" }}>{issue.attach}</span> },
+                  { 
+                    label:"Status", 
+                    el: isEditing ? (
+                      <select style={S.fieldSel} value={draft.status} onChange={e => setDraft(p => ({ ...p, status: e.target.value }))}>
+                        {STATUSES.map(s => <option key={s} value={s}>{s}</option>)}
+                      </select>
+                    ) : (
+                      <span style={{ ...S.statusPill, background: sc.bg, color: sc.text, width: "fit-content", padding: "4px 10px" }}>{issue.status}</span>
+                    )
+                  },
+                  { 
+                    label:"Priority", 
+                    el: isEditing ? (
+                      <select style={S.fieldSel} value={draft.priority} onChange={e => setDraft(p => ({ ...p, priority: e.target.value }))}>
+                        {Object.entries(PRIORITIES).map(([k,v]) => <option key={k} value={k}>{v.label}</option>)}
+                      </select>
+                    ) : (
+                      <span style={{ color: pi.color, fontSize: 13, fontWeight: 700 }}>{pi.icon} {pi.label}</span>
+                    )
+                  },
+                  { 
+                    label:"Type", 
+                    el: isEditing ? (
+                      <select style={S.fieldSel} value={draft.type} onChange={e => setDraft(p => ({ ...p, type: e.target.value }))}>
+                        {Object.entries(ISSUE_TYPES).map(([k,v]) => <option key={k} value={k}>{v.label}</option>)}
+                      </select>
+                    ) : (
+                      <span style={{ color: ti.color, fontSize: 13, fontWeight: 600 }}>{ti.icon} {ti.label}</span>
+                    )
+                  },
+                  { 
+                    label:"Assignee", 
+                    el: isEditing ? (
+                      <select style={S.fieldSel} value={draft.assignee || ""} onChange={e => setDraft(p => ({ ...p, assignee: e.target.value ? Number(e.target.value) : null }))}>
+                        <option value="">Unassigned</option>
+                        {users.map(u => <option key={u.id} value={u.id}>{u.name}</option>)}
+                      </select>
+                    ) : (
+                      <span style={{ fontSize:13, color:"#adbac7" }}>👤 {au?.name || "Unassigned"}</span>
+                    )
+                  },
+                  { 
+                    label:"Reporter", 
+                    el: isEditing && isAdmin ? (
+                      <select style={S.fieldSel} value={draft.reporter} onChange={e => setDraft(p => ({ ...p, reporter: Number(e.target.value) }))}>
+                        {users.map(u => <option key={u.id} value={u.id}>{u.name}</option>)}
+                      </select>
+                    ) : (
+                      <span style={{ fontSize:13, color:"#adbac7" }}>📢 {ru?.name || "Unknown"}</span>
+                    )
+                  },
+                  { 
+                    label:"Department", 
+                    el: isEditing && isAdmin ? (
+                      <select style={S.fieldSel} value={draft.department || ""} onChange={e => setDraft(p => ({ ...p, department: e.target.value }))}>
+                        {Object.entries(DEPARTMENTS).map(([k,v]) => <option key={k} value={k}>{v.label}</option>)}
+                      </select>
+                    ) : (
+                      <span style={{ fontSize:13, color:"#adbac7" }}>🏢 {DEPARTMENTS[issue.department]?.label || issue.department}</span>
+                    )
+                  },
+                  { 
+                    label:"Story Points", 
+                    el: isEditing ? (
+                      <input 
+                        type="number" 
+                        style={S.fieldInput} 
+                        value={draft.sp} 
+                        min={0}
+                        onChange={e => setDraft(p => ({ ...p, sp: Number(e.target.value) || 0 }))} 
+                      />
+                    ) : (
+                      <span style={{ fontSize:13, color:"#adbac7", fontWeight: 700 }}>{issue.sp} pts</span>
+                    )
+                  },
+                  { 
+                    label:"Sprint", 
+                    el: isEditing ? (
+                      <select style={S.fieldSel} value={draft.sprint} onChange={e => setDraft(p => ({ ...p, sprint: e.target.value }))}>
+                        <option>Sprint 1</option><option>Sprint 2</option><option>Backlog</option>
+                      </select>
+                    ) : (
+                      <span style={{ fontSize:13, color:"#adbac7" }}>🏃 {issue.sprint}</span>
+                    )
+                  },
+                  { 
+                    label:"Due Date", 
+                    el: isEditing ? (
+                      <input 
+                        type="date" 
+                        style={S.fieldInput} 
+                        value={draft.dueDate || ""} 
+                        onChange={e => setDraft(p => ({ ...p, dueDate: e.target.value || "" }))} 
+                      />
+                    ) : (
+                      <span style={{ fontSize:13, color: issue.dueDate ? "#adbac7" : "#768390" }}>📅 {issue.dueDate || "No due date"}</span>
+                    )
+                  },
+                  { label:"Watchers",    el: <span style={{ fontSize:13, color:"#adbac7" }}>👁️ {issue.watchers.length} watchers</span> },
+                  { label:"Attachments", el: <span style={{ fontSize:13, color:"#adbac7" }}>📎 {issue.attach} files</span> },
                 ].map(({label,el}) => (
-                  <div key={label} style={S.rightField}>
+                  <div key={label} style={{ ...S.rightField, borderBottom: "1px solid rgba(255, 255, 255, 0.04)", paddingBottom: 8, marginBottom: 8 }}>
                     <div style={S.rightLabel}>{label}</div>
                     {el}
                   </div>
@@ -1967,6 +3146,7 @@ function DetailPanel({ issue, onClose, onUpdate, onDelete, onComment, currentUse
               </div>
             </div>
           )}
+
           {tab === "comments" && (
             <div>
               {issue.comments.length === 0 && <div style={S.emptyComments}>No comments yet.</div>}
@@ -1998,6 +3178,7 @@ function DetailPanel({ issue, onClose, onUpdate, onDelete, onComment, currentUse
               </div>
             </div>
           )}
+
           {tab === "history" && (
             <div style={{ padding:"10px 0", display:"flex", flexDirection:"column", gap:12 }}>
               {historyList.map((h, i) => (
@@ -2026,15 +3207,117 @@ function DetailPanel({ issue, onClose, onUpdate, onDelete, onComment, currentUse
             </div>
           )}
         </div>
+
+        {/* ── FOOTER ACTIONS ── */}
+        <div style={{ 
+          padding: "12px 20px", 
+          borderTop: "1px solid var(--border)", 
+          display: "flex", 
+          justifyContent: "space-between", 
+          alignItems: "center",
+          background: "var(--sidebar-bg)",
+          borderBottomLeftRadius: 12,
+          borderBottomRightRadius: 12
+        }}>
+          {/* View Mode Export tools */}
+          {!isEditing ? (
+            <div style={{ display: "flex", gap: 8 }}>
+              <button 
+                onClick={handleCopyReport}
+                style={{ 
+                  background: "transparent", 
+                  color: "#7dc3db", 
+                  border: "1px solid #338ba8", 
+                  borderRadius: 6, 
+                  padding: "6px 12px", 
+                  fontSize: 12, 
+                  fontWeight: 600, 
+                  cursor: "pointer"
+                }}
+              >
+                📋 Copy Report
+              </button>
+              <button 
+                onClick={handleDownloadReport}
+                style={{ 
+                  background: "transparent", 
+                  color: "#adbac7", 
+                  border: "1px solid #444c56", 
+                  borderRadius: 6, 
+                  padding: "6px 12px", 
+                  fontSize: 12, 
+                  fontWeight: 600, 
+                  cursor: "pointer"
+                }}
+              >
+                📥 Download Report
+              </button>
+            </div>
+          ) : (
+            <div style={{ flex: 1 }} />
+          )}
+
+          {/* Edit Mode Controls */}
+          {isEditing ? (
+            <div style={{ display: "flex", gap: 8 }}>
+              <button 
+                onClick={() => setIsEditing(false)}
+                style={{ 
+                  background: "transparent", 
+                  color: "#adbac7", 
+                  border: "1px solid #444c56", 
+                  borderRadius: 6, 
+                  padding: "6px 16px", 
+                  fontSize: 12, 
+                  fontWeight: 700, 
+                  cursor: "pointer"
+                }}
+              >
+                ✕ Cancel
+              </button>
+              <button 
+                onClick={handleSaveChanges}
+                style={{ 
+                  background: "#338ba8", 
+                  color: "#fff", 
+                  border: "none", 
+                  borderRadius: 6, 
+                  padding: "6px 16px", 
+                  fontSize: 12, 
+                  fontWeight: 700, 
+                  cursor: "pointer",
+                  boxShadow: "0 0 12px rgba(51,139,168,0.4)"
+                }}
+              >
+                💾 Save Changes
+              </button>
+            </div>
+          ) : (
+            <button 
+              onClick={onClose}
+              style={{ 
+                background: "transparent", 
+                color: "#768390", 
+                border: "none", 
+                fontSize: 12, 
+                fontWeight: 600, 
+                cursor: "pointer"
+              }}
+            >
+              Close
+            </button>
+          )}
+        </div>
       </div>
     </div>
   );
 }
 
 // ─── CREATE MODAL ─────────────────────────────────────────────────────────────
-function CreateModal({ onClose, onCreate, currentUser, users }) {
+function CreateModal({ onClose, onCreate, currentUser, users, initialStatus = "To Do" }) {
   const [f, setF] = useState({
     title:"", type:"task", priority:"medium", assignee: String(currentUser.id),
+    status: initialStatus,
     sp:"", epic:"", labels:[], desc:"", dueDate:"", sprint:"Sprint 1", recurrence:"none",
     department: currentUser.department,
   });
@@ -2061,6 +3344,11 @@ function CreateModal({ onClose, onCreate, currentUser, users }) {
             <Row label="Type">
               <select style={S.formSel} value={f.type} onChange={e => set("type",e.target.value)}>
                 {Object.entries(ISSUE_TYPES).map(([k,v]) => <option key={k} value={k}>{v.label}</option>)}
+              </select>
+            </Row>
+            <Row label="Status">
+              <select style={S.formSel} value={f.status} onChange={e => set("status",e.target.value)}>
+                {STATUSES.map(s => <option key={s} value={s}>{s}</option>)}
               </select>
             </Row>
             <Row label="Priority">
@@ -2248,6 +3536,58 @@ function ArchitectureView() {
   );
 }
 
+// ─── CHANGE PASSWORD SCREEN ──────────────────────────────────────────────────
+function ChangePasswordScreen({ user, onChange, onLogout }) {
+  const [newPassword, setNewPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [error, setError] = useState("");
+  const [loading, setLoading] = useState(false);
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    if (newPassword.length < 6) {
+      return setError("Password must be at least 6 characters long.");
+    }
+    if (newPassword !== confirmPassword) {
+      return setError("Passwords do not match.");
+    }
+    setLoading(true);
+    const res = await onChange(newPassword);
+    if (res && res.error) setError(res.error);
+    setLoading(false);
+  };
+
+  return (
+    <div style={{ minHeight:"100vh", background:"#0d1117", display:"flex", alignItems:"center", justifyContent:"center", fontFamily:"'Inter',system-ui,sans-serif" }}>
+      <div style={{ width:"100%", maxWidth:400, padding:24 }}>
+        <div style={{ textAlign:"center", marginBottom:32 }}>
+          <div style={{ fontSize:24, fontWeight:800, color:"#e6edf3" }}>Change Password</div>
+          <div style={{ fontSize:14, color:"#768390", marginTop:8 }}>For security, you must update your password.</div>
+        </div>
+        <div style={{ background:"#161b22", border:"1px solid #30363d", borderRadius:16, padding:32 }}>
+          <form onSubmit={handleSubmit}>
+            <div style={{ marginBottom:18 }}>
+              <label style={{ display:"block", fontSize:12, fontWeight:600, color:"#8b949e", marginBottom:6 }}>NEW PASSWORD</label>
+              <input type="password" style={{ ...S.formInput, width:"100%" }} value={newPassword} onChange={e => setNewPassword(e.target.value)} required />
+            </div>
+            <div style={{ marginBottom:24 }}>
+              <label style={{ display:"block", fontSize:12, fontWeight:600, color:"#8b949e", marginBottom:6 }}>CONFIRM NEW PASSWORD</label>
+              <input type="password" style={{ ...S.formInput, width:"100%" }} value={confirmPassword} onChange={e => setConfirmPassword(e.target.value)} required />
+            </div>
+            {error && <div style={{ color:"#f87171", fontSize:13, marginBottom:16 }}>⚠ {error}</div>}
+            <button type="submit" disabled={loading} style={{ width:"100%", background:"linear-gradient(135deg,#338ba8,#6366f1)", border:"none", borderRadius:8, padding:"12px", color:"#fff", fontWeight:700, cursor:"pointer" }}>
+              {loading ? "Updating..." : "Update Password"}
+            </button>
+            <button type="button" onClick={onLogout} style={{ width:"100%", background:"none", border:"none", color:"#768390", fontSize:13, marginTop:16, cursor:"pointer" }}>
+              Cancel and Logout
+            </button>
+          </form>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 // ─── LOGIN SCREEN ──────────────────────────────────────────────────────────────
 function LoginScreen({ users, onLogin }) {
   const [email, setEmail]       = useState("");
@@ -2277,6 +3617,8 @@ function LoginScreen({ users, onLogin }) {
       minHeight:"100vh", background:"#0d1117", display:"flex", alignItems:"center",
       justifyContent:"center", fontFamily:"'Inter',system-ui,sans-serif", position:"relative", overflow:"hidden"
     }}>
+
+
       {/* Ambient glow */}
       <div style={{ position:"absolute", top:"20%", left:"30%", width:600, height:600, borderRadius:"50%", background:"radial-gradient(circle, #338ba820 0%, transparent 70%)", pointerEvents:"none" }} />
       <div style={{ position:"absolute", bottom:"10%", right:"20%", width:400, height:400, borderRadius:"50%", background:"radial-gradient(circle, #6366f120 0%, transparent 70%)", pointerEvents:"none" }} />
@@ -2331,6 +3673,8 @@ function LoginScreen({ users, onLogin }) {
             </button>
           </form>
 
+          {/* Quick Access panel hidden by user request */}
+          {/*
           <div style={{ marginTop:24, borderTop:"1px solid #30363d", paddingTop:20 }}>
             <div style={{ fontSize:11, color:"#8b949e", textTransform:"uppercase", fontWeight:600, letterSpacing:"0.5px", marginBottom:12 }}>Quick Access</div>
             <div style={{ display:"flex", flexDirection:"column", gap:8 }}>
@@ -2355,6 +3699,7 @@ function LoginScreen({ users, onLogin }) {
               })}
             </div>
           </div>
+          */}
         </div>
       </div>
     </div>
@@ -2362,7 +3707,7 @@ function LoginScreen({ users, onLogin }) {
 }
 
 // ─── USER DASHBOARD (non-admin personal view) ───────────────────────────────
-function UserDashboard({ currentUser, isAdmin, todos, setTodos, issues, users, onSelectIssue, onCreateIssue }) {
+function UserDashboard({ currentUser, isAdmin, todos, setTodos, issues, users, onSelectIssue, onCreateIssue, isMobile }) {
   const myIssues  = issues.filter(i => i.assignee === currentUser.id);
   const myTodo    = myIssues.filter(i => i.status === "To Do");
   const myActive  = myIssues.filter(i => i.status === "In Progress" || i.status === "In Review");
@@ -2387,51 +3732,51 @@ function UserDashboard({ currentUser, isAdmin, todos, setTodos, issues, users, o
         <span style={{ color:ti.color, fontSize:14 }}>{ti.icon}</span>
         <span style={{ fontSize:12, color:"#768390", fontFamily:"monospace" }}>{issue.key}</span>
         <span style={{ flex:1, color:"#cdd9e5", fontSize:13, whiteSpace:"nowrap", overflow:"hidden", textOverflow:"ellipsis" }}>{issue.title}</span>
-        <span style={{ ...S.statusPill, background:sc.bg, color:sc.text, fontSize:11 }}>{issue.status}</span>
+        {!isMobile && <span style={{ ...S.statusPill, background:sc.bg, color:sc.text, fontSize:11 }}>{issue.status}</span>}
         <span style={{ color:pi.color, fontSize:11, fontWeight:700 }}>{pi.icon}</span>
       </div>
     );
   };
 
   const statBoxes = [
-    { label:"Assigned To Me", value:myIssues.length, color:"#338ba8", bg:"#2d4052" },
-    { label:"To Do",          value:myTodo.length,   color:"#7dc3db", bg:"#1c2d3a" },
-    { label:"In Progress",    value:myActive.length,  color:"#fbbf24", bg:"#2d2416" },
-    { label:"Completed",      value:myDone.length,    color:"#4ade80", bg:"#14312a" },
+    { label:"Assigned", value:myIssues.length, color:"#338ba8", bg:"#2d4052" },
+    { label:"To Do",    value:myTodo.length,   color:"#7dc3db", bg:"#1c2d3a" },
+    { label:"Active",   value:myActive.length,  color:"#fbbf24", bg:"#2d2416" },
+    { label:"Done",     value:myDone.length,    color:"#4ade80", bg:"#14312a" },
   ];
 
   return (
     <div style={{ paddingBottom:40 }}>
       {/* Welcome header */}
-      <div style={{ display:"flex", alignItems:"center", gap:16, marginBottom:24, padding:"20px 24px", background:"linear-gradient(135deg,#1c2128,#2d333b)", border:"1px solid #444c56", borderRadius:12 }}>
+      <div style={{ display:"flex", alignItems:"center", gap:16, marginBottom:24, padding: isMobile ? "14px" : "20px 24px", background:"linear-gradient(135deg,#1c2128,#2d333b)", border:"1px solid #444c56", borderRadius:12, flexDirection: isMobile ? "column" : "row", textAlign: isMobile ? "center" : "left" }}>
         <div style={{ width:56, height:56, borderRadius:12, background:currentUser.color+"30", color:currentUser.color, display:"flex", alignItems:"center", justifyContent:"center", fontSize:20, fontWeight:800 }}>
           {currentUser.avatar}
         </div>
         <div style={{ flex:1 }}>
           <div style={{ fontSize:20, fontWeight:800, color:"#e6edf3" }}>Welcome, {currentUser.name.split(" ")[0]}!</div>
           <div style={{ fontSize:13, color:"#768390", marginTop:2 }}>
-            {dept?.icon} {dept?.label} · {ROLES[currentUser.role]?.label} · {currentUser.email}
+            {dept?.icon} {dept?.label} · {ROLES[currentUser.role]?.label}
           </div>
         </div>
         {!isAdmin && (
           <button onClick={onCreateIssue}
-            style={{ background:"#338ba8", color:"#fff", border:"none", borderRadius:8, padding:"8px 16px", fontSize:13, fontWeight:700, cursor:"pointer" }}>
+            style={{ background:"#338ba8", color:"#fff", border:"none", borderRadius:8, padding:"8px 16px", fontSize:13, fontWeight:700, cursor:"pointer", width: isMobile ? "100%" : "auto" }}>
             + New Issue
           </button>
         )}
       </div>
 
       {/* Stats */}
-      <div style={{ display:"grid", gridTemplateColumns:"repeat(4,1fr)", gap:14, marginBottom:28 }}>
+      <div style={{ display:"grid", gridTemplateColumns: isMobile ? "repeat(2, 1fr)" : "repeat(4,1fr)", gap:14, marginBottom:28 }}>
         {statBoxes.map(s => (
-          <div key={s.label} style={{ background:s.bg, border:`1px solid ${s.color}40`, borderRadius:10, padding:"16px 18px" }}>
-            <div style={{ fontSize:28, fontWeight:800, color:s.color }}>{s.value}</div>
-            <div style={{ fontSize:12, color:"#768390", marginTop:4 }}>{s.label}</div>
+          <div key={s.label} style={{ background:s.bg, border:`1px solid ${s.color}40`, borderRadius:10, padding:"12px 14px" }}>
+            <div style={{ fontSize:22, fontWeight:800, color:s.color }}>{s.value}</div>
+            <div style={{ fontSize:11, color:"#768390", marginTop:4 }}>{s.label}</div>
           </div>
         ))}
       </div>
 
-      <div style={{ display:"grid", gridTemplateColumns:"1fr 340px", gap:20 }}>
+      <div style={{ display:"grid", gridTemplateColumns: isMobile ? "1fr" : "1fr 340px", gap:20 }}>
         {/* Issue sections */}
         <div>
           {myActive.length > 0 && (
@@ -2495,9 +3840,7 @@ function UserDashboard({ currentUser, isAdmin, todos, setTodos, issues, users, o
 }
 // ─── DEPARTMENTS VIEW ────────────────────────────────────────────────────────
 function DepartmentsView({ currentUser, isAdmin, users = [] }) {
-  const visibleDepts = isAdmin
-    ? Object.entries(DEPARTMENTS)
-    : Object.entries(DEPARTMENTS).filter(([key]) => key === currentUser?.department);
+  const visibleDepts = Object.entries(DEPARTMENTS);
 
   return (
     <div style={{ paddingBottom: 40 }}>
@@ -2505,10 +3848,7 @@ function DepartmentsView({ currentUser, isAdmin, users = [] }) {
         <h2 style={S.pageH2}>Enterprise Departments</h2>
       </div>
       <p style={{ color:"#909dab", fontSize:13, marginBottom:24, maxWidth:800, lineHeight:1.5 }}>
-        {isAdmin
-          ? "All 12 enterprise departments with purpose, roles, and core KPIs."
-          : `Your assigned enterprise department: ${DEPARTMENTS[currentUser?.department]?.label || ""}`
-        }
+        All 12 enterprise departments with purpose, roles, and core KPIs.
       </p>
       
       <div style={{ display:"grid", gridTemplateColumns:"repeat(auto-fill, minmax(320px, 1fr))", gap:20 }}>
@@ -2524,40 +3864,44 @@ function DepartmentsView({ currentUser, isAdmin, users = [] }) {
               </div>
             </div>
             <div style={{ padding:"16px", display:"flex", flexDirection:"column", gap:16, flex:1 }}>
-              {isAdmin && (
-                <div>
-                  <div style={{ fontSize:11, fontWeight:700, color:"#768390", textTransform:"uppercase", marginBottom:6 }}>Assigned Staff</div>
-                  <div style={{ display:"flex", flexWrap:"wrap", gap:6 }}>
-                    {users.filter(u => u.department === key).map(u => (
-                      <span key={u.id} style={{ display:"inline-flex", alignItems:"center", gap:6, background: u.color+"20", border:`1px solid ${u.color}35`, color: u.color, padding:"3px 8px", borderRadius:6, fontSize:11, fontWeight:600 }}>
-                        <span style={{ width:6, height:6, borderRadius:"50%", background: u.active ? "#10b981" : "#768390" }}></span>
-                        {u.name}
-                      </span>
-                    ))}
-                    {users.filter(u => u.department === key).length === 0 && (
-                      <span style={{ fontSize:12, color:"#768390", fontStyle:"italic" }}>No staff assigned</span>
-                    )}
-                  </div>
+              <div>
+                <div style={{ fontSize:11, fontWeight:700, color:"#768390", textTransform:"uppercase", marginBottom:6 }}>Assigned Staff</div>
+                <div style={{ display:"flex", flexWrap:"wrap", gap:6 }}>
+                  {users.filter(u => u.department === key).map(u => (
+                    <span key={u.id} style={{ display:"inline-flex", alignItems:"center", gap:6, background: u.color+"20", border:`1px solid ${u.color}35`, color: u.color, padding:"3px 8px", borderRadius:6, fontSize:11, fontWeight:600 }}>
+                      <span style={{ width:6, height:6, borderRadius:"50%", background: u.active ? "#10b981" : "#768390" }}></span>
+                      {u.name}
+                    </span>
+                  ))}
+                  {users.filter(u => u.department === key).length === 0 && (
+                    <span style={{ fontSize:12, color:"#768390", fontStyle:"italic" }}>No staff assigned</span>
+                  )}
                 </div>
-              )}
+              </div>
               <div>
                 <div style={{ fontSize:11, fontWeight:700, color:"#768390", textTransform:"uppercase", marginBottom:6 }}>Key Roles</div>
                 <div style={{ display:"flex", flexWrap:"wrap", gap:6 }}>
-                  {d.roles.split(",").map(r => (
+                  {(d.roles || "").split(",").filter(Boolean).map(r => (
                     <span key={r} style={{ background:"#22272e", border:"1px solid #444c56", color:"#cdd9e5", padding:"4px 8px", borderRadius:6, fontSize:12 }}>
                       {r.trim()}
                     </span>
                   ))}
+                  {!(d.roles || "").trim() && (
+                    <span style={{ fontSize:12, color:"#768390", fontStyle:"italic" }}>No roles specified</span>
+                  )}
                 </div>
               </div>
               <div>
                 <div style={{ fontSize:11, fontWeight:700, color:"#768390", textTransform:"uppercase", marginBottom:6 }}>Core KPIs</div>
                 <div style={{ display:"flex", flexWrap:"wrap", gap:6 }}>
-                  {d.kpis.split("·").map(k => (
+                  {(d.kpis || "").split("·").filter(Boolean).map(k => (
                     <span key={k} style={{ color:"#46b3cf", fontSize:12, background:"#0c4a6e", padding:"4px 8px", borderRadius:6 }}>
                       {k.trim()}
                     </span>
                   ))}
+                  {!(d.kpis || "").trim() && (
+                    <span style={{ fontSize:12, color:"#768390", fontStyle:"italic" }}>No KPIs specified</span>
+                  )}
                 </div>
               </div>
             </div>
