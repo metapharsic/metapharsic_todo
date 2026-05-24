@@ -52,3 +52,11 @@ body, html, #root {
   color: var(--text-main);
   transition: background-color 0.3s, color 0.3s;
 }
+
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+
+

@@ -1,7 +1,120 @@
 import { useState, useRef, useMemo, useCallback, useEffect } from "react";
 
+// ─── TRANSLATIONS ────────────────────────────────────────────────────────────
+const TRANSLATIONS = {
+  en: {
+    // Navigation
+    board: "Board",
+    backlog: "Backlog",
+    roadmap: "Roadmap",
+    people: "People",
+    mytasks: "My Tasks",
+    todos: "Task List",
+    departments: "Departments",
+    users: "User Mgmt",
+    settings: "Settings",
+    components: "Components",
+    architecture: "DB Schema",
+    project: "Project",
+    core: "Core",
+    // General
+    save: "Save Changes",
+    cancel: "Cancel",
+    search: "Search issues...",
+    create: "Create Issue",
+    signOut: "Sign Out",
+    loggedInAs: "Logged in as",
+    // Settings
+    systemSettings: "System Settings",
+    appearance: "Appearance & Theme",
+    appBehavior: "Application Behavior",
+    localization: "Localization",
+    language: "System Language",
+    timezone: "Timezone",
+    commPrefs: "Communication Prefs",
+    // Departments
+    enterpriseDepts: "Enterprise Departments",
+    addDept: "Add Department",
+    units: "Units",
+    staff: "Staff",
+    purpose: "Purpose",
+    roles: "Primary Roles",
+    kpis: "Operational KPIs",
+  },
+  hi: {
+    board: "बोर्ड",
+    backlog: "बैकलॉग",
+    roadmap: "रोडमैप",
+    people: "लोग",
+    mytasks: "मेरे कार्य",
+    todos: "कार्य सूची",
+    departments: "विभाग",
+    users: "उपयोगकर्ता प्रबंधन",
+    settings: "सेटिंग्स",
+    components: "घटक",
+    architecture: "डेटाबेस स्कीमा",
+    project: "परियोजना",
+    core: "मुख्य",
+    save: "परिवर्तन सहेजें",
+    cancel: "रद्द करें",
+    search: "खोजें...",
+    create: "कार्य बनाएँ",
+    signOut: "साइन आउट",
+    loggedInAs: "के रूप में लॉग इन",
+    systemSettings: "सिस्टम सेटिंग्स",
+    appearance: "दिखावट और थीम",
+    appBehavior: "एप्लिकेशन व्यवहार",
+    localization: "स्थानीयकरण",
+    language: "सिस्टम भाषा",
+    timezone: "समय क्षेत्र",
+    commPrefs: "संचार प्राथमिकताएं",
+    enterpriseDepts: "उद्यम विभाग",
+    addDept: "विभाग जोड़ें",
+    units: "इकाइयां",
+    staff: "कर्मचारी",
+    purpose: "उद्देश्य",
+    roles: "मुख्य भूमिकाएँ",
+    kpis: "परिचालन KPIs",
+  },
+  ar: {
+    board: "لوحة",
+    backlog: "قائمة المهام",
+    roadmap: "خارطة الطريق",
+    people: "أشخاص",
+    mytasks: "مهامي",
+    todos: "قائمة المهام",
+    departments: "الأقسام",
+    users: "إدارة المستخدمين",
+    settings: "الإعدادات",
+    components: "المكونات",
+    architecture: "هيكل قاعدة البيانات",
+    project: "المشروع",
+    core: "الأساسي",
+    save: "حفظ التغييرات",
+    cancel: "إلغاء",
+    search: "بحث عن المهام...",
+    create: "إنشاء مهمة",
+    signOut: "تسجيل الخروج",
+    loggedInAs: "مسجل الدخول كـ",
+    systemSettings: "إعدادات النظام",
+    appearance: "المظهر والموضوع",
+    appBehavior: "سلوك التطبيق",
+    localization: "الترجمة",
+    language: "لغة النظام",
+    timezone: "المنطقة الزمنية",
+    commPrefs: "تفضيلات التواصل",
+    enterpriseDepts: "أقسام المؤسسة",
+    addDept: "إضافة قسم",
+    units: "وحدات",
+    staff: "الموظفين",
+    purpose: "الغرض",
+    roles: "الأدوار الرئيسية",
+    kpis: "مؤشرات الأداء",
+  }
+};
+
 // ─── DEPARTMENTS ─────────────────────────────────────────────────────────────
-const DEPARTMENTS = {
+let DEPARTMENTS = {
   hr:          { label: "Human Resources",        icon: "👥", color: "#ec4899", purpose: "Employee lifecycle & talent governance", roles: "HR Manager, Recruiter, Payroll Lead", kpis: "Retention Rate · Time-to-Hire · Training ROI" },
   finance:     { label: "Finance",                icon: "💰", color: "#f59e0b", purpose: "Fiscal integrity & strategic budgeting", roles: "Finance Manager, Accountant, Finance Analyst", kpis: "Budget Variance · Cash Flow · Tax Compliance" },
   it:          { label: "Information Technology", icon: "💻", color: "#3b82f6", purpose: "Enterprise infra & digital assets",      roles: "IT Manager, DBA, DevOps Engineer", kpis: "System Uptime · MTTR · Backup Success %" },
@@ -17,7 +130,7 @@ const DEPARTMENTS = {
 };
 
 // ─── ROLES ────────────────────────────────────────────────────────────────────
-const ROLES = {
+let ROLES = {
   admin:        { label: "Admin",          permissions: ["create","edit","delete","assign","manage_users","view_all","manage_roles","approve"] },
   manager:      { label: "Manager",        permissions: ["create","edit","assign","view_all","approve"] },
   developer:    { label: "Developer",      permissions: ["create","edit","view_own"] },
@@ -317,45 +430,53 @@ export default function App() {
   const [currentUser, setCurrentUser]   = useState(null);
   const [theme, setTheme] = useState(() => localStorage.getItem("theme") || "dark");
 
+  const lang = currentUser?.settingsLanguage || "en";
+  const t = (key) => TRANSLATIONS[lang]?.[key] || TRANSLATIONS.en[key] || key;
+  const isRTL = lang === "ar";
+
   useEffect(() => {
     document.body.className = theme === "dark" ? "" : `theme-${theme}`;
     localStorage.setItem("theme", theme);
   }, [theme]);
 
+  useEffect(() => {
+    document.documentElement.dir = isRTL ? "rtl" : "ltr";
+    document.documentElement.lang = lang;
+  }, [lang, isRTL]);
+
   const [issues, setIssues]             = useState(SEED);
 
-  useEffect(() => {
-    // Fetch users from database on boot
-    fetch('/api/users')
-      .then(r => r.json())
-      .then(dbUsers => {
-        if (dbUsers && dbUsers.length > 0) {
-          setUsers(dbUsers);
-        }
-      })
-      .catch(err => console.error("Could not load users from DB", err));
-
-    // Fetch comments from database on boot
-    fetch('/api/comments')
-      .then(r => r.json())
-      .then(dbComments => {
-        setIssues(prev => prev.map(issue => {
-          const issueComments = dbComments.filter(c => c.issueKey === issue.key);
-          if (issueComments.length > 0) {
-            return { ...issue, comments: issueComments };
-          }
-          return issue;
-        }));
-      }).catch(err => console.error("Could not load comments from DB", err));
-  }, []);
+  const [isRefreshing, setIsRefreshing] = useState(false);
 
   const [users, setUsers]             = useState(INITIAL_USERS);
   const [view, setView]               = useState("board");
   const [selected, setSelected]       = useState(null);
-  const [showCreate, setShowCreate]   = useState(false);
+  const [showCreate, setShowCreate] = useState(false);
+  const [showCreateDept, setShowCreateDept] = useState(false);
+  const [initialCreateStatus, setInitialCreateStatus] = useState("To Do");
+
   const [sprint, setSprint]           = useState("Sprint 1");
   const [search, setSearch]           = useState("");
-  const [filters, setFilters]         = useState({ type:"all", priority:"all", assignee:"all", epic:"all" });
+  const [debouncedSearch, setDebouncedSearch] = useState("");
+  const [filters, setFilters] = useState({ type: "all", priority: "all", assignee: "all", epic: "all", domain: "all" });
+  const searchInputRef = useRef(null);
+
+  useEffect(() => {
+    const timer = setTimeout(() => setDebouncedSearch(search), 300);
+    return () => clearTimeout(timer);
+  }, [search]);
+
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      if (e.key === "/" && document.activeElement.tagName !== "INPUT" && document.activeElement.tagName !== "TEXTAREA") {
+        e.preventDefault();
+        searchInputRef.current?.focus();
+      }
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, []);
+
   const [dragOver, setDragOver]       = useState(null);
   const [notifications, setNotifs]    = useState(SEED_NOTIFICATIONS);
   const [showNotifs, setShowNotifs]   = useState(false);
@@ -387,7 +508,11 @@ export default function App() {
   }, []);
 
   const role = currentUser?.role;
-  const hasPermission = (perm) => currentUser?.permissions ? currentUser.permissions.includes(perm) : ROLES[role]?.permissions.includes(perm);
+  const hasPermission = (perm) => {
+    if (currentUser?.permissions) return currentUser.permissions.includes(perm);
+    if (role && ROLES[role]?.permissions) return ROLES[role].permissions.includes(perm);
+    return false;
+  };
   const isAdmin = role === "admin";
   const unreadCount = notifications.filter(n => !n.read && (isAdmin || n.userId === currentUser?.id)).length;
 
@@ -411,8 +536,16 @@ export default function App() {
       setView("board");
       return { ok: true };
     } catch (err) {
-      console.error("Login failed:", err);
-      return { error: 'Network or database server is offline. Please try again.' };
+      console.warn("Login API failed or network offline, falling back to local login verification:", err);
+      const matchedUser = users.find(u => u.email.toLowerCase() === email.toLowerCase() && u.password === password);
+      if (matchedUser) {
+        setCurrentUser(matchedUser);
+        setLoggedIn(true);
+        setView("board");
+        return { ok: true };
+      } else {
+        return { error: 'Invalid credentials. (Offline mode active)' };
+      }
     }
   };
 
@@ -430,7 +563,12 @@ export default function App() {
         return { error: 'Failed to update password.' };
       }
     } catch (err) {
-      return { error: 'Network error.' };
+      console.warn("Change password API offline, changing password locally.", err);
+      setUsers(p => p.map(u => u.id === currentUser.id ? { ...u, password: newPassword, requirePasswordChange: false } : u));
+      setCurrentUser(p => ({ ...p, password: newPassword, requirePasswordChange: false }));
+      setForcePasswordChange(false);
+      setLoggedIn(true);
+      return { ok: true };
     }
   };
 
@@ -451,92 +589,409 @@ export default function App() {
 
   const visibleIssues = useMemo(() => {
     if (!currentUser) return [];
+    const userDepts = currentUser.departments || [currentUser.department] || [];
+
     return issues.filter(i => {
       const inScope = view === "board" ? i.sprint === sprint : view === "backlog" ? i.sprint === "Backlog" : true;
       
-      // Strict department-level containment: non-admins only see tasks belonging to their assigned department or explicitly assigned to them
-      const departmentMatch = isAdmin || i.department === currentUser.department || i.assignee === currentUser.id;
+      const departmentMatch = isAdmin || userDepts.includes(i.department) || i.assignee === currentUser.id;
       if (!departmentMatch) return false;
 
-      const s = search.toLowerCase();
-      const bySearch   = !s || i.title.toLowerCase().includes(s) || i.key.toLowerCase().includes(s);
+      const s = debouncedSearch.toLowerCase().trim();
+      let bySearch = true;
+      if (s) {
+        const tokens = s.split(/\s+/).filter(t => t.length > 0);
+        bySearch = tokens.every(token => {
+          // Tokenized search (e.g. type:bug, p:high, assignee:mannan)
+          if (token.includes(":")) {
+            const [prefix, val] = token.split(":");
+            const v = val.toLowerCase();
+            if (prefix === "type") return i.type.toLowerCase() === v;
+            if (prefix === "p" || prefix === "priority") return i.priority.toLowerCase() === v;
+            if (prefix === "key") return i.key.toLowerCase().includes(v);
+            if (prefix === "assignee") {
+              if (v === "unassigned" || v === "none") return !i.assignee;
+              const au = users.find(u => u.id === i.assignee);
+              return au && au.name.toLowerCase().includes(v);
+            }
+            if (prefix === "epic") {
+              const ep = EPICS.find(e => e.id === v || e.name.toLowerCase().includes(v));
+              return i.epic === ep?.id;
+            }
+            if (prefix === "label") {
+              return (i.labels || []).some(l => l.toLowerCase().includes(v));
+            }
+            if (prefix === "status") return i.status.toLowerCase().includes(v);
+          }
+
+          // General search
+          const au = users.find(u => u.id === i.assignee);
+          const assigneeName = au ? au.name.toLowerCase() : "unassigned";
+          
+          const ru = users.find(u => u.id === i.reporter);
+          const reporterName = ru ? ru.name.toLowerCase() : "unknown";
+          
+          const labels = (i.labels || []).join(" ").toLowerCase();
+          const epicName = EPICS.find(e => e.id === i.epic)?.name.toLowerCase() || "none";
+          const deptName = DEPARTMENTS[i.department]?.label.toLowerCase() || i.department.toLowerCase();
+          const typeName = ISSUE_TYPES[i.type]?.label.toLowerCase() || i.type.toLowerCase();
+
+          return i.title.toLowerCase().includes(token) || 
+                 i.key.toLowerCase().includes(token) ||
+                 (i.desc && i.desc.toLowerCase().includes(token)) ||
+                 i.status.toLowerCase().includes(token) ||
+                 typeName.includes(token) ||
+                 assigneeName.includes(token) ||
+                 reporterName.includes(token) ||
+                 labels.includes(token) ||
+                 epicName.includes(token) ||
+                 deptName.includes(token);
+        });
+      }
+      
       const byType     = filters.type     === "all" || i.type     === filters.type;
       const byPriority = filters.priority === "all" || i.priority === filters.priority;
       const byAssignee = filters.assignee === "all" || String(i.assignee) === filters.assignee;
       const byEpic     = filters.epic     === "all" || i.epic     === filters.epic;
-      return inScope && bySearch && byType && byPriority && byAssignee && byEpic;
+      const byDomain   = filters.domain   === "all" || i.department === filters.domain;
+      
+      return inScope && bySearch && byType && byPriority && byAssignee && byEpic && byDomain;
     });
-  }, [issues, view, sprint, search, filters, currentUser, isAdmin]);
+  }, [issues, view, sprint, debouncedSearch, filters, currentUser, isAdmin, users]);
 
   // ── Define addNotification FIRST so all functions below can reference it ──
   const addNotification = (n) => {
-    setNotifs(p => [{ id: Date.now(), ...n, time:"just now", read:false }, ...p]);
+    const localId = Date.now();
+    setNotifs(p => [{ id: localId, ...n, time: "just now", read: false }, ...p]);
+
+    fetch('/api/notifications', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(n)
+    })
+    .then(r => r.json())
+    .then(saved => {
+      if (saved && saved.id) {
+        setNotifs(p => p.map(notif => notif.id === localId ? { ...notif, id: saved.id } : notif));
+      }
+    })
   };
 
-  const updateIssue = useCallback((key, patch) => {
-    setIssues(p => {
-      const orig = p.find(i => i.key === key);
-      if (currentUser && orig) {
-        if (patch.status && patch.status !== orig.status) {
-          fetch(`/api/issues/${key}/history`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              userId: currentUser.id,
-              eventType: 'status_changed',
-              oldValue: orig.status,
-              newValue: patch.status
-            })
-          }).catch(err => console.error("Could not log status history", err));
-        }
-        if (patch.assignee !== undefined && patch.assignee !== orig.assignee) {
-          const origUser = users.find(u => u.id === Number(orig.assignee));
-          const newUser = users.find(u => u.id === Number(patch.assignee));
-          fetch(`/api/issues/${key}/history`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              userId: currentUser.id,
-              eventType: 'assigned',
-              oldValue: origUser?.name || 'Unassigned',
-              newValue: newUser?.name || 'Unassigned'
-            })
-          }).catch(err => console.error("Could not log assignment history", err));
-        }
+  const refreshData = async () => {
+    setIsRefreshing(true);
+    
+    const pMeta = Promise.all([
+      fetch('/api/departments').then(r => r.json()).catch(() => null),
+      fetch('/api/roles').then(r => r.json()).catch(() => null)
+    ]).then(([depts, roles]) => {
+      if (depts && depts.length > 0) {
+        const map = {};
+        depts.forEach(d => { map[d.id] = d; });
+        DEPARTMENTS = map;
       }
+      if (roles && roles.length > 0) {
+        const map = {};
+        roles.forEach(d => { map[d.id] = d; });
+        ROLES = map;
+      }
+    });
+
+    const pUsers = pMeta.then(() => fetch('/api/users')
+      .then(r => r.json())
+      .then(dbUsers => {
+        if (dbUsers && dbUsers.length > 0) {
+          setUsers(dbUsers);
+        }
+      })
+      .catch(err => console.warn("Could not load users from DB, using initial users seed.", err)));
+
+    const pIssues = fetch('/api/issues')
+      .then(r => {
+        if (!r.ok) throw new Error("Server error");
+        return r.json();
+      })
+      .then(dbIssues => {
+        if (dbIssues && dbIssues.length > 0) {
+          const normalized = dbIssues.map(i => ({
+            ...i,
+            assignee: i.assignee ? Number(i.assignee) : null,
+            reporter: i.reporter ? Number(i.reporter) : 1,
+            sp: i.sp ? Number(i.sp) : 0,
+            notification: !!i.notification,
+            watchers: Array.isArray(i.watchers) ? i.watchers.map(Number) : [],
+            labels: Array.isArray(i.labels) ? i.labels : [],
+            comments: Array.isArray(i.comments) ? i.comments.map(c => ({
+              ...c,
+              userId: Number(c.userId)
+            })) : []
+          }));
+          setIssues(normalized);
+          setSelected(prevSelected => {
+            if (!prevSelected) return null;
+            const updated = normalized.find(i => i.key === prevSelected.key);
+            return updated || prevSelected;
+          });
+        }
+      })
+      .catch(err => {
+        console.warn("Could not load issues from DB, falling back to local memory seed.", err);
+        return fetch('/api/comments')
+          .then(r => r.json())
+          .then(dbComments => {
+            setIssues(prev => prev.map(issue => {
+              const issueComments = dbComments.filter(c => c.issueKey === issue.key);
+              if (issueComments.length > 0) {
+                return { ...issue, comments: issueComments };
+              }
+              return issue;
+            }));
+          })
+          .catch(e => console.warn("Could not load comments fallback", e));
+      });
+
+    const pNotifs = fetch('/api/notifications')
+      .then(r => {
+        if (!r.ok) throw new Error("Server error");
+        return r.json();
+      })
+      .then(dbNotifs => {
+        if (dbNotifs && dbNotifs.length > 0) {
+          setNotifs(dbNotifs.map(n => ({
+            ...n,
+            userId: Number(n.userId),
+            read: !!n.read
+          })));
+        }
+      })
+      .catch(err => console.warn("Could not load notifications from DB, using seed notifications.", err));
+
+    const pTodos = fetch('/api/todos')
+      .then(r => {
+        if (!r.ok) throw new Error("Server error");
+        return r.json();
+      })
+      .then(dbTodos => {
+        if (dbTodos && Object.keys(dbTodos).length > 0) {
+          setTodos(dbTodos);
+        }
+      })
+      .catch(err => console.warn("Could not load todos from DB, using local checklists.", err));
+
+    try {
+      await Promise.all([pUsers, pIssues, pNotifs, pTodos, pMeta]).finally(() => {
+        setIsRefreshing(false);
+      });
+    } catch (e) {
+      console.warn("Error running batch refresh:", e);
+    }
+  };
+
+  const updateUser = async (id, patch) => {
+    const prev = users.find(u => u.id === id);
+    if (!prev) return;
+    const updatedUser = { ...prev, ...patch };
+    
+    // 1. Optimistically update local state immediately
+    setUsers(p => p.map(u => u.id === id ? { ...u, ...patch } : u));
+    if (patch.role && prev.role !== patch.role) {
+      addNotification({ type:"role_change", userId: id, message:`Your role was updated to ${ROLES[patch.role]?.label}`, issueKey: null });
+    }
+    if (id === currentUser?.id) {
+      setCurrentUser(p => ({ ...p, ...patch }));
+    }
+
+    // 2. Perform background API call
+    try {
+      await fetch(`/api/users/${id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(updatedUser)
+      });
+    } catch (err) {
+      console.warn("Failed to update user in DB, running in local mode:", err);
+    }
+  };
+
+  const addUser = async (data) => {
+    const color = ["#46b3cf","#10b981","#f59e0b","#ef4444","#a855f7","#ec4899"][Math.floor(Math.random()*6)];
+    const avatar = data.name.slice(0,2).toUpperCase();
+    const tempId = Date.now();
+    const payload = {
+      ...data,
+      avatar,
+      color,
+      active: true,
+      password: data.password || 'user123'
+    };
+    const localNewUser = {
+      id: tempId,
+      ...payload,
+      joinDate: new Date().toISOString().split('T')[0],
+      permissions: data.permissions || ROLES[data.role]?.permissions || []
+    };
+
+    // 1. Optimistically add to local state immediately
+    setUsers(p => [...p, localNewUser]);
+
+    // 2. Background API call
+    try {
+      const response = await fetch('/api/users', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      });
+      if (response.ok) {
+        const resData = await response.json();
+        // Swap tempId with final database ID
+        setUsers(p => p.map(u => u.id === tempId ? { ...u, id: resData.id } : u));
+      }
+    } catch (err) {
+      console.warn("Failed to add user in DB, running in local mode:", err);
+    }
+  };
+
+  const toggleActive = async (id) => {
+    const user = users.find(u => u.id === id);
+    if (!user) return;
+    const updatedUser = { ...user, active: !user.active };
+
+    // 1. Optimistically toggle locally first
+    setUsers(p => p.map(u => u.id === id ? { ...u, active: !u.active } : u));
+
+    // 2. Background API call
+    try {
+      await fetch(`/api/users/${id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(updatedUser)
+      });
+    } catch (err) {
+      console.warn("Failed to toggle user active status in DB, running in local mode:", err);
+    }
+  };
+
+  const deleteUser = async (id) => {
+    if (!window.confirm("Are you sure you want to permanently delete this user? This action cannot be undone.")) return;
+    
+    // 1. Optimistic local update
+    setUsers(p => p.filter(u => u.id !== id));
+    addNotification({ type: "system", userId: currentUser?.id, message: `User deleted from the roster`, issueKey: null });
+    
+    // 2. Background API call
+    try {
+      await fetch(`/api/users/${id}`, { method: 'DELETE' });
+    } catch (err) {
+      console.warn("Failed to delete user in DB, running locally:", err);
+    }
+  };
+
+  useEffect(() => {
+    refreshData();
+  }, []);
+
+  const updateIssue = useCallback((key, patch) => {
+    // 1. Synchronously update local state (fully functional immediately)
+    setIssues(p => {
       return p.map(i => i.key === key ? { ...i, ...patch } : i);
     });
 
     setSelected(p => p?.key === key ? { ...p, ...patch } : p);
 
     if (patch.status && currentUser) {
-      setNotifs(p => [{ id: Date.now(), type:"status", userId: currentUser.id,
-        message:`${currentUser.name} moved ${key} to ${patch.status}`, issueKey: key, time:"just now", read:false }, ...p]);
+      addNotification({
+        type: "status",
+        userId: currentUser.id,
+        message: `${currentUser.name} moved ${key} to ${patch.status}`,
+        issueKey: key
+      });
     }
-  }, [currentUser, users]);
+
+    // 2. Perform background database update
+    fetch(`/api/issues/${key}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ ...patch, updaterId: currentUser?.id })
+    })
+    .then(res => {
+      if (res.ok) {
+        refreshData();
+      }
+    })
+    .catch(err => console.warn("Database issue update failed in background, running in local mode.", err));
+  }, [currentUser, users, refreshData]);
 
   const createIssue = (data) => {
     if (!currentUser) return;
     const issue = {
-      key: genKey(), type: data.type||"task", title: data.title,
-      status: "To Do", priority: data.priority||"medium",
-      assignee: data.assignee||null, reporter: currentUser.id, sp: data.sp||0,
-      epic: data.epic||null, labels: data.labels||[], desc: data.desc||"",
-      dueDate: data.dueDate||"", sprint: data.sprint||"Sprint 1",
-      created: getCurrentDateTime(), recurrence: data.recurrence||"none",
-      notification: true, comments: [], watchers: [currentUser.id], attach: 0,
+      key: data.key || genKey(),
+      type: data.type || "task",
+      title: data.title,
+      status: "To Do",
+      priority: data.priority || "medium",
+      assignee: data.assignee || null,
+      reporter: currentUser.id,
+      sp: data.sp || 0,
+      epic: data.epic || null,
+      labels: data.labels || [],
+      desc: data.desc || "",
+      dueDate: data.dueDate || "",
+      sprint: data.sprint || "Sprint 1",
+      created: getCurrentDateTime(),
+      recurrence: data.recurrence || "none",
+      notification: true,
+      comments: [],
+      watchers: [currentUser.id],
+      attach: 0,
       department: data.department || currentUser.department,
     };
+
+    // 1. Synchronously update local state
     setIssues(p => [issue, ...p]);
     if (data.assignee) {
-      addNotification({ type:"assignment", userId: +data.assignee, message:`You were assigned ${issue.key}: ${issue.title}`, issueKey: issue.key });
+      addNotification({
+        type: "assignment",
+        userId: +data.assignee,
+        message: `You were assigned ${issue.key}: ${issue.title}`,
+        issueKey: issue.key
+      });
+    }
+
+    // 2. Perform background database creation
+    fetch('/api/issues', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(issue)
+    }).catch(err => console.warn("Database issue creation failed in background, running in local mode.", err));
+  };
+
+  const createDepartment = async (data) => {
+    try {
+      const res = await fetch('/api/departments', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data)
+      });
+      if (res.ok) {
+        await refreshData();
+        setShowCreateDept(false);
+        addNotification({ type: "system", userId: currentUser.id, message: `New department created: ${data.label}`, issueKey: null });
+      }
+    } catch (err) {
+      console.warn("Could not create department in DB", err);
     }
   };
 
   const deleteIssue = (key) => {
     if (!hasPermission("delete")) return;
+    
+    // 1. Synchronously update local state
     setIssues(p => p.filter(i => i.key !== key));
     setSelected(null);
+
+    // 2. Perform background database deletion
+    fetch(`/api/issues/${key}`, {
+      method: 'DELETE'
+    }).catch(err => console.warn("Database issue deletion failed in background, running in local mode.", err));
   };
 
   const addComment = async (key, text) => {
@@ -551,18 +1006,32 @@ export default function App() {
         const c = await res.json();
         setIssues(p => p.map(i => i.key === key ? { ...i, comments: [...i.comments, c] } : i));
         setSelected(p => p?.key === key ? { ...p, comments: [...p.comments, c] } : p);
-        addNotification({ type:"comment", userId: currentUser.id, message:`${currentUser.name} commented on ${key}`, issueKey: key });
+        addNotification({ type: "comment", userId: currentUser.id, message: `${currentUser.name} commented on ${key}`, issueKey: key });
+      } else {
+        throw new Error("HTTP error " + res.status);
       }
-    } catch(e) {
-      console.error(e);
+    } catch (e) {
+      console.warn("Could not save comment in DB, adding to local state only.", e);
       const c = { id: Date.now(), userId: currentUser.id, text, date: getCurrentDateTime() };
       setIssues(p => p.map(i => i.key === key ? { ...i, comments: [...i.comments, c] } : i));
       setSelected(p => p?.key === key ? { ...p, comments: [...p.comments, c] } : p);
     }
   };
 
-  const markAllRead = () => setNotifs(p => p.map(n => ({ ...n, read: true })));
-  const dismissNotif = (id) => setNotifs(p => p.filter(n => n.id !== id));
+  const markAllRead = () => {
+    setNotifs(p => p.map(n => ({ ...n, read: true })));
+    fetch('/api/notifications/read', {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' }
+    }).catch(err => console.warn("Could not update notifications read status in DB", err));
+  };
+
+  const dismissNotif = (id) => {
+    setNotifs(p => p.filter(n => n.id !== id));
+    fetch(`/api/notifications/${id}`, {
+      method: 'DELETE'
+    }).catch(err => console.warn("Could not delete notification in DB", err));
+  };
 
   const onDragStart = (e, key) => { dragKey.current = key; e.dataTransfer.effectAllowed = "move"; };
   const onDrop = (e, status) => {
@@ -577,15 +1046,18 @@ export default function App() {
 
   // Nav items based on role — admins/managers see everything, regular users see filtered views
   const navItems = [
-    { id:"board",   icon:"⊞", label:"Board",   show: isAdmin || hasPermission("view_all") },
-    { id:"backlog", icon:"☰", label:"Backlog",  show: isAdmin || hasPermission("view_all") },
-    { id:"roadmap", icon:"⊟", label:"Roadmap",  show: isAdmin || hasPermission("view_all") },
-    { id:"people",  icon:"⬡", label:"People",   show: isAdmin || hasPermission("view_all") },
-    { id:"mytasks", icon:"☑", label:"My Tasks", show: !isAdmin },
-    { id:"todos",   icon:"☑", label:"Task List",show: isAdmin || hasPermission("view_all") },
-    { id:"architecture", icon:"⛁", label:"DB Schema", show: isAdmin },
-    { id:"departments", icon:"🏢", label:"Departments", show: true },
-    { id:"users",   icon:"👥", label:"User Mgmt",show: hasPermission("manage_users") },
+    { id:"board",   icon:"⊞", label:t("board"),   show: isAdmin || hasPermission("view_all"), section: "core" },
+    { id:"backlog", icon:"☰", label:t("backlog"),  show: isAdmin || hasPermission("view_all"), section: "core" },
+    { id:"roadmap", icon:"⊟", label:t("roadmap"),  show: isAdmin || hasPermission("view_all"), section: "core" },
+    { id:"people",  icon:"⬡", label:t("people"),   show: isAdmin || hasPermission("view_all"), section: "core" },
+    { id:"mytasks", icon:"☑", label:t("mytasks"), show: !isAdmin, section: "core" },
+    { id:"todos",   icon:"☑", label:t("todos"),show: isAdmin || hasPermission("view_all"), section: "core" },
+    
+    { id:"departments", icon:"🏢", label:t("departments"), show: true, section: "project" },
+    { id:"users",       icon:"👥", label:t("users"),   show: hasPermission("manage_users"), section: "project" },
+    { id:"settings",    icon:"⚙",  label:t("settings"),    show: hasPermission("manage_users"), section: "project" },
+    { id:"components",  icon:"◈",  label:t("components"),  show: true, section: "project" },
+    { id:"architecture",icon:"⛁",  label:t("architecture"),   show: isAdmin, section: "project" },
   ].filter(n => n.show);
 
   // Set default view per role
@@ -602,6 +1074,13 @@ export default function App() {
   const currentSidebarStyle = isSmallScreen
     ? { ...S.sidebar, ...S.sidebarMobile, display: sidebarOpen ? "flex" : "none", position: "fixed", top: 0, left: 0, bottom: 0, width: "280px", boxShadow: "10px 0 30px rgba(0,0,0,0.5)" }
     : S.sidebar;
+
+  const NavItem = ({ n }) => (
+    <div key={n.id} style={{ ...S.navItem, ...(resolvedView===n.id?S.navActive:{}) }} onClick={() => { setView(n.id); if(isSmallScreen) setSidebarOpen(false); }}>
+      <span style={S.navIcon}>{n.icon}</span>
+      <span>{n.label}</span>
+    </div>
+  );
 
   return (
     <div style={{ ...S.root, flexDirection: isMobile ? "column" : "row" }}>
@@ -623,67 +1102,35 @@ export default function App() {
             <div style={S.projName}>Metapharsic To Do</div>
             <div style={S.projType}>{isAdmin ? "Admin Portal" : "Team Portal"}</div>
           </div>
-          {isSmallScreen && <button style={{ ...S.iconBtn, marginLeft: "auto" }} onClick={() => setSidebarOpen(false)}>✕</button>}
+          {isSmallScreen && <button style={{ ...S.iconBtn, marginInlineStart: "auto" }} onClick={() => setSidebarOpen(false)}>✕</button>}
         </div>
-        <nav style={{ padding:"6px 0" }}>
-          {navItems.map(n => (
-            <div key={n.id} style={{ ...S.navItem, ...(resolvedView===n.id?S.navActive:{}) }} onClick={() => { setView(n.id); if(isSmallScreen) setSidebarOpen(false); }}>
-              <span style={S.navIcon}>{n.icon}</span>
-              <span>{n.label}</span>
-            </div>
-          ))}
+        
+        <nav style={{ padding:"6px 0", flex: 1 }}>
+          {navItems.filter(n => n.section === "core").map(n => <NavItem key={n.id} n={n} />)}
+          
+          <div style={S.navDivider} />
+          <div style={S.sidebarSection}>{t("project")}</div>
+          {navItems.filter(n => n.section === "project").map(n => <NavItem key={n.id} n={n} />)}
         </nav>
-        <div style={S.navDivider} />
-        <div style={S.sidebarSection}>Project</div>
-        {hasPermission("manage_users") && (
-          <div style={{ ...S.navItem, ...(resolvedView==="settings"?S.navActive:{}) }} onClick={() => { setView("settings"); if(isSmallScreen) setSidebarOpen(false); }}>
-            <span style={S.navIcon}>⚙</span><span>Settings</span>
-          </div>
-        )}
-        <div style={S.navItem}><span style={S.navIcon}>◈</span><span>Components</span></div>
-
-        <div style={{ flex: 1 }} />
-
-        <div style={{ margin:"8px 10px", padding:"8px 10px", background:"var(--card-bg)", borderRadius:8, border:"1px solid var(--border)" }}>
-          <div style={{ fontSize:10, color:"var(--text-muted)", fontWeight:700, marginBottom:8, textTransform:"uppercase" }}>App Theme</div>
-          <div style={{ display:"flex", gap:4, background:"var(--bg-main)", padding:3, borderRadius:6 }}>
-            {[
-              { id:"dark",  label:"Dark",  icon:"🌙" },
-              { id:"light", label:"Light", icon:"☀️" },
-              { id:"shade", label:"Shade", icon:"☁️" },
-            ].map(t => (
-              <button key={t.id} onClick={() => setTheme(t.id)}
-                style={{
-                  flex:1, display:"flex", flexDirection:"column", alignItems:"center", gap:2, padding:"6px 0",
-                  background: theme === t.id ? "var(--sidebar-active)" : "transparent",
-                  border:"none", borderRadius:4, cursor:"pointer", color: theme === t.id ? "var(--accent)" : "var(--text-muted)",
-                  transition:"all 0.2s"
-                }}>
-                <span style={{ fontSize:14 }}>{t.icon}</span>
-                <span style={{ fontSize:9, fontWeight:600 }}>{t.label}</span>
-              </button>
-            ))}
-          </div>
-        </div>
 
         {/* Role badge */}
 
         <div style={{ margin:"8px 10px", padding:"8px 10px", background:"#2d333b", borderRadius:8, border:"1px solid #444c56" }}>
-          <div style={{ fontSize:10, color:"#768390", fontWeight:700, marginBottom:4, textTransform:"uppercase" }}>Logged in as</div>
+          <div style={{ fontSize:10, color:"#768390", fontWeight:700, marginBottom:4, textTransform:"uppercase" }}>{t("loggedInAs")}</div>
           <div style={{ display:"flex", alignItems:"center", gap:8, marginBottom:6 }}>
             <Avatar user={currentUser} size={24} />
-            <span style={{ color:"#cdd9e5", fontSize:13, fontWeight:600 }}>{currentUser.name}</span>
+            <span style={{ color:"#cdd9e5", fontSize:13, fontWeight:600 }}>{currentUser?.name}</span>
           </div>
           <div style={{ display:"flex", gap:6, flexWrap:"wrap" }}>
-            <span style={{ ...S.rolePill, background: (DEPARTMENTS[currentUser.department]?.color||"#6366f1")+"25", color: DEPARTMENTS[currentUser.department]?.color||"#6366f1" }}>
-              {DEPARTMENTS[currentUser.department]?.icon} {DEPARTMENTS[currentUser.department]?.label}
+            <span style={{ ...S.rolePill, background: (DEPARTMENTS[currentUser?.department]?.color||"#6366f1")+"25", color: DEPARTMENTS[currentUser?.department]?.color||"#6366f1" }}>
+              {DEPARTMENTS[currentUser?.department]?.icon} {DEPARTMENTS[currentUser?.department]?.label}
             </span>
             <span style={{ ...S.rolePill, background:"#444c56", color:"#adbac7" }}>
-              {ROLES[currentUser.role]?.label}
+              {ROLES[currentUser?.role]?.label}
             </span>
           </div>
           {isAdmin && (
-            <select style={{ ...S.userSelect, marginTop:6 }} value={currentUser.id} onChange={e => switchUser(e.target.value)}>
+            <select style={{ ...S.userSelect, marginTop:6 }} value={currentUser?.id} onChange={e => switchUser(e.target.value)}>
               {users.filter(u => u.active).map(u => <option key={u.id} value={u.id}>{u.name}</option>)}
             </select>
           )}
@@ -691,7 +1138,7 @@ export default function App() {
             onClick={handleLogout}
             style={{ marginTop:8, width:"100%", background:"#3d1c1c", color:"#f87171", border:"1px solid #6b2121", borderRadius:6, padding:"5px 0", fontSize:12, cursor:"pointer", fontWeight:600 }}
           >
-            💪 Sign Out
+            💪 {t("signOut")}
           </button>
         </div>
       </aside>
@@ -706,11 +1153,25 @@ export default function App() {
             )}
             <div style={S.breadcrumb}>
               {!isMobile && <span style={S.breadProj}>Metapharsic To Do</span>}
-              {!isMobile && <span style={S.breadSep}>/</span>}
+              {!isMobile && <span style={{ ...S.breadSep, marginInline: 6 }}>/</span>}
               <span style={S.breadPage}>{navItems.find(n=>n.id===resolvedView)?.label || resolvedView.charAt(0).toUpperCase()+resolvedView.slice(1)}</span>
             </div>
           </div>
           <div style={{ display:"flex", alignItems:"center", gap:12 }}>
+            {/* Refresh Button */}
+            <button 
+              style={{ ...S.iconBtn, fontSize:16, display:"flex", alignItems:"center", justifyContent:"center" }} 
+              onClick={refreshData}
+              disabled={isRefreshing}
+              title="Sync with database"
+            >
+              <span style={{ 
+                display: "inline-block", 
+                animation: isRefreshing ? "spin 1s linear infinite" : "none"
+              }}>
+                🔄
+              </span>
+            </button>
             {/* Notification Bell */}
             <div style={{ position:"relative" }}>
               <button style={{ ...S.iconBtn, position:"relative", fontSize:18 }} onClick={() => setShowNotifs(p => !p)}>
@@ -741,16 +1202,28 @@ export default function App() {
               issues={visibleIssues} sprints={sprints} sprint={sprint} setSprint={setSprint}
               search={search} setSearch={setSearch} filters={filters} setFilters={setFilters}
               onDragStart={onDragStart} onDrop={onDrop} dragOver={dragOver} setDragOver={setDragOver}
-              onSelect={setSelected} onCreate={() => setShowCreate(true)}
+              onSelect={setSelected}
+              onCreate={(status) => {
+                setInitialCreateStatus(typeof status === 'string' ? status : "To Do");
+                setShowCreate(true);
+              }}
               allIssues={issues} canCreate={hasPermission("create")} users={users} isMobile={isMobile}
+              t={t}
+              searchInputRef={searchInputRef}
             />
           )}
           {view === "backlog" && (
             <BacklogView
               issues={visibleIssues} search={search} setSearch={setSearch}
               filters={filters} setFilters={setFilters}
-              onSelect={setSelected} onCreate={() => setShowCreate(true)}
+              onSelect={setSelected}
+              onCreate={(status) => {
+                setInitialCreateStatus(typeof status === 'string' ? status : "To Do");
+                setShowCreate(true);
+              }}
               canCreate={hasPermission("create")} users={users} isMobile={isMobile}
+              t={t}
+              searchInputRef={searchInputRef}
             />
           )}
           {view === "roadmap" && <RoadmapView issues={issues} onSelect={setSelected} />}
@@ -760,12 +1233,30 @@ export default function App() {
               currentUser={currentUser}
               isAdmin={isAdmin}
               todos={todos[role] || []}
-              setTodos={(updated) => setTodos(p => ({ ...p, [role]: updated }))}
-              issues={issues}
+              setTodos={(updated) => {
+                const currentRoleTodos = todos[role] || [];
+                const changed = updated.find((item, idx) => item.done !== currentRoleTodos[idx]?.done);
+                if (changed) {
+                  fetch(`/api/todos/${changed.id}/toggle`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ done: changed.done })
+                  }).catch(err => console.warn("Could not toggle todo in DB", err));
+                }
+                setTodos(p => ({ ...p, [role]: updated }));
+              }}
+              issues={visibleIssues}
               users={users}
               onSelectIssue={setSelected}
-              onCreateIssue={() => setShowCreate(true)}
+              onCreateIssue={(status) => {
+                setInitialCreateStatus(typeof status === 'string' ? status : "To Do");
+                setShowCreate(true);
+              }}
               isMobile={isMobile}
+              search={search}
+              setSearch={setSearch}
+              searchInputRef={searchInputRef}
+              t={t}
             />
           )}
           {view === "users" && hasPermission("manage_users") && (
@@ -774,10 +1265,22 @@ export default function App() {
               currentUser={currentUser} setCurrentUser={setCurrentUser} issues={issues}
               addNotification={addNotification}
               isMobile={isMobile}
+              setView={setView}
+              setFilters={setFilters}
             />
           )}
           {view === "architecture" && <ArchitectureView />}
-          {view === "departments" && <DepartmentsView currentUser={currentUser} isAdmin={isAdmin} users={users} />}
+          {view === "departments" && (
+            <DepartmentsView 
+              currentUser={currentUser} 
+              isAdmin={isAdmin} 
+              users={users} 
+              onAdd={() => setShowCreateDept(true)}
+              t={t}
+            />
+          )}
+          {view === "settings" && <SettingsView theme={theme} setTheme={setTheme} currentUser={currentUser} updateUser={updateUser} users={users} t={t} />}
+          {view === "components" && <ComponentsView />}
         </div>
       </div>
 
@@ -799,10 +1302,25 @@ export default function App() {
       {/* ── CREATE MODAL ── */}
       {showCreate && hasPermission("create") && (
         <CreateModal
+          initialStatus={initialCreateStatus}
           onClose={() => setShowCreate(false)}
           onCreate={data => { createIssue(data); setShowCreate(false); }}
           currentUser={currentUser}
           users={users}
+        />
+      )}
+
+      {/* ── CREATE DEPARTMENT MODAL ── */}
+      {showCreateDept && isAdmin && (
+        <AddDeptModal
+          onClose={() => setShowCreateDept(false)}
+          onAdd={(data) => {
+            if (data.id && data.label) {
+              createDepartment(data);
+            } else {
+              setShowCreateDept(false);
+            }
+          }}
         />
       )}
     </div>
@@ -971,44 +1489,56 @@ function TodoView({ currentUser, todos, setTodos, issues, users, onSelectIssue }
 }
 
 // ─── USER MANAGEMENT ──────────────────────────────────────────────────────────
-function UserManagement({ users, setUsers, currentUser, setCurrentUser, issues, addNotification, isMobile }) {
+function UserManagement({ users, setUsers, currentUser, setCurrentUser, issues, addNotification, isMobile, setView, setFilters, t }) {
   const [editUser, setEditUser] = useState(null);
   const [showAdd, setShowAdd]   = useState(false);
   const [filterDept, setFilterDept] = useState("all");
   const [filterRole, setFilterRole] = useState("all");
+  const [search, setSearch] = useState("");
 
-  const filtered = users.filter(u =>
-    (filterDept === "all" || u.department === filterDept) &&
-    (filterRole === "all" || u.role === filterRole)
-  );
+  const filtered = users.filter(u => {
+    const matchesDept = filterDept === "all" || (u.departments || [u.department] || []).includes(filterDept);
+    const matchesRole = filterRole === "all" || u.role === filterRole;
+    const s = search.toLowerCase().trim();
+    const matchesSearch = !s || 
+      u.name.toLowerCase().includes(s) || 
+      u.email.toLowerCase().includes(s) || 
+      (u.phone && u.phone.includes(s)) ||
+      u.department.toLowerCase().includes(s) ||
+      ROLES[u.role]?.label.toLowerCase().includes(s);
+    return matchesDept && matchesRole && matchesSearch;
+  });
 
   const updateUser = async (id, patch) => {
     const prev = users.find(u => u.id === id);
     const updatedUser = { ...prev, ...patch };
+    
+    // 1. Optimistically update local state immediately
+    setUsers(p => p.map(u => u.id === id ? { ...u, ...patch } : u));
+    if (patch.role && prev.role !== patch.role) {
+      addNotification({ type:"role_change", userId: id, message:`Your role was updated to ${ROLES[patch.role]?.label}`, issueKey: null });
+    }
+    if (id === currentUser.id) {
+      setCurrentUser(p => ({ ...p, ...patch }));
+    }
+    setEditUser(null);
+
+    // 2. Perform background API call
     try {
-      const response = await fetch(`/api/users/${id}`, {
+      await fetch(`/api/users/${id}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(updatedUser)
       });
-      if (response.ok) {
-        setUsers(p => p.map(u => u.id === id ? { ...u, ...patch } : u));
-        if (patch.role && prev.role !== patch.role) {
-          addNotification({ type:"role_change", userId: id, message:`Your role was updated to ${ROLES[patch.role]?.label}`, issueKey: null });
-        }
-        if (id === currentUser.id) {
-          setCurrentUser(p => ({ ...p, ...patch }));
-        }
-      }
     } catch (err) {
-      console.error("Failed to update user:", err);
+      console.warn("Failed to update user in DB, running in local mode:", err);
     }
-    setEditUser(null);
   };
 
   const addUser = async (data) => {
     const color = ["#46b3cf","#10b981","#f59e0b","#ef4444","#a855f7","#ec4899"][Math.floor(Math.random()*6)];
     const avatar = data.name.slice(0,2).toUpperCase();
+    const tempId = Date.now();
     const payload = {
       ...data,
       avatar,
@@ -1016,43 +1546,66 @@ function UserManagement({ users, setUsers, currentUser, setCurrentUser, issues, 
       active: true,
       password: data.password || 'user123'
     };
+    const localNewUser = {
+      id: tempId,
+      ...payload,
+      joinDate: new Date().toISOString().split('T')[0],
+      permissions: data.permissions || ROLES[data.role]?.permissions || []
+    };
+
+    // 1. Optimistically add to local state immediately
+    setUsers(p => [...p, localNewUser]);
+    setShowAdd(false);
+
+    // 2. Background API call
     try {
       const response = await fetch('/api/users', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload)
       });
-      const resData = await response.json();
       if (response.ok) {
-        const newUser = {
-          id: resData.id,
-          ...payload,
-          joinDate: new Date().toISOString().split('T')[0],
-          permissions: data.permissions || ROLES[data.role]?.permissions || []
-        };
-        setUsers(p => [...p, newUser]);
+        const resData = await response.json();
+        // Swap tempId with final database ID
+        setUsers(p => p.map(u => u.id === tempId ? { ...u, id: resData.id } : u));
       }
     } catch (err) {
-      console.error("Failed to add user:", err);
+      console.warn("Failed to add user in DB, running in local mode:", err);
     }
-    setShowAdd(false);
   };
 
   const toggleActive = async (id) => {
     const user = users.find(u => u.id === id);
     if (!user) return;
     const updatedUser = { ...user, active: !user.active };
+
+    // 1. Optimistically toggle locally first
+    setUsers(p => p.map(u => u.id === id ? { ...u, active: !u.active } : u));
+
+    // 2. Background API call
     try {
-      const response = await fetch(`/api/users/${id}`, {
+      await fetch(`/api/users/${id}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(updatedUser)
       });
-      if (response.ok) {
-        setUsers(p => p.map(u => u.id === id ? { ...u, active: !u.active } : u));
-      }
     } catch (err) {
-      console.error("Failed to toggle user active status:", err);
+      console.warn("Failed to toggle user active status in DB, running in local mode:", err);
+    }
+  };
+
+  const deleteUser = async (id) => {
+    if (!window.confirm("Are you sure you want to permanently delete this user? This action cannot be undone.")) return;
+    
+    // 1. Optimistic local update
+    setUsers(p => p.filter(u => u.id !== id));
+    addNotification({ type: "system", userId: currentUser.id, message: `User deleted from the roster`, issueKey: null });
+    
+    // 2. Background API call
+    try {
+      await fetch(`/api/users/${id}`, { method: 'DELETE' });
+    } catch (err) {
+      console.warn("Failed to delete user in DB, running locally:", err);
     }
   };
 
@@ -1117,19 +1670,38 @@ function UserManagement({ users, setUsers, currentUser, setCurrentUser, issues, 
               const isMe = u.id === currentUser.id;
               return (
                 <tr key={u.id} style={{ ...S.userTableRow, opacity: u.active ? 1 : 0.5 }}>
-                  <td style={S.userTableCell}>
+                  <td 
+                    style={{ ...S.userTableCell, cursor: "pointer", transition: "background 0.2s" }}
+                    onClick={() => {
+                      setFilters(prev => ({ ...prev, assignee: String(u.id) }));
+                      setView("board");
+                    }}
+                    onMouseEnter={e => e.currentTarget.style.background = 'rgba(88, 166, 255, 0.08)'}
+                    onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
+                    title={`Click to view Kanban board filtered by ${u.name}`}
+                  >
                     <div style={{ display:"flex", alignItems:"center", gap:10 }}>
                       <Avatar user={u} size={34} />
                       <div>
-                        <div style={{ fontWeight:600, color:"#e6edf3", fontSize:13 }}>{u.name} {isMe && <span style={{ fontSize:10, color:"#46b3cf" }}>(you)</span>}</div>
+                        <div style={{ fontWeight:600, color:"var(--accent)", fontSize:13 }}>
+                          {u.name} {isMe && <span style={{ fontSize:10, color:"#46b3cf" }}>(you)</span>}
+                          {u.phoneVerified && <span title="WhatsApp Verified" style={{ fontSize:12, marginLeft:4 }}>📱✅</span>}
+                        </div>
                         {!isMobile && <div style={{ fontSize:11, color:"#768390" }}>{u.email}</div>}
                       </div>
                     </div>
                   </td>
                   <td style={S.userTableCell}>
-                    <div style={{ display:"flex", alignItems:"center", gap:6 }}>
-                      <span style={{ width:8, height:8, borderRadius:"50%", background: dept?.color }} />
-                      <span style={{ fontSize:12, color:"#adbac7" }}>{dept?.label}</span>
+                    <div style={{ display:"flex", alignItems:"center", gap:6, flexWrap:"wrap" }}>
+                      {(u.departments && u.departments.length > 0 ? u.departments : [u.department]).map(dk => {
+                        const d = DEPARTMENTS[dk];
+                        return (
+                          <div key={dk} style={{ display:"flex", alignItems:"center", gap:4, background:"rgba(255,255,255,0.05)", padding:"2px 6px", borderRadius:4, border:"1px solid rgba(255,255,255,0.1)" }} title={d?.label}>
+                             <span style={{ fontSize:10 }}>{d?.icon}</span>
+                             <span style={{ fontSize:10, color:"#adbac7", fontWeight:600 }}>{dk.toUpperCase()}</span>
+                          </div>
+                        );
+                      })}
                     </div>
                   </td>
                   <td style={S.userTableCell}>
@@ -1144,8 +1716,17 @@ function UserManagement({ users, setUsers, currentUser, setCurrentUser, issues, 
                       </div>
                     </td>
                   )}
-                  <td style={S.userTableCell}>
-                    <span style={{ fontWeight:600, color: iCount > 0 ? "#f59e0b" : "#22c55e", fontSize:13 }}>{iCount}</span>
+                  <td 
+                    style={{ ...S.userTableCell, cursor: "pointer", transition: "background 0.2s" }}
+                    onClick={() => {
+                      setFilters(prev => ({ ...prev, assignee: String(u.id) }));
+                      setView("board");
+                    }}
+                    onMouseEnter={e => e.currentTarget.style.background = 'rgba(88, 166, 255, 0.08)'}
+                    onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
+                    title={`Click to see issues assigned to ${u.name}`}
+                  >
+                    <span style={{ fontWeight:600, color: iCount > 0 ? "#f59e0b" : "#22c55e", fontSize:13, textDecoration: "underline", textUnderlineOffset: "3px" }}>{iCount}</span>
                   </td>
                   <td style={S.userTableCell}>
                     <div style={{ display:"flex", alignItems:"center", gap:6 }}>
@@ -1154,13 +1735,19 @@ function UserManagement({ users, setUsers, currentUser, setCurrentUser, issues, 
                     </div>
                   </td>
                   <td style={S.userTableCell}>
-                    <div style={{ display:"flex", gap:6 }}>
+                    <div style={{ display:"flex", gap:6, flexWrap: "wrap" }}>
                       <button style={{ ...S.btnGhost, fontSize:11, padding:"3px 8px" }} onClick={() => setEditUser(u)}>Edit</button>
-                      {!isMe && !isMobile && (
-                        <button style={{ ...S.btnGhost, fontSize:11, padding:"3px 8px", color: u.active ? "#f87171" : "#4ade80" }}
-                          onClick={() => toggleActive(u.id)}>
-                          {u.active ? "Off" : "On"}
-                        </button>
+                      {!isMe && (
+                        <>
+                          <button style={{ ...S.btnGhost, fontSize:11, padding:"3px 8px", color: u.active ? "#f87171" : "#4ade80" }}
+                            onClick={() => toggleActive(u.id)}>
+                            {u.active ? "Off" : "On"}
+                          </button>
+                          <button style={{ ...S.btnGhost, fontSize:11, padding:"3px 8px", borderColor: "rgba(239, 68, 68, 0.4)", color: "#ef4444" }}
+                            onClick={() => deleteUser(u.id)}>
+                            Delete
+                          </button>
+                        </>
                       )}
                     </div>
                   </td>
@@ -1186,11 +1773,29 @@ const ALL_PERMISSIONS = ["create", "edit", "delete", "assign", "manage_users", "
 
 function EditUserModal({ user, onClose, onSave }) {
   const [draft, setDraft] = useState({
-    role: user.role,
-    department: user.department,
-    name: user.name,
-    permissions: user.permissions || ROLES[user.role]?.permissions || []
+    id:                    user.id,
+    name:                  user.name,
+    avatar:                user.avatar,
+    email:                 user.email,
+    color:                 user.color,
+    active:                user.active,
+    department:            user.department,
+    departments:           user.departments || [user.department],
+    role:                  user.role,
+    permissions:           user.customPermissions || user.permissions || ROLES[user.role]?.permissions || [],
+    phone:                 user.phone || "",
+
+    notificationEmail:     user.notificationEmail !== false,
+    notificationWhatsapp:  user.notificationWhatsapp || false,
+    requirePasswordChange: user.requirePasswordChange || false,
   });
+
+  // WhatsApp OTP state
+  const [waStep, setWaStep]         = useState("idle"); // idle | setup | sent | verified | error
+  const [waApiKey, setWaApiKey]     = useState("");
+  const [waOtp, setWaOtp]           = useState("");
+  const [waError, setWaError]       = useState("");
+  const [waSending, setWaSending]   = useState(false);
 
   const handleRoleChange = (newRole) => {
     setDraft(p => ({
@@ -1200,14 +1805,57 @@ function EditUserModal({ user, onClose, onSave }) {
     }));
   };
 
+  const sendOtp = async () => {
+    if (!draft.phone || !waApiKey) { setWaError("Enter both phone and API key."); return; }
+    setWaSending(true); setWaError("");
+    try {
+      const r = await fetch(`/api/users/${user.id}/send-whatsapp-otp`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ phone: draft.phone, callmebotApikey: waApiKey })
+      });
+      const d = await r.json();
+      if (r.ok) { setWaStep("sent"); }
+      else { setWaError(d.error || "Failed to send OTP."); }
+    } catch { setWaError("Network error. Try again."); }
+    setWaSending(false);
+  };
+
+  const verifyOtp = async () => {
+    if (!waOtp) { setWaError("Enter the OTP code."); return; }
+    setWaSending(true); setWaError("");
+    try {
+      const r = await fetch(`/api/users/${user.id}/verify-whatsapp-otp`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ otp: waOtp })
+      });
+      const d = await r.json();
+      if (r.ok) {
+        setWaStep("verified");
+        setDraft(p => ({ ...p, notificationWhatsapp: true }));
+      } else { setWaError(d.error || "Verification failed."); }
+    } catch { setWaError("Network error. Try again."); }
+    setWaSending(false);
+  };
+
+  const waBoxStyle = {
+    background:"#1c2128", border:"1px solid #30363d",
+    borderRadius:10, padding:14, display:"flex", flexDirection:"column", gap:10
+  };
+  const stepBadge = (txt, color) => (
+    <span style={{ fontSize:10, fontWeight:700, background: color+"20", color, padding:"2px 8px", borderRadius:20, alignSelf:"flex-start" }}>{txt}</span>
+  );
+
   return (
     <div style={S.modalOverlay} onClick={e => e.target===e.currentTarget && onClose()}>
-      <div style={{ ...S.modal, width:440 }}>
+      <div style={{ ...S.modal, width:480, maxHeight:"90vh", overflowY:"auto" }}>
         <div style={S.modalHdr}>
           <span style={{ fontWeight:700, color:"#e6edf3" }}>Edit User — {user.name}</span>
           <button style={S.iconBtn} onClick={onClose}>✕</button>
         </div>
         <div style={{ ...S.modalBody, gap:14 }}>
+          {/* Avatar + info */}
           <div style={{ display:"flex", alignItems:"center", gap:12, padding:"6px 0" }}>
             <Avatar user={user} size={44} />
             <div>
@@ -1215,19 +1863,37 @@ function EditUserModal({ user, onClose, onSave }) {
               <div style={{ fontSize:12, color:"#909dab" }}>{user.email}</div>
             </div>
           </div>
-          
+
+          {/* Name */}
           <div>
             <label style={{ fontSize:12, color:"#909dab", fontWeight:600, display:"block", marginBottom:5 }}>Name</label>
             <input style={S.formInput} value={draft.name} onChange={e => setDraft(p => ({ ...p, name: e.target.value }))} />
           </div>
 
+          {/* Department(s) */}
           <div>
-            <label style={{ fontSize:12, color:"#909dab", fontWeight:600, display:"block", marginBottom:5 }}>Department</label>
-            <select style={S.formSel} value={draft.department} onChange={e => setDraft(p => ({ ...p, department: e.target.value }))}>
-              {Object.entries(DEPARTMENTS).map(([k,v]) => <option key={k} value={k}>{v.icon} {v.label}</option>)}
-            </select>
+            <label style={{ fontSize:12, color:"#909dab", fontWeight:600, display:"block", marginBottom:8 }}>Domain Responsibilities (Multiple)</label>
+            <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:8, background:"#22272e", padding:12, borderRadius:8, border:"1px solid #444c56" }}>
+              {Object.entries(DEPARTMENTS).map(([dk, dv]) => {
+                const isSelected = (draft.departments || []).includes(dk);
+                return (
+                  <div key={dk} onClick={() => toggleDept(dk)}
+                    style={{
+                      display:"flex", alignItems:"center", gap:8, padding:"6px 10px", borderRadius:6, cursor:"pointer",
+                      background: isSelected ? dv.color+"20" : "transparent",
+                      border: `1px solid ${isSelected ? dv.color+"50" : "transparent"}`,
+                      transition: "all 0.2s"
+                    }}>
+                    <span style={{ fontSize:14 }}>{dv.icon}</span>
+                    <span style={{ fontSize:12, color: isSelected ? dv.color : "#adbac7", fontWeight: isSelected ? 700 : 400 }}>{dv.label}</span>
+                    {isSelected && <span style={{ marginLeft:"auto", color:dv.color, fontSize:10 }}>✓</span>}
+                  </div>
+                );
+              })}
+            </div>
           </div>
 
+          {/* Role */}
           <div>
             <label style={{ fontSize:12, color:"#909dab", fontWeight:600, display:"block", marginBottom:5 }}>Role</label>
             <select style={S.formSel} value={draft.role} onChange={e => handleRoleChange(e.target.value)}>
@@ -1235,16 +1901,14 @@ function EditUserModal({ user, onClose, onSave }) {
             </select>
           </div>
 
+          {/* Force password change */}
           <label style={{ display:"flex", alignItems:"center", gap:8, cursor:"pointer", userSelect:"none" }}>
-            <input
-              type="checkbox"
-              checked={draft.requirePasswordChange}
-              onChange={e => setDraft(prev => ({ ...prev, requirePasswordChange: e.target.checked }))}
-              style={{ cursor:"pointer" }}
-            />
+            <input type="checkbox" checked={draft.requirePasswordChange}
+              onChange={e => setDraft(p => ({ ...p, requirePasswordChange: e.target.checked }))} style={{ cursor:"pointer" }} />
             <span style={{ fontSize:13, color:"#adbac7" }}>Force password change on next login</span>
           </label>
 
+          {/* Custom Permissions */}
           <div>
             <div style={{ fontSize:12, color:"#909dab", fontWeight:600, marginBottom:8 }}>Configure Custom Permissions</div>
             <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:8, background:"#22272e", padding:12, borderRadius:8, border:"1px solid #444c56" }}>
@@ -1252,21 +1916,164 @@ function EditUserModal({ user, onClose, onSave }) {
                 const has = draft.permissions.includes(p);
                 return (
                   <label key={p} style={{ display:"flex", alignItems:"center", gap:8, fontSize:12, color:"#adbac7", cursor:"pointer", userSelect:"none" }}>
-                    <input
-                      type="checkbox"
-                      checked={has}
+                    <input type="checkbox" checked={has}
                       onChange={() => {
-                        const next = has
-                          ? draft.permissions.filter(x => x !== p)
-                          : [...draft.permissions, p];
+                        const next = has ? draft.permissions.filter(x => x !== p) : [...draft.permissions, p];
                         setDraft(prev => ({ ...prev, permissions: next }));
-                      }}
-                      style={{ cursor:"pointer" }}
-                    />
+                      }} style={{ cursor:"pointer" }} />
                     <span>{p}</span>
                   </label>
                 );
               })}
+            </div>
+          </div>
+
+          {/* ── Notification Settings ── */}
+          <div style={{ borderTop:"1px solid #30363d", paddingTop:14 }}>
+            <div style={{ fontSize:12, color:"#909dab", fontWeight:700, marginBottom:10, letterSpacing:"0.5px", textTransform:"uppercase" }}>📣 Notification Settings</div>
+
+            {/* Email toggle */}
+            <label style={{ display:"flex", alignItems:"center", justifyContent:"space-between", cursor:"pointer", marginBottom:10, padding:"8px 10px", background:"#22272e", borderRadius:8, border:"1px solid #30363d" }}>
+              <div style={{ display:"flex", alignItems:"center", gap:8 }}>
+                <span style={{ fontSize:16 }}>📧</span>
+                <div>
+                  <div style={{ fontSize:13, fontWeight:600, color:"#e6edf3" }}>Email Notifications</div>
+                  <div style={{ fontSize:11, color:"#768390" }}>Receive task alerts via email</div>
+                </div>
+              </div>
+              <div style={{
+                width:36, height:20, borderRadius:20, background: draft.notificationEmail ? "#22c55e" : "#444c56",
+                position:"relative", transition:"background 0.2s", cursor:"pointer"
+              }} onClick={() => setDraft(p => ({ ...p, notificationEmail: !p.notificationEmail }))}>
+                <div style={{
+                  width:14, height:14, borderRadius:"50%", background:"#fff",
+                  position:"absolute", top:3,
+                  left: draft.notificationEmail ? 18 : 3,
+                  transition:"left 0.2s"
+                }} />
+              </div>
+            </label>
+
+            {/* WhatsApp section */}
+            <div style={waBoxStyle}>
+              <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between" }}>
+                <div style={{ display:"flex", alignItems:"center", gap:8 }}>
+                  <span style={{ fontSize:16 }}>📱</span>
+                  <div>
+                    <div style={{ fontSize:13, fontWeight:600, color:"#e6edf3" }}>WhatsApp Notifications</div>
+                    <div style={{ fontSize:11, color:"#768390" }}>Receive task alerts on WhatsApp</div>
+                  </div>
+                </div>
+                {user.phoneVerified
+                  ? stepBadge("✅ Verified", "#22c55e")
+                  : stepBadge("Not Verified", "#f59e0b")
+                }
+              </div>
+
+              {/* Phone number input */}
+              <div>
+                <label style={{ fontSize:11, color:"#768390", display:"block", marginBottom:4 }}>WhatsApp Phone (with country code)</label>
+                <input
+                  style={{ ...S.formInput, fontSize:13 }}
+                  placeholder="+919876543210"
+                  value={draft.phone}
+                  onChange={e => setDraft(p => ({ ...p, phone: e.target.value }))}
+                />
+              </div>
+
+              {/* CallMeBot setup instructions */}
+              {waStep === "idle" && !user.phoneVerified && (
+                <div style={{ background:"#0d1117", border:"1px solid #238636", borderRadius:8, padding:12 }}>
+                  <div style={{ fontSize:11, fontWeight:700, color:"#3fb950", marginBottom:8 }}>📋 One-time CallMeBot Setup (Free)</div>
+                  <ol style={{ margin:0, paddingLeft:16, display:"flex", flexDirection:"column", gap:4 }}>
+                    <li style={{ fontSize:11, color:"#adbac7" }}>Open WhatsApp → message <strong style={{ color:"#7dc3db" }}>+34 644 78 81 73</strong></li>
+                    <li style={{ fontSize:11, color:"#adbac7" }}>Send: <em style={{ color:"#f0f6fc" }}>"I allow callmebot to send me messages"</em></li>
+                    <li style={{ fontSize:11, color:"#adbac7" }}>Wait for reply — it will contain your <strong style={{ color:"#7dc3db" }}>API key</strong></li>
+                    <li style={{ fontSize:11, color:"#adbac7" }}>Paste the API key below and click Send OTP</li>
+                  </ol>
+                </div>
+              )}
+
+              {/* API key input + Send OTP */}
+              {!user.phoneVerified && waStep !== "verified" && (
+                <div style={{ display:"flex", flexDirection:"column", gap:8 }}>
+                  <div>
+                    <label style={{ fontSize:11, color:"#768390", display:"block", marginBottom:4 }}>Your CallMeBot API Key</label>
+                    <input
+                      style={{ ...S.formInput, fontSize:13 }}
+                      placeholder="e.g. 1234567"
+                      value={waApiKey}
+                      onChange={e => setWaApiKey(e.target.value)}
+                    />
+                  </div>
+                  <button
+                    onClick={sendOtp}
+                    disabled={waSending || !draft.phone || !waApiKey}
+                    style={{
+                      background: waSending ? "#22272e" : "linear-gradient(135deg, #25d366, #128c7e)",
+                      color:"#fff", border:"none", borderRadius:8, padding:"9px 16px",
+                      fontSize:13, fontWeight:700, cursor: waSending ? "not-allowed" : "pointer",
+                      opacity: !draft.phone || !waApiKey ? 0.5 : 1
+                    }}
+                  >
+                    {waSending && waStep === "idle" ? "⏳ Sending..." : "📲 Send Verification Code"}
+                  </button>
+                </div>
+              )}
+
+              {/* OTP entry */}
+              {waStep === "sent" && (
+                <div style={{ display:"flex", flexDirection:"column", gap:8 }}>
+                  {stepBadge("Code sent! Check WhatsApp", "#3b82f6")}
+                  <div>
+                    <label style={{ fontSize:11, color:"#768390", display:"block", marginBottom:4 }}>Enter 6-digit OTP</label>
+                    <input
+                      style={{ ...S.formInput, fontSize:18, fontWeight:700, letterSpacing:8, textAlign:"center" }}
+                      placeholder="● ● ● ● ● ●"
+                      maxLength={6}
+                      value={waOtp}
+                      onChange={e => setWaOtp(e.target.value.replace(/\D/g, ""))}
+                    />
+                  </div>
+                  <div style={{ display:"flex", gap:8 }}>
+                    <button
+                      onClick={verifyOtp}
+                      disabled={waSending || waOtp.length !== 6}
+                      style={{
+                        flex:1, background: "linear-gradient(135deg, #6366f1, #4f46e5)",
+                        color:"#fff", border:"none", borderRadius:8, padding:"9px 0",
+                        fontSize:13, fontWeight:700, cursor: waSending ? "not-allowed" : "pointer",
+                        opacity: waOtp.length !== 6 ? 0.5 : 1
+                      }}
+                    >
+                      {waSending ? "⏳ Verifying..." : "✅ Verify Code"}
+                    </button>
+                    <button onClick={sendOtp} disabled={waSending}
+                      style={{ background:"#22272e", color:"#768390", border:"1px solid #30363d", borderRadius:8, padding:"9px 12px", fontSize:12, cursor:"pointer" }}
+                    >
+                      Resend
+                    </button>
+                  </div>
+                </div>
+              )}
+
+              {/* Verified success */}
+              {(waStep === "verified" || user.phoneVerified) && (
+                <div style={{ display:"flex", alignItems:"center", gap:8, background:"rgba(34,197,94,0.1)", border:"1px solid rgba(34,197,94,0.3)", borderRadius:8, padding:"10px 12px" }}>
+                  <span style={{ fontSize:18 }}>✅</span>
+                  <div>
+                    <div style={{ fontSize:12, fontWeight:700, color:"#4ade80" }}>WhatsApp Verified!</div>
+                    <div style={{ fontSize:11, color:"#768390" }}>{draft.phone || user.phone} — Notifications enabled</div>
+                  </div>
+                </div>
+              )}
+
+              {/* Error */}
+              {waError && (
+                <div style={{ background:"rgba(239,68,68,0.1)", border:"1px solid rgba(239,68,68,0.3)", borderRadius:8, padding:"8px 12px", fontSize:12, color:"#f87171" }}>
+                  ⚠️ {waError}
+                </div>
+              )}
             </div>
           </div>
         </div>
@@ -1286,9 +2093,21 @@ function AddUserModal({ onClose, onAdd }) {
     password: "",
     role: "developer",
     department: "it",
+    departments: ["it"],
     permissions: ROLES["developer"]?.permissions || []
   });
+  const [copied, setCopied] = useState(false);
   const set = (k,v) => setF(p => ({...p,[k]:v}));
+
+  const toggleDept = (dk) => {
+    setF(prev => {
+      const current = prev.departments || [];
+      const next = current.includes(dk)
+        ? (current.length > 1 ? current.filter(x => x !== dk) : current)
+        : [...current, dk];
+      return { ...prev, departments: next, department: next[0] };
+    });
+  };
 
   const handleRoleChange = (newRole) => {
     setF(p => ({
@@ -1298,29 +2117,151 @@ function AddUserModal({ onClose, onAdd }) {
     }));
   };
 
+  const generatePassword = () => {
+    const chars = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%^&*()_+";
+    let pass = "";
+    for (let i = 0; i < 12; i++) {
+      pass += chars.charAt(Math.floor(Math.random() * chars.length));
+    }
+    set("password", pass);
+    navigator.clipboard.writeText(pass);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  };
+
+  const isEmailValid = (email) => {
+    const re = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    return re.test(email);
+  };
+
+  const getPasswordStrength = (pass) => {
+    if (!pass) return { score: 0, text: "None", color: "#666" };
+    let score = 0;
+    if (pass.length >= 6) score++;
+    if (pass.length >= 10) score++;
+    if (/[0-9]/.test(pass)) score++;
+    if (/[!@#$%^&*()_+]/.test(pass)) score++;
+    
+    if (score <= 1) return { score, text: "Weak", color: "#ef4444" };
+    if (score <= 3) return { score, text: "Medium", color: "#f59e0b" };
+    return { score, text: "Strong", color: "#10b981" };
+  };
+
+  const strength = getPasswordStrength(f.password);
+
+  const PERMISSION_METADATA = {
+    create:       { label: "Create Issues", desc: "Allow starting new tasks & epics", icon: "➕" },
+    edit:         { label: "Edit Issues", desc: "Allow modifying fields & details", icon: "✏️" },
+    delete:       { label: "Delete Issues", desc: "Allow permanently removing issues", icon: "🗑️" },
+    assign:       { label: "Assign Team", desc: "Allow delegating tasks to members", icon: "👥" },
+    manage_users: { label: "Manage Users", desc: "Allow adding & modifying members", icon: "🛡️" },
+    view_all:     { label: "View All Depts", desc: "Access boards of all departments", icon: "👁️" },
+    manage_roles: { label: "Manage Roles", desc: "Define category security structures", icon: "🔑" },
+    approve:      { label: "Approve Items", desc: "Transition tasks to Done status", icon: "✅" },
+  };
+
   return (
-    <div style={S.modalOverlay} onClick={e => e.target===e.currentTarget && onClose()}>
-      <div style={{ ...S.modal, width:440 }}>
-        <div style={S.modalHdr}>
-          <span style={{ fontWeight:700, color:"#e6edf3" }}>Add New User</span>
+    <div style={{ ...S.modalOverlay, backdropFilter: "blur(12px)", background: "rgba(0,0,0,0.85)" }} onClick={e => e.target===e.currentTarget && onClose()}>
+      <div style={{ 
+        ...S.modal, 
+        width: 500, 
+        background: "linear-gradient(135deg, rgba(28,33,40,0.98), rgba(34,39,46,0.98))",
+        border: "1px solid rgba(255, 255, 255, 0.08)",
+        borderRadius: 16,
+        boxShadow: "0 24px 64px rgba(0, 0, 0, 0.8)",
+        animation: "modalFadeIn 0.3s cubic-bezier(0.16, 1, 0.3, 1)"
+      }}>
+        <div style={{ ...S.modalHdr, borderBottom: "1px solid rgba(255, 255, 255, 0.06)", padding: "16px 24px" }}>
+          <span style={{ fontWeight: 800, fontSize: 16, color: "#fff", letterSpacing: "-0.01em" }}>Add New User</span>
           <button style={S.iconBtn} onClick={onClose}>✕</button>
         </div>
-        <div style={{ ...S.modalBody, gap:12 }}>
-          {[
-            { label:"Full Name", key:"name", type:"input", placeholder:"e.g. Jane Smith" },
-            { label:"Email", key:"email", type:"input", placeholder:"jane@metapharsic.io" },
-            { label:"Password", key:"password", type:"password", placeholder:"••••••••" },
-          ].map(f2 => (
-            <div key={f2.key}>
-              <label style={{ fontSize:12, color:"#909dab", fontWeight:600, display:"block", marginBottom:5 }}>{f2.label}</label>
-              <input type={f2.type} style={S.formInput} placeholder={f2.placeholder} value={f[f2.key]} onChange={e => set(f2.key, e.target.value)} />
-            </div>
-          ))}
+        <div style={{ ...S.modalBody, gap: 14, padding: "20px 24px" }}>
           <div>
-            <label style={{ fontSize:12, color:"#909dab", fontWeight:600, display:"block", marginBottom:5 }}>Department</label>
-            <select style={S.formSel} value={f.department} onChange={e => set("department",e.target.value)}>
-              {Object.entries(DEPARTMENTS).map(([k,v]) => <option key={k} value={k}>{v.icon} {v.label}</option>)}
-            </select>
+            <label style={{ fontSize:12, color:"#909dab", fontWeight:600, display:"block", marginBottom:5 }}>Full Name</label>
+            <input type="text" style={S.formInput} placeholder="e.g. Jane Smith" value={f.name} onChange={e => set("name", e.target.value)} />
+          </div>
+          <div>
+            <label style={{ fontSize:12, color:"#909dab", fontWeight:600, display:"block", marginBottom:5 }}>Email</label>
+            <input type="email" style={S.formInput} placeholder="jane@metapharsic.io" value={f.email} onChange={e => set("email", e.target.value)} />
+            {f.email && (
+              <div style={{ fontSize: 11, color: isEmailValid(f.email) ? "#10b981" : "#ef4444", marginTop: 4, display:"flex", alignItems:"center", gap: 4 }}>
+                <span>{isEmailValid(f.email) ? "✓" : "⚠️"}</span>
+                <span>{isEmailValid(f.email) ? "Valid email format" : "Enter a valid email format"}</span>
+              </div>
+            )}
+          </div>
+          <div>
+            <label style={{ fontSize:12, color:"#909dab", fontWeight:600, display:"block", marginBottom:5 }}>WhatsApp Phone <span style={{ fontWeight:400, color:"#768390" }}>(optional, for notifications)</span></label>
+            <input type="tel" style={S.formInput} placeholder="+919876543210" value={f.phone||""} onChange={e => set("phone", e.target.value)} />
+            <div style={{ fontSize:11, color:"#768390", marginTop:4 }}>📱 User can verify their WhatsApp from their profile after login.</div>
+          </div>
+          <div>
+            <label style={{ fontSize:12, color:"#909dab", fontWeight:600, display:"block", marginBottom:5 }}>Password</label>
+            <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
+              <input
+                type="text"
+                style={{ ...S.formInput, flex: 1 }}
+                placeholder="••••••••"
+                value={f.password}
+                onChange={e => set("password", e.target.value)}
+              />
+              <button
+                type="button"
+                onClick={generatePassword}
+                style={{
+                  background: "linear-gradient(135deg, #6366f1, #4f46e5)",
+                  color: "#fff",
+                  border: "none",
+                  borderRadius: 6,
+                  padding: "8px 14px",
+                  fontSize: 12,
+                  fontWeight: 600,
+                  cursor: "pointer",
+                  transition: "all 0.2s",
+                  boxShadow: "0 4px 12px rgba(99, 102, 241, 0.3)",
+                  whiteSpace: "nowrap"
+                }}
+              >
+                ⚡ Auto
+              </button>
+            </div>
+            {copied && (
+              <div style={{ fontSize: 11, color: "#10b981", marginTop: 4, display: "flex", alignItems: "center", gap: 4 }}>
+                <span>✓</span> Copied password to clipboard!
+              </div>
+            )}
+            {f.password && (
+              <div style={{ marginTop: 6 }}>
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                  <span style={{ fontSize: 10, color: "#768390" }}>Strength: <strong style={{ color: strength.color }}>{strength.text}</strong></span>
+                </div>
+                <div style={{ width: "100%", height: 4, background: "#22272e", borderRadius: 2, marginTop: 3, overflow: "hidden" }}>
+                  <div style={{ width: `${(strength.score / 4) * 100}%`, height: "100%", background: strength.color, transition: "width 0.3s" }} />
+                </div>
+              </div>
+            )}
+          </div>
+          {/* Department(s) */}
+          <div>
+            <label style={{ fontSize:12, color:"#909dab", fontWeight:600, display:"block", marginBottom:8 }}>Domain Responsibilities (Multiple)</label>
+            <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:8, background:"#22272e", padding:12, borderRadius:8, border:"1px solid rgba(255,255,255,0.06)" }}>
+              {Object.entries(DEPARTMENTS).map(([dk, dv]) => {
+                const isSelected = (f.departments || []).includes(dk);
+                return (
+                  <div key={dk} onClick={() => toggleDept(dk)}
+                    style={{
+                      display:"flex", alignItems:"center", gap:8, padding:"6px 10px", borderRadius:6, cursor:"pointer",
+                      background: isSelected ? dv.color+"20" : "transparent",
+                      border: `1px solid ${isSelected ? dv.color+"50" : "transparent"}`,
+                      transition: "all 0.2s"
+                    }}>
+                    <span style={{ fontSize:14 }}>{dv.icon}</span>
+                    <span style={{ fontSize:12, color: isSelected ? dv.color : "#adbac7", fontWeight: isSelected ? 700 : 400 }}>{dv.label}</span>
+                    {isSelected && <span style={{ marginLeft:"auto", color:dv.color, fontSize:10 }}>✓</span>}
+                  </div>
+                );
+              })}
+            </div>
           </div>
           <div>
             <label style={{ fontSize:12, color:"#909dab", fontWeight:600, display:"block", marginBottom:5 }}>Role</label>
@@ -1329,7 +2270,7 @@ function AddUserModal({ onClose, onAdd }) {
             </select>
           </div>
 
-          <label style={{ display:"flex", alignItems:"center", gap:8, cursor:"pointer", userSelect:"none" }}>
+          <label style={{ display:"flex", alignItems:"center", gap:8, cursor:"pointer", userSelect:"none", margin: "4px 0" }}>
             <input
               type="checkbox"
               checked={f.requirePasswordChange === undefined ? true : f.requirePasswordChange}
@@ -1341,33 +2282,66 @@ function AddUserModal({ onClose, onAdd }) {
 
           <div>
             <div style={{ fontSize:12, color:"#909dab", fontWeight:600, marginBottom:8 }}>Configure Custom Permissions</div>
-            <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:8, background:"#22272e", padding:12, borderRadius:8, border:"1px solid #444c56" }}>
+            <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:8, maxHeight:180, overflowY:"auto", paddingRight:4 }}>
               {ALL_PERMISSIONS.map(p => {
                 const has = f.permissions.includes(p);
+                const meta = PERMISSION_METADATA[p] || { label: p, desc: "", icon: "⚙️" };
                 return (
-                  <label key={p} style={{ display:"flex", alignItems:"center", gap:8, fontSize:12, color:"#adbac7", cursor:"pointer", userSelect:"none" }}>
-                    <input
-                      type="checkbox"
-                      checked={has}
-                      onChange={() => {
-                        const next = has
-                          ? f.permissions.filter(x => x !== p)
-                          : [...f.permissions, p];
-                        setF(prev => ({ ...prev, permissions: next }));
+                  <div
+                    key={p}
+                    onClick={() => {
+                      const next = has
+                        ? f.permissions.filter(x => x !== p)
+                        : [...f.permissions, p];
+                      setF(prev => ({ ...prev, permissions: next }));
+                    }}
+                    style={{
+                      background: has ? "rgba(99, 102, 241, 0.1)" : "#22272e",
+                      border: has ? "1px solid rgba(99, 102, 241, 0.5)" : "1px solid rgba(255, 255, 255, 0.06)",
+                      borderRadius: 8,
+                      padding: "8px 12px",
+                      cursor: "pointer",
+                      display: "flex",
+                      alignItems: "center",
+                      gap: 8,
+                      transition: "all 0.2s",
+                      boxShadow: has ? "0 0 10px rgba(99, 102, 241, 0.15)" : "none"
+                    }}
+                  >
+                    <span style={{ fontSize: 15 }}>{meta.icon}</span>
+                    <div style={{ flex: 1 }}>
+                      <div style={{ fontSize: 11, fontWeight: 700, color: has ? "#8c8dfa" : "#adbac7" }}>{meta.label}</div>
+                      <div style={{ fontSize: 9, color: "#768390", marginTop: 1 }}>{meta.desc}</div>
+                    </div>
+                    <div
+                      style={{
+                        width: 12,
+                        height: 12,
+                        borderRadius: "50%",
+                        border: has ? "3.5px solid #6366f1" : "1.5px solid #768390",
+                        background: has ? "#fff" : "transparent",
+                        transition: "all 0.2s"
                       }}
-                      style={{ cursor:"pointer" }}
                     />
-                    <span>{p}</span>
-                  </label>
+                  </div>
                 );
               })}
             </div>
           </div>
         </div>
-        <div style={S.modalFoot}>
+        <div style={{ ...S.modalFoot, borderTop: "1px solid rgba(255, 255, 255, 0.06)", padding: "12px 24px" }}>
           <button style={S.btnGhost} onClick={onClose}>Cancel</button>
-          <button style={S.createBtn} disabled={!f.name.trim() || !f.email.trim()}
-            onClick={() => { if(f.name.trim() && f.email.trim()) onAdd(f); }}>
+          <button 
+            style={{
+              ...S.btnPrimary,
+              background: (!f.name.trim() || !f.email.trim() || !isEmailValid(f.email)) ? "#2d333b" : "linear-gradient(135deg, #10b981, #059669)",
+              color: (!f.name.trim() || !f.email.trim() || !isEmailValid(f.email)) ? "#768390" : "#fff",
+              cursor: (!f.name.trim() || !f.email.trim() || !isEmailValid(f.email)) ? "not-allowed" : "pointer",
+              transition: "all 0.2s",
+              boxShadow: (!f.name.trim() || !f.email.trim() || !isEmailValid(f.email)) ? "none" : "0 4px 12px rgba(16, 185, 129, 0.2)"
+            }} 
+            disabled={!f.name.trim() || !f.email.trim() || !isEmailValid(f.email)}
+            onClick={() => { if(f.name.trim() && f.email.trim() && isEmailValid(f.email)) onAdd(f); }}>
             Add User
           </button>
         </div>
@@ -1378,7 +2352,7 @@ function AddUserModal({ onClose, onAdd }) {
 
 // ─── BOARD VIEW ───────────────────────────────────────────────────────────────
 function BoardView({ issues, sprints, sprint, setSprint, search, setSearch, filters, setFilters,
-                     onDragStart, onDrop, dragOver, setDragOver, onSelect, onCreate, allIssues, canCreate, users, isMobile }) {
+                     onDragStart, onDrop, dragOver, setDragOver, onSelect, onCreate, allIssues, canCreate, users, isMobile, t, searchInputRef }) {
   const total = issues.length;
   const done  = issues.filter(i => i.status === "Done").length;
   const pts   = issues.reduce((s,i) => s+(i.sp||0), 0);
@@ -1436,8 +2410,47 @@ function BoardView({ issues, sprints, sprint, setSprint, search, setSearch, filt
           <select style={S.sel} value={sprint} onChange={e => setSprint(e.target.value)}>
             {sprints.map(s => <option key={s} value={s}>{s}</option>)}
           </select>
-          <input style={{ ...S.searchBox, maxWidth: isMobile ? "100%" : 190 }} placeholder="🔍  Search issues…" value={search} onChange={e => setSearch(e.target.value)} />
-          <Filters filters={filters} setFilters={setFilters} users={users} />
+
+          <div style={{ position: "relative", display: "flex", alignItems: "center", width: isMobile ? "100%" : "auto", minWidth: isMobile ? "none" : 200 }}>
+            <input 
+              ref={searchInputRef}
+              style={{ 
+                ...S.searchBox, 
+                paddingRight: search ? 30 : 10, 
+                width: "100%",
+                maxWidth: "100%",
+                fontSize: isMobile ? 16 : 13
+              }} 
+              placeholder={`🔍  ${t("search")}`} 
+              value={search} 
+              onChange={e => setSearch(e.target.value)} 
+              title="Search by title, key, desc, status, type, assignee, reporter, epic, or labels. Tokens: type:, p:, key:, assignee:, epic:, label:, status:"
+            />
+            {search && (
+              <button 
+                onClick={() => setSearch("")}
+                style={{
+                  position: "absolute",
+                  right: 8,
+                  top: "50%",
+                  transform: "translateY(-50%)",
+                  background: "none",
+                  border: "none",
+                  color: "var(--text-muted)",
+                  cursor: "pointer",
+                  fontSize: 14,
+                  padding: 8,
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center"
+                }}
+              >
+                ✕
+              </button>
+            )}
+          </div>
+
+          <Filters filters={filters} setFilters={setFilters} users={users} t={t} />
           
           <button style={{ 
             background: showLog ? "#338ba820" : "transparent",
@@ -1453,7 +2466,7 @@ function BoardView({ issues, sprints, sprint, setSprint, search, setSearch, filt
             📅 {showLog ? "Hide Activity Log" : "Daily Activity Log"}
           </button>
         </div>
-        {canCreate && <button style={{ ...S.createBtn, width: isMobile ? "100%" : "auto" }} onClick={onCreate}>+ Create Issue</button>}
+        {canCreate && <button style={{ ...S.createBtn, width: isMobile ? "100%" : "auto" }} onClick={onCreate}>+ {t("create")}</button>}
       </div>
       
       <div style={S.sprintBar}>
@@ -1475,10 +2488,37 @@ function BoardView({ issues, sprints, sprint, setSprint, search, setSearch, filt
                   onDragOver={e => { e.preventDefault(); setDragOver(status); }}
                   onDragLeave={() => setDragOver(null)}
                   onDrop={e => onDrop(e, status)}>
-                  <div style={S.colHeader}>
-                    <span style={{ ...S.dot, background: sc.dot }} />
-                    <span style={{ ...S.colTitle, color: sc.text }}>{status}</span>
-                    <span style={S.colCount}>{col.length}</span>
+                  <div style={{ ...S.colHeader, display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+                    <div style={{ display: "flex", alignItems: "center" }}>
+                      <span style={{ ...S.dot, background: sc.dot }} />
+                      <span style={{ ...S.colTitle, color: sc.text }}>{status}</span>
+                      <span style={S.colCount}>{col.length}</span>
+                    </div>
+                    {canCreate && (
+                      <button 
+                        onClick={(e) => { e.stopPropagation(); onCreate(status); }}
+                        title={`Create task in ${status}`}
+                        style={{
+                          background: "transparent",
+                          border: "none",
+                          color: "#7dc3db",
+                          cursor: "pointer",
+                          fontSize: 16,
+                          fontWeight: 700,
+                          padding: "2px 6px",
+                          borderRadius: 4,
+                          display: "flex",
+                          alignItems: "center",
+                          justifyContent: "center",
+                          lineHeight: 1,
+                          transition: "all 0.2s"
+                        }}
+                        onMouseEnter={e => { e.target.style.background = "rgba(125,195,219,0.15)"; e.target.style.transform = "scale(1.1)"; }}
+                        onMouseLeave={e => { e.target.style.background = "transparent"; e.target.style.transform = "none"; }}
+                      >
+                        +
+                      </button>
+                    )}
                   </div>
                   <div style={S.colBody}>
                     {col.map(issue => (
@@ -1605,6 +2645,9 @@ function IssueCard({ issue, onDragStart, onClick, users }) {
           {issue.comments.length > 0 && <span style={S.cardStat}>💬{issue.comments.length}</span>}
           {issue.attach > 0 && <span style={S.cardStat}>📎{issue.attach}</span>}
           {issue.sp > 0 && <span style={S.spBadge}>{issue.sp}</span>}
+          <div title={DEPARTMENTS[issue.department]?.label} style={{ fontSize:12, cursor:"help", marginLeft:2 }}>
+            {DEPARTMENTS[issue.department]?.icon}
+          </div>
           {au ? <Avatar user={au} size={20} /> : <div style={S.unassigned} title="Unassigned">?</div>}
         </div>
       </div>
@@ -1613,19 +2656,58 @@ function IssueCard({ issue, onDragStart, onClick, users }) {
 }
 
 // ─── BACKLOG VIEW ─────────────────────────────────────────────────────────────
-function BacklogView({ issues, search, setSearch, filters, setFilters, onSelect, onCreate, canCreate, users }) {
+function BacklogView({ issues, search, setSearch, filters, setFilters, onSelect, onCreate, canCreate, users, isMobile, t, searchInputRef }) {
   return (
     <div>
       <div style={S.toolbar}>
         <div style={{ display:"flex", gap:8, alignItems:"center", flexWrap:"wrap" }}>
-          <input style={S.searchBox} placeholder="🔍  Search backlog…" value={search} onChange={e => setSearch(e.target.value)} />
-          <Filters filters={filters} setFilters={setFilters} users={users} />
+          
+          <div style={{ position: "relative", display: "flex", alignItems: "center", width: isMobile ? "100%" : "auto", minWidth: isMobile ? "none" : 200 }}>
+            <input 
+              ref={searchInputRef}
+              style={{ 
+                ...S.searchBox, 
+                paddingRight: search ? 30 : 10, 
+                width: "100%",
+                maxWidth: "100%",
+                fontSize: isMobile ? 16 : 13
+              }} 
+              placeholder={`🔍  ${t("search")}`} 
+              value={search} 
+              onChange={e => setSearch(e.target.value)} 
+              title="Search by title, key, desc, status, type, assignee, reporter, epic, or labels. Tokens: type:, p:, key:, assignee:, epic:, label:, status:"
+            />
+            {search && (
+              <button 
+                onClick={() => setSearch("")}
+                style={{
+                  position: "absolute",
+                  right: 8,
+                  top: "50%",
+                  transform: "translateY(-50%)",
+                  background: "none",
+                  border: "none",
+                  color: "var(--text-muted)",
+                  cursor: "pointer",
+                  fontSize: 14,
+                  padding: 8,
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center"
+                }}
+              >
+                ✕
+              </button>
+            )}
+          </div>
+
+          <Filters filters={filters} setFilters={setFilters} users={users} t={t} />
         </div>
-        {canCreate && <button style={S.createBtn} onClick={onCreate}>+ Create Issue</button>}
+        {canCreate && <button style={S.createBtn} onClick={onCreate}>+ {t("create")}</button>}
       </div>
       <div style={S.backlogBox}>
         <div style={S.backlogHdr}>
-          <span style={S.backlogHdrTitle}>Backlog</span>
+          <span style={S.backlogHdrTitle}>{t("backlog")}</span>
           <span style={S.backlogCount}>{issues.length} issues</span>
         </div>
         {issues.length === 0 && <div style={S.emptyBacklog}>No issues in the backlog.</div>}
@@ -1655,17 +2737,19 @@ function BacklogView({ issues, search, setSearch, filters, setFilters, onSelect,
 }
 
 // ─── ROADMAP ──────────────────────────────────────────────────────────────────
-function RoadmapView({ issues, onSelect }) {
+function RoadmapView({ issues, onSelect, isMobile }) {
   const start = new Date("2026-05-01");
   const end   = new Date("2026-07-31");
   function pct(d,s,e) { return Math.min(100, Math.max(0, ((d-s)/(e-s))*100)); }
   const todayPct = pct(new Date("2026-05-19"), start, end);
   const months = ["May 2026","Jun 2026","Jul 2026"];
+  const labelWidth = isMobile ? 120 : 220;
+
   return (
     <div>
-      <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:16 }}>
+      <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:16, flexWrap:"wrap", gap:10 }}>
         <h2 style={S.pageH2}>Roadmap</h2>
-        <div style={{ display:"flex", gap:10 }}>
+        <div style={{ display:"flex", gap:10, flexWrap:"wrap" }}>
           {EPICS.map(ep => (
             <span key={ep.id} style={{ display:"flex", alignItems:"center", gap:5, fontSize:12, color:"#adbac7" }}>
               <span style={{ width:8, height:8, borderRadius:2, background: ep.color, display:"inline-block" }} />
@@ -1675,9 +2759,9 @@ function RoadmapView({ issues, onSelect }) {
         </div>
       </div>
       <div style={{ display:"flex", marginBottom:6 }}>
-        <div style={{ width:220, flexShrink:0 }} />
+        <div style={{ width:labelWidth, flexShrink:0 }} />
         <div style={{ flex:1, display:"flex" }}>
-          {months.map(m => <div key={m} style={{ flex:1, fontSize:11, color:"#768390" }}>{m}</div>)}
+          {months.map(m => <div key={m} style={{ flex:1, fontSize:11, color:"#768390", textAlign:"center" }}>{isMobile ? m.split(" ")[0] : m}</div>)}
         </div>
       </div>
       <div style={{ display:"flex", flexDirection:"column", gap:4 }}>
@@ -1690,22 +2774,22 @@ function RoadmapView({ issues, onSelect }) {
           const barL = Math.max(0, dp-8);
           return (
             <div key={issue.key} style={S.roadRow} onClick={() => onSelect(issue)}>
-              <div style={S.roadLabel}>
+              <div style={{ ...S.roadLabel, maxWidth: labelWidth }}>
                 <span style={{ color: ti.color, fontSize:11, flexShrink:0 }}>{ti.icon}</span>
-                <span style={{ color:"#46b3cf", fontSize:11, fontFamily:"monospace", flexShrink:0 }}>{issue.key}</span>
-                <span style={{ color:"#adbac7", fontSize:12, overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap" }}>{issue.title}</span>
+                {!isMobile && <span style={{ color:"#46b3cf", fontSize:11, fontFamily:"monospace", flexShrink:0 }}>{issue.key}</span>}
+                <span style={{ color:"#adbac7", fontSize:11, overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap" }}>{issue.title}</span>
               </div>
               <div style={{ flex:1, position:"relative", height:24, background:"#2d333b", borderRadius:4, overflow:"hidden" }}>
                 <div style={{ position:"absolute", left:`${todayPct}%`, top:0, bottom:0, width:1, background:"#ef4444", zIndex:2 }} />
                 <div style={{ position:"absolute", left:`${barL}%`, width:`${barW}%`, top:3, bottom:3, background: ep?.color||"#6366f1", borderRadius:3, display:"flex", alignItems:"center", paddingLeft:5, fontSize:9, color:"#fff", overflow:"hidden", whiteSpace:"nowrap" }}>
-                  {issue.dueDate}
+                  {!isMobile && issue.dueDate}
                 </div>
               </div>
             </div>
           );
         })}
       </div>
-      <div style={{ marginTop:8, fontSize:11, color:"#768390" }}>
+      <div style={{ marginTop:12, fontSize:11, color:"#768390" }}>
         <span style={{ display:"inline-block", width:8, height:8, background:"#ef4444", marginRight:4 }} />Today (May 19, 2026)
       </div>
     </div>
@@ -1844,19 +2928,68 @@ function UserHistoryModal({ user, issues, onClose }) {
   );
 }
 
-function PeopleView({ users, issues, isAdmin }) {
+function PeopleView({ users, issues, isAdmin, isMobile, t }) {
   const [filterDept, setFilterDept] = useState("all");
+  const [search, setSearch] = useState("");
   const [selectedUser, setSelectedUser] = useState(null);
-  const filtered = filterDept === "all" ? users : users.filter(u => u.department === filterDept);
+  
+  const filtered = users.filter(u => {
+    const matchesDept = filterDept === "all" || u.department === filterDept;
+    const s = search.toLowerCase().trim();
+    const matchesSearch = !s || 
+      u.name.toLowerCase().includes(s) || 
+      u.email.toLowerCase().includes(s) || 
+      u.department.toLowerCase().includes(s) ||
+      ROLES[u.role]?.label.toLowerCase().includes(s);
+    return matchesDept && matchesSearch;
+  });
 
   return (
     <div>
-      <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:16 }}>
+      <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:16, flexWrap:"wrap", gap:10 }}>
         <h2 style={S.pageH2}>People</h2>
-        <select style={S.sel} value={filterDept} onChange={e => setFilterDept(e.target.value)}>
-          <option value="all">All Departments</option>
-          {Object.entries(DEPARTMENTS).map(([k,v]) => <option key={k} value={k}>{v.icon} {v.label}</option>)}
-        </select>
+        <div style={{ display:"flex", gap:8, alignItems:"center", width: isMobile ? "100%" : "auto", flexWrap:"wrap" }}>
+          <div style={{ position: "relative", display: "flex", alignItems: "center", width: isMobile ? "100%" : 200 }}>
+            <input 
+              type="text" 
+              value={search}
+              onChange={e => setSearch(e.target.value)}
+              placeholder={`🔍  Search team...`}
+              style={{ 
+                ...S.searchBox, 
+                width:"100%", 
+                paddingRight: search ? 30 : 10,
+                fontSize: isMobile ? 16 : 13
+              }}
+            />
+            {search && (
+              <button 
+                onClick={() => setSearch("")}
+                style={{
+                  position: "absolute",
+                  right: 8,
+                  top: "50%",
+                  transform: "translateY(-50%)",
+                  background: "none",
+                  border: "none",
+                  color: "var(--text-muted)",
+                  cursor: "pointer",
+                  fontSize: 14,
+                  padding: 8,
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center"
+                }}
+              >
+                ✕
+              </button>
+            )}
+          </div>
+          <select style={{ ...S.sel, flex: isMobile ? 1 : "initial" }} value={filterDept} onChange={e => setFilterDept(e.target.value)}>
+            <option value="all">All Departments</option>
+            {Object.entries(DEPARTMENTS).map(([k,v]) => <option key={k} value={k}>{v.icon} {v.label}</option>)}
+          </select>
+        </div>
       </div>
       {!isAdmin && <div style={{ color:"#f87171", fontSize:13, marginBottom:16 }}>⚠ Admin access required to manage team members.</div>}
       <div style={S.peopleGrid}>
@@ -1918,31 +3051,144 @@ function PeopleView({ users, issues, isAdmin }) {
 function DetailPanel({ issue, onClose, onUpdate, onDelete, onComment, currentUser, isAdmin, hasPermission, users }) {
   const [tab, setTab]         = useState("details");
   const [commentTxt, setCTxt] = useState("");
-  const [editTitle, setET]    = useState(false);
-  const [titleDraft, setTD]   = useState(issue.title);
-  const [editDesc, setED]     = useState(false);
-  const [descDraft, setDD]    = useState(issue.desc);
+  const [isEditing, setIsEditing] = useState(false);
+  const [draft, setDraft]     = useState({ ...issue });
   const [historyList, setHistoryList] = useState([]);
+  const [currentTime, setCurrentTime] = useState(new Date());
+
+  // Keep draft in sync when issue changes or edit mode toggles
+  useEffect(() => {
+    setDraft({ ...issue });
+  }, [issue, isEditing]);
+
+  // Update clock for tickers every second
+  useEffect(() => {
+    const timer = setInterval(() => setCurrentTime(new Date()), 1000);
+    return () => clearInterval(timer);
+  }, []);
+
+  const fetchHistory = useCallback(() => {
+    fetch(`/api/issues/${issue.key}/history`)
+      .then(res => res.json())
+      .then(data => {
+        if (Array.isArray(data)) {
+          setHistoryList(data);
+        }
+      })
+      .catch(err => {
+        console.error("Could not fetch history from DB", err);
+        const fallback = [
+          { eventType: "created", userName: users.find(u=>u.id===issue.reporter)?.name||"Unknown", date: issue.created, userAvatar: users.find(u=>u.id===issue.reporter)?.avatar },
+          ...issue.comments.map(c => ({ eventType: "commented", userName: users.find(u=>u.id===c.userId)?.name||"Unknown", date: c.date, userAvatar: users.find(u=>u.id===c.userId)?.avatar, newValue: c.text }))
+        ];
+        setHistoryList(fallback);
+      });
+  }, [issue.key, issue.created, issue.reporter, issue.comments, users]);
 
   useEffect(() => {
-    if (tab === "history") {
-      fetch(`/api/issues/${issue.key}/history`)
-        .then(res => res.json())
-        .then(data => {
-          if (Array.isArray(data)) {
-            setHistoryList(data);
-          }
-        })
-        .catch(err => {
-          console.error("Could not fetch history from DB", err);
-          const fallback = [
-            { eventType: "created", userName: users.find(u=>u.id===issue.reporter)?.name||"Unknown", date: issue.created, userAvatar: users.find(u=>u.id===issue.reporter)?.avatar },
-            ...issue.comments.map(c => ({ eventType: "commented", userName: users.find(u=>u.id===c.userId)?.name||"Unknown", date: c.date, userAvatar: users.find(u=>u.id===c.userId)?.avatar, newValue: c.text }))
-          ];
-          setHistoryList(fallback);
-        });
+    if (tab === "history" || !isEditing) {
+      fetchHistory();
     }
-  }, [tab, issue.key, issue.comments, issue.created, issue.reporter, users]);
+  }, [tab, isEditing, fetchHistory]);
+
+  const getDurationString = (startDateStr) => {
+    if (!startDateStr) return "0s";
+    // Parse timestamp safely (handle both space and T delimiters)
+    const normalized = startDateStr.replace(' ', 'T');
+    const start = new Date(normalized);
+    const diffMs = currentTime - start;
+    if (isNaN(diffMs) || diffMs < 0) return "0s";
+    
+    const seconds = Math.floor((diffMs / 1000) % 60);
+    const minutes = Math.floor((diffMs / (1000 * 60)) % 60);
+    const hours = Math.floor((diffMs / (1000 * 60 * 60)) % 24);
+    const days = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+    
+    const parts = [];
+    if (days > 0) parts.push(`${days}d`);
+    if (hours > 0) parts.push(`${hours}h`);
+    if (minutes > 0) parts.push(`${minutes}m`);
+    parts.push(`${seconds}s`);
+    return parts.join(' ');
+  };
+
+  const getTimeInStatusString = () => {
+    // Find the latest status change event
+    const statusEvent = [...historyList].reverse().find(h => h.eventType === 'status_changed');
+    const startTimeStr = statusEvent ? statusEvent.date : issue.created;
+    return getDurationString(startTimeStr);
+  };
+
+  const generateReportText = () => {
+    const assignedUser = users.find(u => u.id === issue.assignee)?.name || "Unassigned";
+    const reporterUser = users.find(u => u.id === issue.reporter)?.name || "Unknown";
+    const epicName = EPICS.find(e => e.id === issue.epic)?.name || "None";
+    
+    let report = `==================================================
+METAPHARSIC ERP - TASK SUMMARY REPORT
+==================================================
+Issue Key:     ${issue.key}
+Title:         ${issue.title}
+Status:        ${issue.status}
+Priority:      ${issue.priority.toUpperCase()}
+Type:          ${issue.type.toUpperCase()}
+--------------------------------------------------
+Assignee:      ${assignedUser}
+Reporter:      ${reporterUser}
+Department:    ${DEPARTMENTS[issue.department]?.label || issue.department}
+Story Points:  ${issue.sp}
+Sprint:        ${issue.sprint}
+Epic:          ${epicName}
+Due Date:      ${issue.dueDate || 'None'}
+Recurrence:    ${issue.recurrence}
+Notifications: ${issue.notification ? 'Enabled' : 'Disabled'}
+--------------------------------------------------
+TIMING & AUDITING (Precision Seconds)
+Created At:    ${issue.created}
+Last Updated:  ${issue.updated || issue.created}
+Total Age:     ${getDurationString(issue.created)}
+Time in Status:${issue.status} for ${getTimeInStatusString()}
+--------------------------------------------------
+DESCRIPTION
+${issue.desc || 'No description provided.'}
+--------------------------------------------------
+COMMENTS (${issue.comments.length})
+`;
+    issue.comments.forEach((c) => {
+      const author = users.find(u => u.id === c.userId)?.name || "Unknown";
+      report += `[${c.date}] ${author}: ${c.text}\n`;
+    });
+    
+    report += `--------------------------------------------------
+ACTIVITY HISTORY LOG (${historyList.length})
+`;
+    historyList.forEach((h) => {
+      report += `[${h.date}] ${h.userName || 'System'}: ${getHistoryText(h)}\n`;
+    });
+    
+    report += `==================================================\n`;
+    return report;
+  };
+
+  const handleCopyReport = () => {
+    navigator.clipboard.writeText(generateReportText());
+    alert("📋 Detailed task report copied to clipboard!");
+  };
+
+  const handleDownloadReport = () => {
+    const element = document.createElement("a");
+    const file = new Blob([generateReportText()], {type: 'text/plain'});
+    element.href = URL.createObjectURL(file);
+    element.download = `report-${issue.key}.txt`;
+    document.body.appendChild(element);
+    element.click();
+    document.body.removeChild(element);
+  };
+
+  const handleSaveChanges = () => {
+    onUpdate(draft);
+    setIsEditing(false);
+  };
 
   const getHistoryText = (h) => {
     switch (h.eventType) {
@@ -1955,14 +3201,33 @@ function DetailPanel({ issue, onClose, onUpdate, onDelete, onComment, currentUse
       case 'assigned':
         return `assigned this issue to "${h.newValue || 'Unassigned'}" (was "${h.oldValue || 'Unassigned'}")`;
       case 'edited':
-        return `edited issue details`;
+        return `edited issue details (Title/Description)`;
       case 'labeled':
-        return `updated labels to "${h.newValue}"`;
+        return `updated labels from "${h.oldValue || 'None'}" to "${h.newValue}"`;
       case 'sprint_changed':
-        return `moved sprint to "${h.newValue}"`;
+        return `moved sprint from "${h.oldValue || 'Backlog'}" to "${h.newValue}"`;
+      case 'priority_changed':
+        return `changed priority from "${h.oldValue}" to "${h.newValue}"`;
+      case 'type_changed':
+        return `changed type from "${h.oldValue}" to "${h.newValue}"`;
+      case 'sp_changed':
+        return `changed story points from "${h.oldValue || '0'}" to "${h.newValue}"`;
+      case 'epic_changed':
+        return `changed epic from "${h.oldValue}" to "${h.newValue}"`;
+      case 'duedate_changed':
+        return `changed due date from "${h.oldValue}" to "${h.newValue}"`;
+      case 'recurrence_changed':
+        return `changed recurrence from "${h.oldValue}" to "${h.newValue}"`;
       default:
         return `updated this issue`;
     }
+  };
+
+  const toggleDraftLabel = (lbl) => {
+    setDraft(p => ({
+      ...p,
+      labels: p.labels.includes(lbl) ? p.labels.filter(l => l !== lbl) : [...p.labels, lbl]
+    }));
   };
 
   const ti = ISSUE_TYPES[issue.type];
@@ -1976,14 +3241,34 @@ function DetailPanel({ issue, onClose, onUpdate, onDelete, onComment, currentUse
 
   return (
     <div style={S.panelOverlay} onClick={e => e.target === e.currentTarget && onClose()}>
-      <div style={S.panel}>
+      <div style={{ ...S.panel, display: "flex", flexDirection: "column", background: "var(--card-bg)" }}>
         <div style={S.panelHdr}>
           <div style={{ display:"flex", alignItems:"center", gap:8 }}>
             <span style={{ color: ti.color, fontSize:14 }}>{ti.icon}</span>
             <span style={S.panelKey}>{issue.key}</span>
             <span style={{ ...S.statusPill, background: sc.bg, color: sc.text }}>{issue.status}</span>
           </div>
-          <div style={{ display:"flex", gap:4 }}>
+          <div style={{ display:"flex", alignItems: "center", gap:10 }}>
+            {canEdit && !isEditing && (
+              <button 
+                onClick={() => setIsEditing(true)}
+                style={{ 
+                  background: "#338ba8", 
+                  color: "#fff", 
+                  border: "none", 
+                  borderRadius: 6, 
+                  padding: "4px 10px", 
+                  fontSize: 12, 
+                  fontWeight: 700, 
+                  cursor: "pointer",
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 4
+                }}
+              >
+                ✏️ Edit Task
+              </button>
+            )}
             {isAdmin && <button style={S.iconBtn} onClick={onDelete} title="Delete">🗑</button>}
             <button style={S.iconBtn} onClick={onClose}>✕</button>
           </div>
@@ -1998,8 +3283,8 @@ function DetailPanel({ issue, onClose, onUpdate, onDelete, onComment, currentUse
             const color = isPast ? "#fff" : "#768390";
             return (
               <div key={st} style={{ display:"flex", alignItems:"center", flex:1 }}>
-                <div style={{ display:"flex", alignItems:"center", gap:6, cursor:canEdit?"pointer":"default" }}
-                  onClick={() => canEdit && onUpdate({ status: st })}
+                <div style={{ display:"flex", alignItems:"center", gap:6, cursor:(canEdit && !isEditing)?"pointer":"default" }}
+                  onClick={() => canEdit && !isEditing && onUpdate({ status: st })}
                 >
                   <div style={{ ...S.processDot, background: bg, color }}>
                     {isPast ? "✓" : (i+1)}
@@ -2015,16 +3300,21 @@ function DetailPanel({ issue, onClose, onUpdate, onDelete, onComment, currentUse
         </div>
 
         <div style={{ padding:"16px 20px 12px" }}>
-          {editTitle && canEdit ? (
-            <div style={{ display:"flex", gap:8 }}>
-              <input style={S.titleEdit} value={titleDraft} onChange={e => setTD(e.target.value)} autoFocus />
-              <button style={S.btnPrimary} onClick={() => { onUpdate({ title: titleDraft }); setET(false); }}>Save</button>
-              <button style={S.btnGhost}   onClick={() => setET(false)}>Cancel</button>
+          {isEditing ? (
+            <div style={{ display:"flex", flexDirection:"column", gap:6, width: "100%" }}>
+              <label style={{ fontSize: 11, color: "#909dab", fontWeight: 600 }}>Title</label>
+              <input 
+                style={{ ...S.titleEdit, width: "100%", boxSizing: "border-box" }} 
+                value={draft.title} 
+                onChange={e => setDraft(p => ({ ...p, title: e.target.value }))} 
+                autoFocus 
+              />
             </div>
           ) : (
-            <h2 style={S.panelTitle} onClick={() => canEdit && setET(true)}>{issue.title}</h2>
+            <h2 style={{ ...S.panelTitle, cursor: "default" }}>{issue.title}</h2>
           )}
         </div>
+        
         <div style={S.tabBar}>
           {["details","comments","history"].map(t => (
             <button key={t} style={{ ...S.tab, ...(tab===t?S.tabActive:{}) }} onClick={() => setTab(t)}>
@@ -2033,84 +3323,253 @@ function DetailPanel({ issue, onClose, onUpdate, onDelete, onComment, currentUse
             </button>
           ))}
         </div>
-        <div style={S.panelBody}>
+
+        <div style={{ ...S.panelBody, flex: 1, overflowY: "auto" }}>
           {tab === "details" && (
             <div style={S.detailGrid}>
-              <div>
+              <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+                {/* Description */}
                 <div style={S.fieldGroup}>
                   <div style={S.fieldLabel}>Description</div>
-                  {editDesc && canEdit ? (
-                    <>
-                      <textarea style={S.descEdit} value={descDraft} onChange={e => setDD(e.target.value)} rows={5} autoFocus />
-                      <div style={{ display:"flex", gap:8, marginTop:8 }}>
-                        <button style={S.btnPrimary} onClick={() => { onUpdate({ desc: descDraft }); setED(false); }}>Save</button>
-                        <button style={S.btnGhost}   onClick={() => setED(false)}>Cancel</button>
-                      </div>
-                    </>
+                  {isEditing ? (
+                    <textarea 
+                      style={{ ...S.descEdit, width: "100%", boxSizing: "border-box" }} 
+                      value={draft.desc} 
+                      onChange={e => setDraft(p => ({ ...p, desc: e.target.value }))} 
+                      rows={5} 
+                    />
                   ) : (
-                    <div style={S.descText} onClick={() => canEdit && setED(true)}>
-                      {issue.desc || <span style={{ color:"#768390" }}>Click to add a description…</span>}
+                    <div style={{ ...S.descText, cursor: "default" }}>
+                      {issue.desc || <span style={{ color:"#768390", fontStyle: "italic" }}>No description provided.</span>}
                     </div>
                   )}
                 </div>
+
+                {/* Labels */}
                 <div style={S.fieldGroup}>
                   <div style={S.fieldLabel}>Labels</div>
-                  <div style={S.labelRow}>
-                    {issue.labels.map(l => <span key={l} style={S.labelChip}>{l}</span>)}
-                    {issue.labels.length === 0 && <span style={{ color:"#768390", fontSize:13 }}>None</span>}
-                  </div>
+                  {isEditing ? (
+                    <div style={{ display:"flex", flexWrap:"wrap", gap:6, marginTop:4 }}>
+                      {ALL_LABELS.map(l => {
+                        const active = draft.labels?.includes(l);
+                        return (
+                          <button 
+                            key={l} 
+                            style={{ 
+                              ...S.labelPickBtn, 
+                              ...(active ? S.labelPickActive : {}),
+                              padding: "4px 8px",
+                              fontSize: 11
+                            }}
+                            onClick={() => toggleDraftLabel(l)}
+                          >
+                            {l}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  ) : (
+                    <div style={S.labelRow}>
+                      {issue.labels.map(l => <span key={l} style={S.labelChip}>{l}</span>)}
+                      {issue.labels.length === 0 && <span style={{ color:"#768390", fontSize:13 }}>None</span>}
+                    </div>
+                  )}
                 </div>
-                {ep && (
+
+                {/* Epic (Only in View Mode if Epic exists; Editable in Edit Mode) */}
+                {isEditing ? (
                   <div style={S.fieldGroup}>
                     <div style={S.fieldLabel}>Epic</div>
-                    <span style={{ ...S.epicTag, background: ep.color+"25", color: ep.color }}>⚡ {ep.name}</span>
+                    <select 
+                      style={S.fieldSel} 
+                      value={draft.epic || ""} 
+                      onChange={e => setDraft(p => ({ ...p, epic: e.target.value || null }))}
+                    >
+                      <option value="">None</option>
+                      {EPICS.map(ep => <option key={ep.id} value={ep.id}>{ep.name}</option>)}
+                    </select>
                   </div>
+                ) : (
+                  ep && (
+                    <div style={S.fieldGroup}>
+                      <div style={S.fieldLabel}>Epic</div>
+                      <span style={{ ...S.epicTag, background: ep.color+"25", color: ep.color }}>⚡ {ep.name}</span>
+                    </div>
+                  )
                 )}
+
+                {/* Recurrence */}
                 <div style={S.fieldGroup}>
                   <div style={S.fieldLabel}>Recurrence</div>
-                  <select style={S.fieldSel} value={issue.recurrence} onChange={e => canEdit && onUpdate({ recurrence: e.target.value })} disabled={!canEdit}>
-                    {RECURRENCE_OPTIONS.map(r => <option key={r} value={r}>{r.charAt(0).toUpperCase()+r.slice(1)}</option>)}
-                  </select>
+                  {isEditing ? (
+                    <select 
+                      style={S.fieldSel} 
+                      value={draft.recurrence} 
+                      onChange={e => setDraft(p => ({ ...p, recurrence: e.target.value }))}
+                    >
+                      {RECURRENCE_OPTIONS.map(r => <option key={r} value={r}>{r.charAt(0).toUpperCase()+r.slice(1)}</option>)}
+                    </select>
+                  ) : (
+                    <span style={{ fontSize:13, color:"#adbac7", textTransform: "capitalize" }}>🔄 {issue.recurrence}</span>
+                  )}
                 </div>
+
+                {/* Notifications Toggle */}
                 <div style={S.fieldGroup}>
                   <div style={S.fieldLabel}>Notifications</div>
-                  <label style={{ display:"flex", alignItems:"center", gap:8, cursor:"pointer" }}>
-                    <input type="checkbox" checked={issue.notification} onChange={() => canEdit && onUpdate({ notification: !issue.notification })} disabled={!canEdit} />
-                    <span style={{ fontSize:13, color:"#adbac7" }}>{issue.notification ? "🔔 Enabled" : "🔕 Disabled"}</span>
-                  </label>
+                  {isEditing ? (
+                    <label style={{ display:"flex", alignItems:"center", gap:8, cursor:"pointer" }}>
+                      <input 
+                        type="checkbox" 
+                        checked={draft.notification} 
+                        onChange={e => setDraft(p => ({ ...p, notification: e.target.checked }))} 
+                      />
+                      <span style={{ fontSize:13, color:"#adbac7" }}>{draft.notification ? "🔔 Enabled" : "🔕 Disabled"}</span>
+                    </label>
+                  ) : (
+                    <span style={{ fontSize:13, color:"#adbac7" }}>{issue.notification ? "🔔 Active" : "🔕 Suppressed"}</span>
+                  )}
                 </div>
+
+                {/* --- TIME TRACKING & METADATA SECTION --- */}
+                {!isEditing && (
+                  <div style={{ background: "#22272e", border: "1px solid #444c56", borderRadius: 8, padding: 12, display: "flex", flexDirection: "column", gap: 10, marginTop: 8 }}>
+                    <div style={{ fontSize: 11, fontWeight: 700, color: "#7dc3db", borderBottom: "1px solid #444c56", paddingBottom: 6, textTransform: "uppercase", letterSpacing: 0.5 }}>
+                      ⏱️ Auditing & Timing Analysis
+                    </div>
+                    <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
+                      <div>
+                        <div style={{ fontSize: 10, color: "#768390" }}>Task Age (Total Duration)</div>
+                        <div style={{ fontSize: 13, fontWeight: 800, color: "#7dc3db", textShadow: "0 0 8px rgba(125,195,219,0.3)", marginTop: 2 }}>
+                          🕒 {getDurationString(issue.created)}
+                        </div>
+                      </div>
+                      <div>
+                        <div style={{ fontSize: 10, color: "#768390" }}>Time in Status ({issue.status})</div>
+                        <div style={{ fontSize: 13, fontWeight: 800, color: "#fbbf24", textShadow: "0 0 8px rgba(251,191,36,0.3)", marginTop: 2 }}>
+                          ⚡ {getTimeInStatusString()}
+                        </div>
+                      </div>
+                    </div>
+                    <div style={{ display: "flex", flexDirection: "column", gap: 4, marginTop: 2, borderTop: "1px solid #22272e", paddingTop: 6 }}>
+                      <div style={{ display: "flex", justifyContent: "space-between", fontSize: 11 }}>
+                        <span style={{ color: "#768390" }}>Created At:</span>
+                        <span style={{ color: "#adbac7", fontFamily: "monospace" }}>{issue.created}</span>
+                      </div>
+                      <div style={{ display: "flex", justifyContent: "space-between", fontSize: 11 }}>
+                        <span style={{ color: "#768390" }}>Last Updated:</span>
+                        <span style={{ color: "#adbac7", fontFamily: "monospace" }}>{issue.updated || issue.created}</span>
+                      </div>
+                    </div>
+                  </div>
+                )}
               </div>
+
+              {/* Sidebar attributes */}
               <div style={S.detailRight}>
                 {[
-                  { label:"Status", el: <select style={S.fieldSel} value={issue.status} onChange={e => canEdit && onUpdate({ status: e.target.value })} disabled={!canEdit}>
-                      {STATUSES.map(s => <option key={s} value={s}>{s}</option>)}
-                    </select> },
-                  { label:"Priority", el: <select style={S.fieldSel} value={issue.priority} onChange={e => canEdit && onUpdate({ priority: e.target.value })} disabled={!canEdit}>
-                      {Object.entries(PRIORITIES).map(([k,v]) => <option key={k} value={k}>{v.label}</option>)}
-                    </select> },
-                  { label:"Type", el: <select style={S.fieldSel} value={issue.type} onChange={e => canEdit && onUpdate({ type: e.target.value })} disabled={!canEdit}>
-                      {Object.entries(ISSUE_TYPES).map(([k,v]) => <option key={k} value={k}>{v.label}</option>)}
-                    </select> },
-                  { label:"Assignee", el: <select style={S.fieldSel} value={issue.assignee||""} onChange={e => canEdit && onUpdate({ assignee: e.target.value ? +e.target.value : null })} disabled={!hasPermission("assign")}>
-                      <option value="">Unassigned</option>
-                      {users.map(u => <option key={u.id} value={u.id}>{u.name}</option>)}
-                    </select> },
-                  { label:"Reporter", el: <span style={{ fontSize:13, color:"#adbac7" }}>{ru?.name}</span> },
-                  { label:"Department", el: <select style={S.fieldSel} value={issue.department||""} onChange={e => isAdmin && onUpdate({ department: e.target.value })} disabled={!isAdmin}>
-                      {Object.entries(DEPARTMENTS).map(([k,v]) => <option key={k} value={k}>{v.label}</option>)}
-                    </select> },
-                  { label:"Story Points", el: <input type="number" style={S.fieldInput} value={issue.sp} min={0} disabled={!canEdit}
-                      onChange={e => canEdit && onUpdate({ sp: +e.target.value||0 })} /> },
-                  { label:"Sprint", el: <select style={S.fieldSel} value={issue.sprint} onChange={e => canEdit && onUpdate({ sprint: e.target.value })} disabled={!canEdit}>
-                      <option>Sprint 1</option><option>Sprint 2</option><option>Backlog</option>
-                    </select> },
-                  { label:"Due Date", el: <input type="date" style={S.fieldInput} value={issue.dueDate} disabled={!canEdit}
-                      onChange={e => canEdit && onUpdate({ dueDate: e.target.value })} /> },
-                  { label:"Created",     el: <span style={{ fontSize:13, color:"#adbac7" }}>{issue.created}</span> },
-                  { label:"Watchers",    el: <span style={{ fontSize:13, color:"#adbac7" }}>{issue.watchers.length}</span> },
-                  { label:"Attachments", el: <span style={{ fontSize:13, color:"#adbac7" }}>{issue.attach}</span> },
+                  { 
+                    label:"Status", 
+                    el: isEditing ? (
+                      <select style={S.fieldSel} value={draft.status} onChange={e => setDraft(p => ({ ...p, status: e.target.value }))}>
+                        {STATUSES.map(s => <option key={s} value={s}>{s}</option>)}
+                      </select>
+                    ) : (
+                      <span style={{ ...S.statusPill, background: sc.bg, color: sc.text, width: "fit-content", padding: "4px 10px" }}>{issue.status}</span>
+                    )
+                  },
+                  { 
+                    label:"Priority", 
+                    el: isEditing ? (
+                      <select style={S.fieldSel} value={draft.priority} onChange={e => setDraft(p => ({ ...p, priority: e.target.value }))}>
+                        {Object.entries(PRIORITIES).map(([k,v]) => <option key={k} value={k}>{v.label}</option>)}
+                      </select>
+                    ) : (
+                      <span style={{ color: pi.color, fontSize: 13, fontWeight: 700 }}>{pi.icon} {pi.label}</span>
+                    )
+                  },
+                  { 
+                    label:"Type", 
+                    el: isEditing ? (
+                      <select style={S.fieldSel} value={draft.type} onChange={e => setDraft(p => ({ ...p, type: e.target.value }))}>
+                        {Object.entries(ISSUE_TYPES).map(([k,v]) => <option key={k} value={k}>{v.label}</option>)}
+                      </select>
+                    ) : (
+                      <span style={{ color: ti.color, fontSize: 13, fontWeight: 600 }}>{ti.icon} {ti.label}</span>
+                    )
+                  },
+                  { 
+                    label:"Assignee", 
+                    el: isEditing ? (
+                      <select style={S.fieldSel} value={draft.assignee || ""} onChange={e => setDraft(p => ({ ...p, assignee: e.target.value ? Number(e.target.value) : null }))}>
+                        <option value="">Unassigned</option>
+                        {users.map(u => <option key={u.id} value={u.id}>{u.name}</option>)}
+                      </select>
+                    ) : (
+                      <span style={{ fontSize:13, color:"#adbac7" }}>👤 {au?.name || "Unassigned"}</span>
+                    )
+                  },
+                  { 
+                    label:"Reporter", 
+                    el: isEditing && isAdmin ? (
+                      <select style={S.fieldSel} value={draft.reporter} onChange={e => setDraft(p => ({ ...p, reporter: Number(e.target.value) }))}>
+                        {users.map(u => <option key={u.id} value={u.id}>{u.name}</option>)}
+                      </select>
+                    ) : (
+                      <span style={{ fontSize:13, color:"#adbac7" }}>📢 {ru?.name || "Unknown"}</span>
+                    )
+                  },
+                  { 
+                    label:"Department", 
+                    el: isEditing && isAdmin ? (
+                      <select style={S.fieldSel} value={draft.department || ""} onChange={e => setDraft(p => ({ ...p, department: e.target.value }))}>
+                        {Object.entries(DEPARTMENTS).map(([k,v]) => <option key={k} value={k}>{v.label}</option>)}
+                      </select>
+                    ) : (
+                      <span style={{ fontSize:13, color:"#adbac7" }}>🏢 {DEPARTMENTS[issue.department]?.label || issue.department}</span>
+                    )
+                  },
+                  { 
+                    label:"Story Points", 
+                    el: isEditing ? (
+                      <input 
+                        type="number" 
+                        style={S.fieldInput} 
+                        value={draft.sp} 
+                        min={0}
+                        onChange={e => setDraft(p => ({ ...p, sp: Number(e.target.value) || 0 }))} 
+                      />
+                    ) : (
+                      <span style={{ fontSize:13, color:"#adbac7", fontWeight: 700 }}>{issue.sp} pts</span>
+                    )
+                  },
+                  { 
+                    label:"Sprint", 
+                    el: isEditing ? (
+                      <select style={S.fieldSel} value={draft.sprint} onChange={e => setDraft(p => ({ ...p, sprint: e.target.value }))}>
+                        <option>Sprint 1</option><option>Sprint 2</option><option>Backlog</option>
+                      </select>
+                    ) : (
+                      <span style={{ fontSize:13, color:"#adbac7" }}>🏃 {issue.sprint}</span>
+                    )
+                  },
+                  { 
+                    label:"Due Date", 
+                    el: isEditing ? (
+                      <input 
+                        type="date" 
+                        style={S.fieldInput} 
+                        value={draft.dueDate || ""} 
+                        onChange={e => setDraft(p => ({ ...p, dueDate: e.target.value || "" }))} 
+                      />
+                    ) : (
+                      <span style={{ fontSize:13, color: issue.dueDate ? "#adbac7" : "#768390" }}>📅 {issue.dueDate || "No due date"}</span>
+                    )
+                  },
+                  { label:"Watchers",    el: <span style={{ fontSize:13, color:"#adbac7" }}>👁️ {issue.watchers.length} watchers</span> },
+                  { label:"Attachments", el: <span style={{ fontSize:13, color:"#adbac7" }}>📎 {issue.attach} files</span> },
                 ].map(({label,el}) => (
-                  <div key={label} style={S.rightField}>
+                  <div key={label} style={{ ...S.rightField, borderBottom: "1px solid rgba(255, 255, 255, 0.04)", paddingBottom: 8, marginBottom: 8 }}>
                     <div style={S.rightLabel}>{label}</div>
                     {el}
                   </div>
@@ -2118,6 +3577,7 @@ function DetailPanel({ issue, onClose, onUpdate, onDelete, onComment, currentUse
               </div>
             </div>
           )}
+
           {tab === "comments" && (
             <div>
               {issue.comments.length === 0 && <div style={S.emptyComments}>No comments yet.</div>}
@@ -2149,6 +3609,7 @@ function DetailPanel({ issue, onClose, onUpdate, onDelete, onComment, currentUse
               </div>
             </div>
           )}
+
           {tab === "history" && (
             <div style={{ padding:"10px 0", display:"flex", flexDirection:"column", gap:12 }}>
               {historyList.map((h, i) => (
@@ -2177,15 +3638,117 @@ function DetailPanel({ issue, onClose, onUpdate, onDelete, onComment, currentUse
             </div>
           )}
         </div>
+
+        {/* ── FOOTER ACTIONS ── */}
+        <div style={{ 
+          padding: "12px 20px", 
+          borderTop: "1px solid var(--border)", 
+          display: "flex", 
+          justifyContent: "space-between", 
+          alignItems: "center",
+          background: "var(--sidebar-bg)",
+          borderBottomLeftRadius: 12,
+          borderBottomRightRadius: 12
+        }}>
+          {/* View Mode Export tools */}
+          {!isEditing ? (
+            <div style={{ display: "flex", gap: 8 }}>
+              <button 
+                onClick={handleCopyReport}
+                style={{ 
+                  background: "transparent", 
+                  color: "#7dc3db", 
+                  border: "1px solid #338ba8", 
+                  borderRadius: 6, 
+                  padding: "6px 12px", 
+                  fontSize: 12, 
+                  fontWeight: 600, 
+                  cursor: "pointer"
+                }}
+              >
+                📋 Copy Report
+              </button>
+              <button 
+                onClick={handleDownloadReport}
+                style={{ 
+                  background: "transparent", 
+                  color: "#adbac7", 
+                  border: "1px solid #444c56", 
+                  borderRadius: 6, 
+                  padding: "6px 12px", 
+                  fontSize: 12, 
+                  fontWeight: 600, 
+                  cursor: "pointer"
+                }}
+              >
+                📥 Download Report
+              </button>
+            </div>
+          ) : (
+            <div style={{ flex: 1 }} />
+          )}
+
+          {/* Edit Mode Controls */}
+          {isEditing ? (
+            <div style={{ display: "flex", gap: 8 }}>
+              <button 
+                onClick={() => setIsEditing(false)}
+                style={{ 
+                  background: "transparent", 
+                  color: "#adbac7", 
+                  border: "1px solid #444c56", 
+                  borderRadius: 6, 
+                  padding: "6px 16px", 
+                  fontSize: 12, 
+                  fontWeight: 700, 
+                  cursor: "pointer"
+                }}
+              >
+                ✕ Cancel
+              </button>
+              <button 
+                onClick={handleSaveChanges}
+                style={{ 
+                  background: "#338ba8", 
+                  color: "#fff", 
+                  border: "none", 
+                  borderRadius: 6, 
+                  padding: "6px 16px", 
+                  fontSize: 12, 
+                  fontWeight: 700, 
+                  cursor: "pointer",
+                  boxShadow: "0 0 12px rgba(51,139,168,0.4)"
+                }}
+              >
+                💾 Save Changes
+              </button>
+            </div>
+          ) : (
+            <button 
+              onClick={onClose}
+              style={{ 
+                background: "transparent", 
+                color: "#768390", 
+                border: "none", 
+                fontSize: 12, 
+                fontWeight: 600, 
+                cursor: "pointer"
+              }}
+            >
+              Close
+            </button>
+          )}
+        </div>
       </div>
     </div>
   );
 }
 
 // ─── CREATE MODAL ─────────────────────────────────────────────────────────────
-function CreateModal({ onClose, onCreate, currentUser, users }) {
+function CreateModal({ onClose, onCreate, currentUser, users, initialStatus = "To Do" }) {
   const [f, setF] = useState({
     title:"", type:"task", priority:"medium", assignee: String(currentUser.id),
+    status: initialStatus,
     sp:"", epic:"", labels:[], desc:"", dueDate:"", sprint:"Sprint 1", recurrence:"none",
     department: currentUser.department,
   });
@@ -2212,6 +3775,11 @@ function CreateModal({ onClose, onCreate, currentUser, users }) {
             <Row label="Type">
               <select style={S.formSel} value={f.type} onChange={e => set("type",e.target.value)}>
                 {Object.entries(ISSUE_TYPES).map(([k,v]) => <option key={k} value={k}>{v.label}</option>)}
+              </select>
+            </Row>
+            <Row label="Status">
+              <select style={S.formSel} value={f.status} onChange={e => set("status",e.target.value)}>
+                {STATUSES.map(s => <option key={s} value={s}>{s}</option>)}
               </select>
             </Row>
             <Row label="Priority">
@@ -2302,8 +3870,12 @@ function Filters({ filters, setFilters, users }) {
         <option value="all">All Epics</option>
         {EPICS.map(ep => <option key={ep.id} value={ep.id}>{ep.name}</option>)}
       </select>
+      <select style={S.sel} value={filters.domain}   onChange={e => set("domain",e.target.value)}>
+        <option value="all">All Domains</option>
+        {Object.entries(DEPARTMENTS).map(([k,v]) => <option key={k} value={k}>{v.icon} {v.label}</option>)}
+      </select>
       {active > 0 && (
-        <button style={S.clearBtn} onClick={() => setFilters({ type:"all", priority:"all", assignee:"all", epic:"all" })}>
+        <button style={S.clearBtn} onClick={() => setFilters({ type:"all", priority:"all", assignee:"all", epic:"all", domain:"all" })}>
           ✕ Clear ({active})
         </button>
       )}
@@ -2480,6 +4052,8 @@ function LoginScreen({ users, onLogin }) {
       minHeight:"100vh", background:"#0d1117", display:"flex", alignItems:"center",
       justifyContent:"center", fontFamily:"'Inter',system-ui,sans-serif", position:"relative", overflow:"hidden"
     }}>
+
+
       {/* Ambient glow */}
       <div style={{ position:"absolute", top:"20%", left:"30%", width:600, height:600, borderRadius:"50%", background:"radial-gradient(circle, #338ba820 0%, transparent 70%)", pointerEvents:"none" }} />
       <div style={{ position:"absolute", bottom:"10%", right:"20%", width:400, height:400, borderRadius:"50%", background:"radial-gradient(circle, #6366f120 0%, transparent 70%)", pointerEvents:"none" }} />
@@ -2534,6 +4108,8 @@ function LoginScreen({ users, onLogin }) {
             </button>
           </form>
 
+          {/* Quick Access panel hidden by user request */}
+          {/*
           <div style={{ marginTop:24, borderTop:"1px solid #30363d", paddingTop:20 }}>
             <div style={{ fontSize:11, color:"#8b949e", textTransform:"uppercase", fontWeight:600, letterSpacing:"0.5px", marginBottom:12 }}>Quick Access</div>
             <div style={{ display:"flex", flexDirection:"column", gap:8 }}>
@@ -2558,6 +4134,7 @@ function LoginScreen({ users, onLogin }) {
               })}
             </div>
           </div>
+          */}
         </div>
       </div>
     </div>
@@ -2565,7 +4142,7 @@ function LoginScreen({ users, onLogin }) {
 }
 
 // ─── USER DASHBOARD (non-admin personal view) ───────────────────────────────
-function UserDashboard({ currentUser, isAdmin, todos, setTodos, issues, users, onSelectIssue, onCreateIssue, isMobile }) {
+function UserDashboard({ currentUser, isAdmin, todos, setTodos, issues, users, onSelectIssue, onCreateIssue, isMobile, search, setSearch, searchInputRef, t }) {
   const myIssues  = issues.filter(i => i.assignee === currentUser.id);
   const myTodo    = myIssues.filter(i => i.status === "To Do");
   const myActive  = myIssues.filter(i => i.status === "In Progress" || i.status === "In Review");
@@ -2622,6 +4199,49 @@ function UserDashboard({ currentUser, isAdmin, todos, setTodos, issues, users, o
             + New Issue
           </button>
         )}
+      </div>
+
+      {/* Search Bar */}
+      <div style={{ position:"relative", marginBottom:20, display:"flex", alignItems:"center", gap:10 }}>
+         <div style={{ position:"relative", flex:1 }}>
+            <input 
+              ref={searchInputRef}
+              type="text" 
+              value={search}
+              onChange={e => setSearch(e.target.value)}
+              placeholder={`🔍  ${t("search")}`}
+              style={{ 
+                ...S.searchBox, 
+                width:"100%", 
+                maxWidth: isMobile ? "none" : 400, 
+                paddingRight: search ? 30 : 10,
+                fontSize: isMobile ? 16 : 13 // Prevent zoom on iOS
+              }}
+              title="Search by title, key, desc, status, type, assignee, reporter, epic, or labels. Tokens: type:, p:, key:, assignee:, epic:, label:, status:"
+            />
+            {search && (
+              <button 
+                onClick={() => setSearch("")}
+                style={{
+                  position: "absolute",
+                  right: 8,
+                  top: "50%",
+                  transform: "translateY(-50%)",
+                  background: "none",
+                  border: "none",
+                  color: "#8b949e",
+                  cursor: "pointer",
+                  fontSize: 14,
+                  padding: 8, // Larger hit area for mobile
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center"
+                }}
+              >
+                ✕
+              </button>
+            )}
+         </div>
       </div>
 
       {/* Stats */}
@@ -2697,76 +4317,458 @@ function UserDashboard({ currentUser, isAdmin, todos, setTodos, issues, users, o
   );
 }
 // ─── DEPARTMENTS VIEW ────────────────────────────────────────────────────────
-function DepartmentsView({ currentUser, isAdmin, users = [] }) {
-  const visibleDepts = isAdmin
-    ? Object.entries(DEPARTMENTS)
-    : Object.entries(DEPARTMENTS).filter(([key]) => key === currentUser?.department);
+function DepartmentsView({ currentUser, isAdmin, users = [], onAdd, isMobile, t }) {
+  const [search, setSearch] = useState("");
+  
+  const allDepts = Object.entries(DEPARTMENTS);
+  const visibleDepts = (isAdmin
+    ? allDepts
+    : allDepts.filter(([key]) => key === currentUser?.department)
+  ).filter(([key, d]) => {
+    const s = search.toLowerCase().trim();
+    return !s || d.label.toLowerCase().includes(s) || key.toLowerCase().includes(s) || d.purpose.toLowerCase().includes(s);
+  });
 
   return (
     <div style={{ paddingBottom: 40 }}>
-      <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:16 }}>
-        <h2 style={S.pageH2}>Enterprise Departments</h2>
+      <div style={{ display:"flex", justifyContent:"space-between", alignItems:"flex-start", marginBottom:28, borderBottom:"1px solid var(--border)", paddingBottom:24, flexDirection: isMobile ? "column" : "row", gap: 16 }}>
+        <div>
+          <div style={{ display:"flex", alignItems:"center", gap:12, marginBottom:8 }}>
+            <h2 style={{ ...S.pageH2, marginBottom:0 }}>Enterprise Departments</h2>
+            <span style={{ background:"var(--accent)20", color:"var(--accent)", padding:"2px 10px", borderRadius:20, fontSize:11, fontWeight:700, border:"1px solid var(--accent)30", textTransform:"uppercase", letterSpacing:"0.5px" }}>
+              {allDepts.length} Units
+            </span>
+          </div>
+          <p style={{ color:"var(--text-muted)", fontSize:14, maxWidth:700, lineHeight:1.6, margin:0 }}>
+            {isAdmin
+              ? "Comprehensive overview of organizational structure, operational KPIs, and cross-departmental staffing modules."
+              : `Operational parameters and staffing overview for your assigned unit: ${DEPARTMENTS[currentUser?.department]?.label || ""}`
+            }
+          </p>
+        </div>
+        <div style={{ display:"flex", gap:8, alignItems:"center", width: isMobile ? "100%" : "auto", flexWrap:"wrap" }}>
+           <div style={{ position: "relative", display: "flex", alignItems: "center", width: isMobile ? "100%" : 200 }}>
+            <input 
+              type="text" 
+              value={search}
+              onChange={e => setSearch(e.target.value)}
+              placeholder={`🔍  Search depts...`}
+              style={{ 
+                ...S.searchBox, 
+                width:"100%", 
+                paddingRight: search ? 30 : 10,
+                fontSize: isMobile ? 16 : 13
+              }}
+            />
+            {search && (
+              <button 
+                onClick={() => setSearch("")}
+                style={{
+                  position: "absolute",
+                  right: 8,
+                  top: "50%",
+                  transform: "translateY(-50%)",
+                  background: "none",
+                  border: "none",
+                  color: "var(--text-muted)",
+                  cursor: "pointer",
+                  fontSize: 14,
+                  padding: 8,
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center"
+                }}
+              >
+                ✕
+              </button>
+            )}
+          </div>
+          {isAdmin && (
+            <button 
+              style={{ ...S.btnPrimary, padding:"10px 20px", borderRadius:8, display:"flex", alignItems:"center", gap:8, fontWeight:700, boxShadow:"0 4px 15px rgba(0,0,0,0.2)", width: isMobile ? "100%" : "auto" }}
+              onClick={onAdd}
+            >
+              <span style={{ fontSize:20, lineHeight:0, marginTop:-2 }}>+</span> Add Department
+            </button>
+          )}
+        </div>
       </div>
-      <p style={{ color:"#909dab", fontSize:13, marginBottom:24, maxWidth:800, lineHeight:1.5 }}>
-        {isAdmin
-          ? "All 12 enterprise departments with purpose, roles, and core KPIs."
-          : `Your assigned enterprise department: ${DEPARTMENTS[currentUser?.department]?.label || ""}`
-        }
-      </p>
       
-      <div style={{ display:"grid", gridTemplateColumns:"repeat(auto-fill, minmax(320px, 1fr))", gap:20 }}>
-        {visibleDepts.map(([key, d]) => (
-          <div key={key} style={{ background:"#2d333b", border:"1px solid #444c56", borderRadius:10, overflow:"hidden", display:"flex", flexDirection:"column" }}>
-            <div style={{ display:"flex", alignItems:"center", gap:12, background:"#1c2128", padding:"14px 16px", borderBottom:"1px solid #444c56" }}>
-              <div style={{ width:36, height:36, borderRadius:8, background: d.color+"25", color: d.color, display:"flex", alignItems:"center", justifyContent:"center", fontSize:18, flexShrink:0 }}>
-                {d.icon}
+      <div style={{ display:"grid", gridTemplateColumns:"repeat(auto-fill, minmax(340px, 1fr))", gap:20 }}>
+        {visibleDepts.map(([key, d]) => {
+          const deptUsers = users.filter(u => u.department === key);
+          const staffingPct = Math.min(100, (deptUsers.length / 10) * 100);
+
+          return (
+            <div key={key} style={{ background:"var(--card-bg)", border:"1px solid var(--border)", borderRadius:10, overflow:"hidden", display:"flex", flexDirection:"column" }}>
+              <div style={{ display:"flex", alignItems:"center", gap:12, background:"var(--border)", padding:"14px 16px", borderBottom:"1px solid var(--border)" }}>
+                <div style={{ width:36, height:36, borderRadius:8, background: d.color+"25", color: d.color, display:"flex", alignItems:"center", justifyContent:"center", fontSize:18, flexShrink:0 }}>
+                  {d.icon}
+                </div>
+                <div style={{ flex:1 }}>
+                  <div style={{ fontWeight:700, color:"var(--text-header)", fontSize:15 }}>{d.label}</div>
+                  <div style={{ fontSize:11, color:"var(--text-muted)", textTransform:"uppercase", fontWeight:600 }}>ID: {key}</div>
+                </div>
+                <div style={{ textAlign:"right" }}>
+                  <div style={{ fontSize:18, fontWeight:700, color:"var(--text-header)" }}>{deptUsers.length}</div>
+                  <div style={{ fontSize:9, color:"var(--text-muted)", textTransform:"uppercase" }}>Staff</div>
+                </div>
               </div>
-              <div>
-                <div style={{ fontWeight:700, color:"#e6edf3", fontSize:15 }}>{d.label}</div>
-                <div style={{ fontSize:12, color:"#768390" }}>{d.purpose}</div>
-              </div>
-            </div>
-            <div style={{ padding:"16px", display:"flex", flexDirection:"column", gap:16, flex:1 }}>
-              {isAdmin && (
+              <div style={{ padding:"16px", display:"flex", flexDirection:"column", gap:16, flex:1 }}>
                 <div>
-                  <div style={{ fontSize:11, fontWeight:700, color:"#768390", textTransform:"uppercase", marginBottom:6 }}>Assigned Staff</div>
-                  <div style={{ display:"flex", flexWrap:"wrap", gap:6 }}>
-                    {users.filter(u => u.department === key).map(u => (
-                      <span key={u.id} style={{ display:"inline-flex", alignItems:"center", gap:6, background: u.color+"20", border:`1px solid ${u.color}35`, color: u.color, padding:"3px 8px", borderRadius:6, fontSize:11, fontWeight:600 }}>
-                        <span style={{ width:6, height:6, borderRadius:"50%", background: u.active ? "#10b981" : "#768390" }}></span>
-                        {u.name}
-                      </span>
-                    ))}
-                    {users.filter(u => u.department === key).length === 0 && (
-                      <span style={{ fontSize:12, color:"#768390", fontStyle:"italic" }}>No staff assigned</span>
-                    )}
+                  <div style={{ display:"flex", justifyContent:"space-between", marginBottom:6 }}>
+                    <div style={S.fieldLabel}>Staffing Capacity</div>
+                    <div style={{ fontSize:11, color:"var(--text-main)", fontWeight:600 }}>{deptUsers.length} / 10</div>
+                  </div>
+                  <div style={S.progressBar}>
+                    <div style={{ ...S.progressFill, width: `${staffingPct}%`, background: d.color }}></div>
                   </div>
                 </div>
-              )}
-              <div>
-                <div style={{ fontSize:11, fontWeight:700, color:"#768390", textTransform:"uppercase", marginBottom:6 }}>Key Roles</div>
-                <div style={{ display:"flex", flexWrap:"wrap", gap:6 }}>
-                  {d.roles.split(",").map(r => (
-                    <span key={r} style={{ background:"#22272e", border:"1px solid #444c56", color:"#cdd9e5", padding:"4px 8px", borderRadius:6, fontSize:12 }}>
-                      {r.trim()}
-                    </span>
-                  ))}
+
+                <div>
+                  <div style={S.fieldLabel}>Purpose</div>
+                  <div style={{ fontSize:13, color:"var(--text-main)", lineHeight:1.5 }}>{d.purpose}</div>
                 </div>
-              </div>
-              <div>
-                <div style={{ fontSize:11, fontWeight:700, color:"#768390", textTransform:"uppercase", marginBottom:6 }}>Core KPIs</div>
-                <div style={{ display:"flex", flexWrap:"wrap", gap:6 }}>
-                  {d.kpis.split("·").map(k => (
-                    <span key={k} style={{ color:"#46b3cf", fontSize:12, background:"#0c4a6e", padding:"4px 8px", borderRadius:6 }}>
-                      {k.trim()}
-                    </span>
-                  ))}
+
+                {isAdmin && (
+                  <div>
+                    <div style={S.fieldLabel}>Active Members</div>
+                    <div style={{ display:"flex", flexWrap:"wrap", gap:6 }}>
+                      {deptUsers.slice(0, 5).map(u => (
+                        <div key={u.id} title={u.name} style={{ width:24, height:24, borderRadius:"50%", background:u.color, color:"#fff", display:"flex", alignItems:"center", justifyContent:"center", fontSize:10, fontWeight:700, border:"2px solid var(--card-bg)" }}>
+                          {u.avatar}
+                        </div>
+                      ))}
+                      {deptUsers.length > 5 && (
+                        <div style={{ width:24, height:24, borderRadius:"50%", background:"var(--border)", color:"var(--text-muted)", display:"flex", alignItems:"center", justifyContent:"center", fontSize:10, fontWeight:700 }}>
+                          +{deptUsers.length - 5}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                )}
+                
+                <div style={{ display:"flex", gap:10 }}>
+                  <div style={{ flex:1 }}>
+                    <div style={S.fieldLabel}>Primary Roles</div>
+                    <div style={{ display:"flex", flexWrap:"wrap", gap:4 }}>
+                      {(d.roles||"").split(",").slice(0,2).map(r => (
+                        <span key={r} style={{ background:"var(--bg-main)", border:"1px solid var(--border)", color:"var(--text-muted)", padding:"2px 6px", borderRadius:4, fontSize:10 }}>
+                          {r.trim()}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                  <div style={{ flex:1 }}>
+                    <div style={S.fieldLabel}>Operational KPIs</div>
+                    <div style={{ display:"flex", flexWrap:"wrap", gap:4 }}>
+                      {(d.kpis||"").split("·").slice(0,1).map(k => (
+                        <span key={k} style={{ color:d.color, fontSize:10, fontWeight:600 }}>
+                          📈 {k.trim()}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
                 </div>
               </div>
             </div>
-          </div>
-        ))}
+          );
+        })}
       </div>
     </div>
   );
 }
+
+function AddDeptModal({ onClose, onAdd }) {
+  const [f, setF] = useState({
+    id: "",
+    label: "",
+    icon: "🏢",
+    color: "#6366f1",
+    purpose: "",
+    roles: "",
+    kpis: ""
+  });
+  const set = (k,v) => setF(p => ({...p,[k]:v}));
+
+  return (
+    <div style={S.modalOverlay} onClick={e => e.target===e.currentTarget && onClose()}>
+      <div style={S.modal}>
+        <div style={S.modalHdr}>
+          <span style={{ fontWeight:700, fontSize:15, color:"#e6edf3" }}>Add New Department</span>
+          <button style={S.iconBtn} onClick={onClose}>✕</button>
+        </div>
+        <div style={S.modalBody}>
+          <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:12 }}>
+            <Row label="Department ID (e.g. sales)">
+              <input style={S.formInput} placeholder="it, finance, etc." value={f.id} onChange={e => set("id", e.target.value.toLowerCase())} />
+            </Row>
+            <Row label="Label">
+              <input style={S.formInput} placeholder="Information Technology" value={f.label} onChange={e => set("label", e.target.value)} />
+            </Row>
+          </div>
+          <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:12 }}>
+            <Row label="Icon (Emoji)">
+              <input style={S.formInput} placeholder="🏢" value={f.icon} onChange={e => set("icon", e.target.value)} />
+            </Row>
+            <Row label="Brand Color">
+              <input type="color" style={{ ...S.formInput, height:38, padding:2 }} value={f.color} onChange={e => set("color", e.target.value)} />
+            </Row>
+          </div>
+          <Row label="Mission / Purpose">
+            <textarea style={S.formTextarea} rows={2} placeholder="Briefly describe the unit's goal..." value={f.purpose} onChange={e => set("purpose", e.target.value)} />
+          </Row>
+          <Row label="Key Roles (Comma separated)">
+            <input style={S.formInput} placeholder="Manager, Developer, Designer" value={f.roles} onChange={e => set("roles", e.target.value)} />
+          </Row>
+          <Row label="Operational KPIs (Separated by ·)">
+            <input style={S.formInput} placeholder="Uptime · MTTR · Success Rate" value={f.kpis} onChange={e => set("kpis", e.target.value)} />
+          </Row>
+        </div>
+        <div style={S.modalFoot}>
+          <button style={S.btnGhost} onClick={onAdd}>Cancel</button>
+          <button style={S.createBtn} onClick={() => { if(f.id && f.label) onAdd(f); }}>
+            Register Department
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+
+// ─── SETTINGS VIEW ───────────────────────────────────────────────────────────
+function SettingsView({ theme, setTheme, currentUser, updateUser, users }) {
+  const [profile, setProfile] = useState({
+    name: currentUser?.name || "",
+    avatar: currentUser?.avatar || "👤",
+    email: currentUser?.email || ""
+  });
+
+  const lang = currentUser?.settingsLanguage || "en";
+  const t = (key) => TRANSLATIONS[lang]?.[key] || TRANSLATIONS.en[key] || key;
+
+  const toggleBehavior = (key, field) => {
+    const newVal = !currentUser[field];
+    updateUser(currentUser.id, { [field]: newVal });
+  };
+
+  const toggleNotif = (key, field) => {
+    const newVal = !currentUser[field];
+    updateUser(currentUser.id, { [field]: newVal });
+  };
+
+  const changeLang = (l) => updateUser(currentUser.id, { settingsLanguage: l });
+  const changeTZ   = (tz) => updateUser(currentUser.id, { settingsTimezone: tz });
+
+  return (
+    <div style={{ paddingBottom: 60 }}>
+      <div style={{ marginBottom: 32 }}>
+        <h2 style={{ ...S.pageH2, marginBottom: 4 }}>{t("systemSettings")}</h2>
+        <p style={{ color: "var(--text-muted)", fontSize: 14 }}>Personalize your Metapharsic ERP workspace and account preferences.</p>
+      </div>
+
+      <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr" : "repeat(auto-fit, minmax(380px, 1fr))", gap: 24 }}>
+        
+        {/* ── PROFILE SECTION ── */}
+        <section style={{ background: "var(--card-bg)", border: "1px solid var(--border)", borderRadius: 12, padding: 24, display: "flex", flexDirection: "column", gap: 20 }}>
+          <h3 style={{ fontSize: 16, fontWeight: 700, color: "var(--text-header)", display: "flex", alignItems: "center", gap: 10, margin: 0 }}>
+            👤 User Profile
+          </h3>
+          <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
+            <div style={{ position: "relative" }}>
+              <Avatar user={currentUser} size={64} />
+              <button style={{ position: "absolute", bottom: -4, right: -4, width: 24, height: 24, borderRadius: "50%", background: "var(--accent)", color: "#fff", border: "2px solid var(--card-bg)", fontSize: 12, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                ✎
+              </button>
+            </div>
+            <div style={{ flex: 1 }}>
+              <input 
+                style={{ ...S.formInput, fontSize: 16, fontWeight: 700, padding: "4px 8px", background: "transparent", border: "1px dashed transparent" }}
+                value={profile.name}
+                onChange={e => setProfile(p => ({ ...p, name: e.target.value }))}
+                onBlur={() => updateUser(currentUser.id, { name: profile.name })}
+              />
+              <div style={{ fontSize: 12, color: "var(--text-muted)", paddingLeft: 8 }}>{profile.email}</div>
+            </div>
+          </div>
+          <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+            <button style={{ ...S.btnGhost, width: "100%", textAlign: "left", padding: "10px 14px" }}>🔐 Change Password</button>
+            <button style={{ ...S.btnGhost, width: "100%", textAlign: "left", padding: "10px 14px", color: "#f87171" }}>🚪 Sign Out of All Devices</button>
+          </div>
+        </section>
+
+        {/* ── THEME SECTION ── */}
+        <section style={{ background: "var(--card-bg)", border: "1px solid var(--border)", borderRadius: 12, padding: 24 }}>
+          <h3 style={{ fontSize: 16, fontWeight: 700, color: "var(--text-header)", marginBottom: 20, display: "flex", alignItems: "center", gap: 10 }}>
+            🎨 {t("appearance")}
+          </h3>
+          <div style={{ display: "flex", gap: 12 }}>
+            {[
+              { id: "dark", label: "Deep Space", icon: "🌙" },
+              { id: "light", label: "Pure Light", icon: "☀️" },
+              { id: "blue", label: "Oceanic", icon: "🌊" }
+            ].map(t => (
+              <div
+                key={t.id}
+                onClick={() => setTheme(t.id)}
+                style={{
+                  flex: 1, padding: 16, borderRadius: 12, cursor: "pointer",
+                  border: `2px solid ${theme === t.id ? "var(--accent)" : "var(--border)"}`,
+                  background: theme === t.id ? "var(--accent)10" : "var(--bg-main)",
+                  textAlign: "center", transition: "all 0.2s transform active:scale(0.95)"
+                }}
+              >
+                <div style={{ fontSize: 24, marginBottom: 8 }}>{t.icon}</div>
+                <div style={{ fontSize: 12, fontWeight: 700, color: theme === t.id ? "var(--accent)" : "var(--text-header)" }}>{t.label}</div>
+              </div>
+            ))}
+          </div>
+        </section>
+
+        {/* ── NOTIFICATIONS SECTION ── */}
+        <section style={{ background: "var(--card-bg)", border: "1px solid var(--border)", borderRadius: 12, padding: 24, gridRow: "span 2" }}>
+          <h3 style={{ fontSize: 16, fontWeight: 700, color: "var(--text-header)", marginBottom: 20, display: "flex", alignItems: "center", gap: 10 }}>
+            📣 {t("commPrefs")}
+          </h3>
+          <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+            {[
+              { id: "email",    field: "notificationEmail",    label: t("email"), desc: "Receive real-time alerts for task activity", icon: "📧" },
+              { id: "whatsapp", field: "notificationWhatsapp", label: t("whatsapp"), desc: "Automated updates via CallMeBot gateway", icon: "📱" },
+              { id: "inApp",    field: "notificationInApp",    label: "In-App Notifications", desc: "Browser-level alerts and sidebar badges", icon: "🔔" },
+              { id: "digest",   field: "notificationDigest",   label: "Daily Task Digest", desc: "3x daily summary of pending responsibilities", icon: "📅" }
+            ].map((s) => (
+              <div key={s.id} onClick={() => toggleNotif(s.id, s.field)} style={{ display: "flex", alignItems: "center", gap: 14, padding: "12px 14px", background: "var(--bg-main)", borderRadius: 10, cursor: "pointer", border: "1px solid var(--border)" }}>
+                <span style={{ fontSize: 20 }}>{s.icon}</span>
+                <div style={{ flex: 1 }}>
+                  <div style={{ fontSize: 14, fontWeight: 700, color: "var(--text-header)" }}>{s.label}</div>
+                  <div style={{ fontSize: 11, color: "var(--text-muted)" }}>{s.desc}</div>
+                </div>
+                <div style={{ width: 40, height: 22, borderRadius: 20, background: currentUser[s.field] ? "var(--accent)" : "var(--border)", position: "relative", transition: "background 0.2s" }}>
+                  <div style={{ width: 16, height: 16, borderRadius: "50%", background: "#fff", position: "absolute", top: 3, left: currentUser[s.field] ? 21 : 3, transition: "left 0.2s" }} />
+                </div>
+              </div>
+            ))}
+          </div>
+        </section>
+
+        {/* ── BEHAVIOR SECTION ── */}
+        <section style={{ background: "var(--card-bg)", border: "1px solid var(--border)", borderRadius: 12, padding: 24 }}>
+          <h3 style={{ fontSize: 16, fontWeight: 700, color: "var(--text-header)", marginBottom: 20, display: "flex", alignItems: "center", gap: 10 }}>
+            ⚙️ {t("appBehavior")}
+          </h3>
+          <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+            {[
+              { id: "autoRefresh", field: "settingsAutoRefresh", label: "Auto-refresh Data", desc: "Sync with database every 5m" },
+              { id: "compactMode", field: "settingsCompactMode", label: "Compact Interface", desc: "Minimize vertical spacing in boards" },
+              { id: "animations",  field: "settingsAnimations",   label: "Motion Effects", desc: "Enable UI transitions and animations" }
+            ].map((s) => (
+              <div key={s.id} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "8px 0" }}>
+                <div>
+                  <div style={{ fontSize: 13, fontWeight: 600, color: "var(--text-main)" }}>{s.label}</div>
+                  <div style={{ fontSize: 11, color: "var(--text-muted)" }}>{s.desc}</div>
+                </div>
+                <div 
+                  onClick={() => toggleBehavior(s.id, s.field)}
+                  style={{ width: 36, height: 20, borderRadius: 20, background: currentUser[s.field] ? "var(--accent)" : "var(--border)", position: "relative", cursor: "pointer" }}
+                >
+                  <div style={{ width: 14, height: 14, borderRadius: "50%", background: "#fff", position: "absolute", top: 3, left: currentUser[s.field] ? 19 : 3, transition: "left 0.2s" }} />
+                </div>
+              </div>
+            ))}
+          </div>
+        </section>
+
+        {/* ── LOCALIZATION SECTION ── */}
+        <section style={{ background: "var(--card-bg)", border: "1px solid var(--border)", borderRadius: 12, padding: 24 }}>
+          <h3 style={{ fontSize: 16, fontWeight: 700, color: "var(--text-header)", marginBottom: 20, display: "flex", alignItems: "center", gap: 10 }}>
+            🌍 {t("localization")}
+          </h3>
+          <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+            <Row label={t("language")}>
+              <select style={S.formSel} value={currentUser.settingsLanguage} onChange={e => changeLang(e.target.value)}>
+                <option value="en">English (United States)</option>
+                <option value="hi">Hindi (हिन्दी)</option>
+                <option value="ar">Arabic (العربية)</option>
+              </select>
+            </Row>
+            <Row label={t("timezone")}>
+              <select style={S.formSel} value={currentUser.settingsTimezone} onChange={e => changeTZ(e.target.value)}>
+                <option value="Asia/Kolkata">(GMT+05:30) Chennai, Kolkata, Mumbai</option>
+                <option value="UTC">(GMT+00:00) UTC</option>
+                <option value="America/New_York">(GMT-05:00) Eastern Time</option>
+                <option value="Asia/Dubai">(GMT+04:00) Gulf Standard Time</option>
+              </select>
+            </Row>
+          </div>
+        </section>
+
+      </div>
+    </div>
+  );
+}
+
+// ─── COMPONENTS VIEW ─────────────────────────────────────────────────────────
+function ComponentsView() {
+  return (
+    <div>
+      <h2 style={S.pageH2}>UI Component Library</h2>
+      <p style={{ color:"var(--text-muted)", fontSize:13, marginBottom:24 }}>Atomic building blocks of the Metapharsic Design System.</p>
+
+      <div style={{ display:"grid", gridTemplateColumns:"repeat(auto-fill, minmax(300px, 1fr))", gap:24 }}>
+        <div style={{ background:"var(--card-bg)", border:"1px solid var(--border)", borderRadius:12, padding:20 }}>
+          <div style={S.fieldLabel}>Buttons & Actions</div>
+          <div style={{ display:"flex", gap:10, flexWrap:"wrap", marginTop:10 }}>
+            <button style={S.btnPrimary}>Primary Action</button>
+            <button style={S.btnGhost}>Secondary</button>
+            <button style={S.iconBtn}>⚙️</button>
+            <button style={S.iconBtn}>🗑️</button>
+          </div>
+        </div>
+
+        <div style={{ background:"var(--card-bg)", border:"1px solid var(--border)", borderRadius:12, padding:20 }}>
+          <div style={S.fieldLabel}>Status Indicators</div>
+          <div style={{ display:"flex", gap:8, flexWrap:"wrap", marginTop:10 }}>
+            <span style={{ ...S.statusPill, background:"#ef444420", color:"#ef4444" }}>CRITICAL</span>
+            <span style={{ ...S.statusPill, background:"#f59e0b20", color:"#f59e0b" }}>PENDING</span>
+            <span style={{ ...S.statusPill, background:"#22c55e20", color:"#22c55e" }}>COMPLETED</span>
+            <span style={{ ...S.statusPill, background:"#46b3cf20", color:"#46b3cf" }}>IN REVIEW</span>
+          </div>
+        </div>
+
+        <div style={{ background:"var(--card-bg)", border:"1px solid var(--border)", borderRadius:12, padding:20 }}>
+          <div style={S.fieldLabel}>Form Elements</div>
+          <div style={{ marginTop:10, display:"flex", flexDirection:"column", gap:10 }}>
+            <input style={S.formInput} placeholder="Text input field..." />
+            <select style={S.formSel}>
+              <option>Select option...</option>
+              <option>Option A</option>
+              <option>Option B</option>
+            </select>
+          </div>
+        </div>
+
+        <div style={{ background:"var(--card-bg)", border:"1px solid var(--border)", borderRadius:12, padding:20 }}>
+          <div style={S.fieldLabel}>Data Visuals</div>
+          <div style={{ marginTop:10 }}>
+            <div style={{ fontSize:11, color:"var(--text-muted)", marginBottom:4 }}>Progress Metric</div>
+            <div style={S.progressBar}>
+              <div style={{ ...S.progressFill, width: "65%" }}></div>
+            </div>
+            <div style={{ display:"flex", gap:10, marginTop:12 }}>
+              <div style={S.statCard}>
+                <div style={{ fontSize:18, fontWeight:700, color:"var(--accent)" }}>42</div>
+                <div style={{ fontSize:9, color:"var(--text-muted)", textTransform:"uppercase" }}>Issues</div>
+              </div>
+              <div style={S.statCard}>
+                <div style={{ fontSize:18, fontWeight:700, color:"#22c55e" }}>89%</div>
+                <div style={{ fontSize:9, color:"var(--text-muted)", textTransform:"uppercase" }}>Velocity</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+

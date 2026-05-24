@@ -31,25 +31,28 @@ DROP TABLE IF EXISTS departments       CASCADE;
 --  1. DEPARTMENTS
 -- ════════════════════════════════════════════════════════════
 CREATE TABLE departments (
-  id     VARCHAR(30) PRIMARY KEY,
-  label  VARCHAR(100) NOT NULL,
-  icon   VARCHAR(10)  NOT NULL,
-  color  VARCHAR(7)   NOT NULL
+  id      VARCHAR(30) PRIMARY KEY,
+  label   VARCHAR(100) NOT NULL,
+  icon    VARCHAR(10)  NOT NULL,
+  color   VARCHAR(7)   NOT NULL,
+  purpose TEXT         NOT NULL DEFAULT '',
+  roles   TEXT         NOT NULL DEFAULT '',
+  kpis    TEXT         NOT NULL DEFAULT ''
 );
 
-INSERT INTO departments (id, label, icon, color) VALUES
-  ('hr',          'Human Resources',        '👥', '#ec4899'),
-  ('finance',     'Finance',                '💰', '#f59e0b'),
-  ('it',          'Information Technology', '💻', '#3b82f6'),
-  ('operations',  'Operations',             '⚙',  '#8b5cf6'),
-  ('sales',       'Sales',                  '📈', '#10b981'),
-  ('marketing',   'Marketing',              '📢', '#ef4444'),
-  ('support',     'Customer Support',       '🎧', '#0ea5e9'),
-  ('legal',       'Legal',                  '⚖',  '#64748b'),
-  ('procurement', 'Procurement',            '📦', '#f97316'),
-  ('qa',          'QA / QC',                '🔬', '#14b8a6'),
-  ('production',  'Production',             '🏭', '#eab308'),
-  ('rnd',         'R&D',                    '🧪', '#84cc16');
+INSERT INTO departments (id, label, icon, color, purpose, roles, kpis) VALUES
+  ('hr',          'Human Resources',        '👥', '#ec4899', 'Employee lifecycle & talent governance', 'HR Manager, Recruiter, Payroll Lead', 'Retention Rate · Time-to-Hire · Training ROI'),
+  ('finance',     'Finance',                '💰', '#f59e0b', 'Fiscal integrity & strategic budgeting', 'Finance Manager, Accountant, Finance Analyst', 'Budget Variance · Cash Flow · Tax Compliance'),
+  ('it',          'Information Technology', '💻', '#3b82f6', 'Enterprise infra & digital assets',      'IT Manager, DBA, DevOps Engineer', 'System Uptime · MTTR · Backup Success %'),
+  ('operations',  'Operations',             '⚙',  '#8b5cf6', 'Process execution & operational excellence','General Manager, Ops Manager, Coordinator', 'SLA Achievement · Process Efficiency · TAT'),
+  ('sales',       'Sales',                  '📈', '#10b981', 'Revenue growth & account management',      'Sales Manager, Account Manager, Sales Executive', 'Target vs Actual · CAC · Lead Conversion'),
+  ('marketing',   'Marketing',              '📢', '#ef4444', 'Brand positioning & digital footprint',    'Brand Manager, Digital Marketer, SEO Analyst', 'Brand Recall · Marketing ROI · Traffic Growth'),
+  ('support',     'Customer Support',       '🎧', '#0ea5e9', 'Consumer satisfaction & issue resolution', 'Support Engineer, Helpdesk Agent', 'CSAT Score · Ticket Resolution · First Response'),
+  ('legal',       'Legal',                  '⚖',  '#64748b', 'Statutory compliance & risk mitigation',    'Legal Advisor, Compliance Officer', 'Litigation Status · Contract Turnaround · Audit Pass %'),
+  ('procurement', 'Procurement',            '📦', '#f97316', 'Strategic sourcing & vendor governance',   'Purchase Exec, Vendor Manager', 'Cost Saving · Vendor Performance · Lead Time'),
+  ('qa',          'QA / QC',                '🔬', '#14b8a6', 'Quality assurance & laboratory control',   'QA Manager, QC Technician, QA Analyst', 'Batch Success · Lab Compliance · Error Rate'),
+  ('production',  'Production',             '🏭', '#eab308', 'High-scale pharmaceutical manufacturing',  'Plant Head, Production Supv, Operator', 'Yield Efficiency · Plant Safety · Downtime %'),
+  ('rnd',         'R&D',                    '🧪', '#84cc16', 'Formula innovation & clinical research',   'R&D Manager, Scientist, Lab Tech', 'Innovation Velocity · Patent Filing · Lab Safety');
 
 -- ════════════════════════════════════════════════════════════
 --  2. PERMISSIONS
@@ -129,17 +132,34 @@ INSERT INTO role_permissions (role_id, permission_id) VALUES
 --  5. USERS
 -- ════════════════════════════════════════════════════════════
 CREATE TABLE users (
-  id            SERIAL       PRIMARY KEY,
-  name          VARCHAR(100) NOT NULL,
-  avatar        VARCHAR(4)   NOT NULL,
-  email         VARCHAR(255) NOT NULL UNIQUE,
-  password      VARCHAR(255) NOT NULL DEFAULT 'user123',
-  require_password_change BOOLEAN NOT NULL DEFAULT false,
-  role_id       VARCHAR(30)  NOT NULL REFERENCES roles(id),
-  department_id VARCHAR(30)  NOT NULL REFERENCES departments(id),
-  color         VARCHAR(7)   NOT NULL,
-  active        BOOLEAN      NOT NULL DEFAULT true,
-  join_date     DATE         NOT NULL
+  id                      SERIAL        PRIMARY KEY,
+  name                    VARCHAR(100)  NOT NULL,
+  avatar                  VARCHAR(4)    NOT NULL,
+  email                   VARCHAR(255)  NOT NULL UNIQUE,
+  password                VARCHAR(255)  NOT NULL DEFAULT 'user123',
+  require_password_change BOOLEAN       NOT NULL DEFAULT false,
+  role_id                 VARCHAR(30)   NOT NULL REFERENCES roles(id),
+  department_id           VARCHAR(30)   NOT NULL REFERENCES departments(id),
+  color                   VARCHAR(7)    NOT NULL,
+  active                  BOOLEAN       NOT NULL DEFAULT true,
+  join_date               DATE          NOT NULL,
+  -- Notification channels
+  phone                   VARCHAR(20),
+  phone_verified          BOOLEAN       NOT NULL DEFAULT false,
+  whatsapp_otp            VARCHAR(6),
+  otp_expires_at          TIMESTAMPTZ,
+  callmebot_apikey        VARCHAR(50),
+  notification_email      BOOLEAN       NOT NULL DEFAULT true,
+  notification_whatsapp   BOOLEAN       NOT NULL DEFAULT false,
+  notification_in_app     BOOLEAN       NOT NULL DEFAULT true,
+  notification_digest     BOOLEAN       NOT NULL DEFAULT true,
+  settings_auto_refresh   BOOLEAN       NOT NULL DEFAULT true,
+  settings_compact_mode   BOOLEAN       NOT NULL DEFAULT false,
+  settings_animations     BOOLEAN       NOT NULL DEFAULT true,
+  settings_language       VARCHAR(10)   NOT NULL DEFAULT 'en',
+  settings_timezone       VARCHAR(50)   NOT NULL DEFAULT 'Asia/Kolkata',
+  -- Custom per-user permissions (overrides role defaults)
+  custom_permissions      JSONB         NOT NULL DEFAULT '[]'::jsonb
 );
 
 INSERT INTO users (id, name, avatar, email, password, require_password_change, role_id, department_id, color, active, join_date) VALUES
@@ -224,7 +244,8 @@ CREATE TABLE issues (
   epic_id       VARCHAR(10)  REFERENCES epics(id) ON DELETE SET NULL,
   sprint_id     INTEGER      REFERENCES sprints(id) ON DELETE SET NULL,
   due_date      DATE,
-  created_at    DATE         NOT NULL DEFAULT CURRENT_DATE,
+  created_at    TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
+  updated_at    TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
   recurrence    VARCHAR(20)  NOT NULL DEFAULT 'none'
                   CHECK (recurrence IN ('none','daily','weekly','biweekly','monthly','yearly')),
   notification  BOOLEAN      NOT NULL DEFAULT true,
