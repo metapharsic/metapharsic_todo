@@ -1085,6 +1085,588 @@ app.get('/api/epics', async (req, res) => {
   }
 });
 
+// ─── WhatsApp OTP Verification ───────────────────────────────────────────────
+
+// Step 1 — User provides their phone + callmebot apikey → send OTP
+app.post('/api/users/:id/send-whatsapp-otp', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { phone, callmebotApikey } = req.body;
+
+    if (!phone || !callmebotApikey) {
+      return res.status(400).json({ error: 'phone and callmebotApikey are required' });
+    }
+
+    // Generate 6-digit OTP
+    const otp = String(Math.floor(100000 + crypto.randomInt(900000)));
+    const expiresAt = new Date(Date.now() + 10 * 60 * 1000); // 10 minutes
+
+    // Save OTP + phone + apikey to user record (not yet verified)
+    await pool.query(
+      'UPDATE users SET phone = $1, callmebot_apikey = $2, whatsapp_otp = $3, otp_expires_at = $4, phone_verified = false WHERE id = $5',
+      [phone, callmebotApikey, otp, expiresAt, id]
+    );
+
+    // Send OTP via CallMeBot
+    await sendOtpWhatsApp({ phone, apiKey: callmebotApikey, otp });
+
+    res.json({ ok: true, message: 'OTP sent to WhatsApp' });
+  } catch (err) {
+    logError(err, 'db');
+    res.status(500).json({ error: 'Server error' });
+  }
+});
+
+// Step 2 — User enters the OTP → verify and mark as verified
+app.post('/api/users/:id/verify-whatsapp-otp', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { otp } = req.body;
+
+    const userRes = await pool.query(
+      'SELECT whatsapp_otp, otp_expires_at, phone FROM users WHERE id = $1',
+      [id]
+    );
+    if (userRes.rows.length === 0) return res.status(404).json({ error: 'User not found' });
+
+    const { whatsapp_otp, otp_expires_at, phone } = userRes.rows[0];
+
+    if (!whatsapp_otp) return res.status(400).json({ error: 'No OTP pending for this user' });
+    if (new Date() > new Date(otp_expires_at)) return res.status(400).json({ error: 'OTP has expired. Please request a new one.' });
+    if (otp !== whatsapp_otp) return res.status(400).json({ error: 'Incorrect OTP. Please try again.' });
+
+    // Mark verified and clear OTP
+    await pool.query(
+      'UPDATE users SET phone_verified = true, whatsapp_otp = NULL, otp_expires_at = NULL, notification_whatsapp = true WHERE id = $1',
+      [id]
+    );
+
+    res.json({ ok: true, message: `WhatsApp number ${phone} verified successfully!` });
+  } catch (err) {
+    logError(err, 'db');
+    res.status(500).json({ error: 'Server error' });
+  }
+});
+
+// Delete user in database
+app.delete('/api/users/:id', async (req, res) => {
+  const client = await pool.connect();
+  try {
+    const { id } = req.params;
+    await client.query('BEGIN');
+    
+    // Delete user's watchers reference
+    await client.query('DELETE FROM issue_watchers WHERE user_id = $1', [id]);
+
+    // Delete user's comments
+    await client.query('DELETE FROM comments WHERE user_id = $1', [id]);
+    
+    // Re-assign reporter_id on issues to Admin (id=1)
+    await client.query('UPDATE issues SET reporter_id = 1 WHERE reporter_id = $1', [id]);
+    
+    // Set assignee_id to NULL on issues (handled by schema but good to be explicit/safe)
+    await client.query('UPDATE issues SET assignee_id = NULL WHERE assignee_id = $1', [id]);
+    
+    // Set history user_id to NULL (handled by schema)
+    await client.query('UPDATE history SET user_id = NULL WHERE user_id = $1', [id]);
+    
+    // Delete user's notifications
+    await client.query('DELETE FROM notifications WHERE user_id = $1', [id]);
+
+    // Finally delete user
+    await client.query('DELETE FROM users WHERE id = $1', [id]);
+    
+    await client.query('COMMIT');
+    res.json({ ok: true });
+  } catch (err) {
+    await client.query('ROLLBACK');
+    logError(err, 'db');
+    res.status(500).json({ error: 'Server error' });
+  } finally {
+    client.release();
+  }
+});
+
+
+// ─── ISSUES ENDPOINTS ────────────────────────────────────────────────────────
+app.get('/api/issues', async (req, res) => {
+  try {
+    const result = await pool.query(`
+      SELECT 
+        i.id,
+        i.key,
+        i.type,
+        i.title,
+        i.description as desc,
+        i.status,
+        i.priority,
+        i.assignee_id as assignee,
+        i.reporter_id as reporter,
+        i.story_points as sp,
+        i.epic_id as epic,
+        s.name as sprint,
+        TO_CHAR(i.due_date, 'YYYY-MM-DD') as "dueDate",
+        TO_CHAR(i.created_at, 'YYYY-MM-DD HH24:MI:SS') as created,
+        TO_CHAR(i.updated_at, 'YYYY-MM-DD HH24:MI:SS') as updated,
+        i.recurrence,
+        i.notification,
+        i.attach_count as attach,
+        COALESCE(u.department_id, 'it') as department,
+        COALESCE(
+          (SELECT json_agg(l.name) 
+           FROM issue_labels il 
+           JOIN labels l ON l.id = il.label_id 
+           WHERE il.issue_id = i.id), 
+          '[]'::json
+        ) as labels,
+        COALESCE(
+          (SELECT json_agg(iw.user_id) 
+           FROM issue_watchers iw 
+           WHERE iw.issue_id = i.id), 
+          '[]'::json
+        ) as watchers,
+        COALESCE(
+          (SELECT json_agg(json_build_object(
+             'id', c.id,
+             'userId', c.user_id,
+             'text', c.text,
+             'date', TO_CHAR(c.created_at, 'YYYY-MM-DD HH24:MI:SS')
+           ))
+           FROM comments c
+           WHERE c.issue_id = i.id),
+          '[]'::json
+        ) as comments
+      FROM issues i
+      LEFT JOIN sprints s ON s.id = i.sprint_id
+      LEFT JOIN users u ON u.id = i.assignee_id
+      ORDER BY i.id ASC
+    `);
+    res.json(result.rows);
+  } catch (err) {
+    logError(err, 'db');
+    res.status(500).json({ error: 'Server error' });
+  }
+});
+
+app.post('/api/issues', async (req, res) => {
+  try {
+    const data = req.body;
+    
+    // Resolve sprint_id
+    const sprintName = data.sprint || 'Sprint 1';
+    const sprintRes = await pool.query('SELECT id FROM sprints WHERE LOWER(name) = LOWER($1)', [sprintName]);
+    const sprintId = sprintRes.rows.length > 0 ? sprintRes.rows[0].id : 3;
+
+    // Insert issue
+    const issueRes = await pool.query(`
+      INSERT INTO issues (key, type, title, description, status, priority, assignee_id, reporter_id, story_points, epic_id, sprint_id, due_date, created_at, recurrence, notification, attach_count)
+      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, NOW(), $13, $14, $15)
+      RETURNING id
+    `, [
+      data.key,
+      data.type || 'task',
+      data.title,
+      data.desc || '',
+      data.status || 'To Do',
+      data.priority || 'medium',
+      data.assignee ? Number(data.assignee) : null,
+      data.reporter ? Number(data.reporter) : 1,
+      data.sp || 0,
+      data.epic || null,
+      sprintId,
+      data.dueDate || null,
+      data.recurrence || 'none',
+      data.notification !== false,
+      data.attach || 0
+    ]);
+
+    const issueId = issueRes.rows[0].id;
+
+    // Insert labels
+    if (data.labels && data.labels.length > 0) {
+      for (const labelName of data.labels) {
+        let labelRes = await pool.query('SELECT id FROM labels WHERE LOWER(name) = LOWER($1)', [labelName]);
+        let labelId;
+        if (labelRes.rows.length === 0) {
+          const insertLabel = await pool.query('INSERT INTO labels (name) VALUES ($1) RETURNING id', [labelName]);
+          labelId = insertLabel.rows[0].id;
+        } else {
+          labelId = labelRes.rows[0].id;
+        }
+        await pool.query('INSERT INTO issue_labels (issue_id, label_id) VALUES ($1, $2) ON CONFLICT DO NOTHING', [issueId, labelId]);
+      }
+    }
+
+    // Insert watcher
+    const repId = data.reporter ? Number(data.reporter) : 1;
+    await pool.query('INSERT INTO issue_watchers (issue_id, user_id) VALUES ($1, $2) ON CONFLICT DO NOTHING', [issueId, repId]);
+
+    // Record creation in history
+    await pool.query(`
+      INSERT INTO history (issue_id, user_id, event_type, old_value, new_value, created_at)
+      VALUES ($1, $2, 'created', NULL, $3, NOW())
+    `, [issueId, repId, data.type || 'task']);
+
+    // ── Fire email + WhatsApp notifications (non-blocking) ──────────────────
+    const issueForNotify = {
+      key:          data.key,
+      title:        data.title,
+      priority:     data.priority || 'medium',
+      status:       data.status   || 'To Do',
+      due_date:     data.dueDate  || null,
+    };
+    const [assigneeUser, reporterUser] = await Promise.all([
+      data.assignee ? pool.query('SELECT id, name, email, phone, phone_verified, callmebot_apikey, notification_email, notification_whatsapp FROM users WHERE id = $1', [Number(data.assignee)]).then(r => r.rows[0]) : null,
+      pool.query('SELECT id, name, email, phone, phone_verified, callmebot_apikey, notification_email, notification_whatsapp FROM users WHERE id = $1', [repId]).then(r => r.rows[0]),
+    ]);
+    if (assigneeUser) issueForNotify.assigneeName = assigneeUser.name;
+    if (reporterUser) issueForNotify.reporterName = reporterUser.name;
+    notifyTaskCreated({ issue: issueForNotify, assignee: assigneeUser, reporter: reporterUser }).catch(console.error);
+
+    res.json({ ok: true, id: issueId });
+  } catch (err) {
+    logError(err, 'db');
+    res.status(500).json({ error: 'Server error' });
+  }
+});
+
+app.put('/api/issues/:key', async (req, res) => {
+  try {
+    const { key } = req.params;
+    const patch = req.body;
+
+    const issueRes = await pool.query('SELECT * FROM issues WHERE key = $1', [key]);
+    if (issueRes.rows.length === 0) {
+      return res.status(404).json({ error: 'Issue not found' });
+    }
+    const existing = issueRes.rows[0];
+    const issueId = existing.id;
+
+    // --- AUDIT HISTORY AND TIME TRACKING ---
+    const updaterId = patch.updaterId || patch.userId || 1; // Default to Admin user
+    const historyInserts = [];
+
+    // Title
+    if (patch.title !== undefined && patch.title !== existing.title) {
+      historyInserts.push({ eventType: 'edited', oldValue: existing.title, newValue: patch.title });
+    }
+    // Type
+    if (patch.type !== undefined && patch.type !== existing.type) {
+      historyInserts.push({ eventType: 'type_changed', oldValue: existing.type, newValue: patch.type });
+    }
+    // Status
+    if (patch.status !== undefined && patch.status !== existing.status) {
+      historyInserts.push({ eventType: 'status_changed', oldValue: existing.status, newValue: patch.status });
+    }
+    // Priority
+    if (patch.priority !== undefined && patch.priority !== existing.priority) {
+      historyInserts.push({ eventType: 'priority_changed', oldValue: existing.priority, newValue: patch.priority });
+    }
+    // Description
+    if (patch.desc !== undefined && patch.desc !== existing.description) {
+      historyInserts.push({ eventType: 'edited', oldValue: 'Description modified', newValue: 'Description modified' });
+    }
+    // Story Points
+    if (patch.sp !== undefined && Number(patch.sp) !== Number(existing.story_points)) {
+      historyInserts.push({ eventType: 'sp_changed', oldValue: String(existing.story_points), newValue: String(patch.sp) });
+    }
+    // Epic
+    if (patch.epic !== undefined && patch.epic !== existing.epic_id) {
+      const oldEpicName = existing.epic_id ? (await pool.query('SELECT name FROM epics WHERE id = $1', [existing.epic_id])).rows[0]?.name || existing.epic_id : 'None';
+      const newEpicName = patch.epic ? (await pool.query('SELECT name FROM epics WHERE id = $1', [patch.epic])).rows[0]?.name || patch.epic : 'None';
+      historyInserts.push({ eventType: 'epic_changed', oldValue: oldEpicName, newValue: newEpicName });
+    }
+    // Recurrence
+    if (patch.recurrence !== undefined && patch.recurrence !== existing.recurrence) {
+      historyInserts.push({ eventType: 'recurrence_changed', oldValue: existing.recurrence, newValue: patch.recurrence });
+    }
+    // Due Date
+    const formattedExistingDueDate = existing.due_date ? new Date(existing.due_date).toISOString().split('T')[0] : null;
+    const formattedPatchDueDate = patch.dueDate || null;
+    if (patch.dueDate !== undefined && formattedPatchDueDate !== formattedExistingDueDate) {
+      historyInserts.push({ eventType: 'duedate_changed', oldValue: formattedExistingDueDate || 'None', newValue: formattedPatchDueDate || 'None' });
+    }
+    // Assignee
+    if (patch.assignee !== undefined && Number(patch.assignee || 0) !== Number(existing.assignee_id || 0)) {
+      const origUserName = existing.assignee_id ? (await pool.query('SELECT name FROM users WHERE id = $1', [existing.assignee_id])).rows[0]?.name : 'Unassigned';
+      const newUserName = patch.assignee ? (await pool.query('SELECT name FROM users WHERE id = $1', [Number(patch.assignee)])).rows[0]?.name : 'Unassigned';
+      historyInserts.push({ eventType: 'assigned', oldValue: origUserName, newValue: newUserName });
+    }
+    // Sprint
+    if (patch.sprint !== undefined) {
+      const sprintRes = await pool.query('SELECT id, name FROM sprints WHERE LOWER(name) = LOWER($1)', [patch.sprint]);
+      const sprintId = sprintRes.rows.length > 0 ? sprintRes.rows[0].id : 3;
+      if (sprintId !== existing.sprint_id) {
+        const oldSprintRes = await pool.query('SELECT name FROM sprints WHERE id = $1', [existing.sprint_id]);
+        const oldSprintName = oldSprintRes.rows.length > 0 ? oldSprintRes.rows[0].name : 'Backlog';
+        historyInserts.push({ eventType: 'sprint_changed', oldValue: oldSprintName, newValue: patch.sprint });
+      }
+    }
+    // Labels
+    if (patch.labels !== undefined) {
+      const curLabelsRes = await pool.query(`
+        SELECT l.name FROM issue_labels il 
+        JOIN labels l ON l.id = il.label_id 
+        WHERE il.issue_id = $1
+      `, [issueId]);
+      const curLabels = curLabelsRes.rows.map(r => r.name).sort();
+      const newLabels = [...patch.labels].sort();
+      if (JSON.stringify(curLabels) !== JSON.stringify(newLabels)) {
+        historyInserts.push({ 
+          eventType: 'labeled', 
+          oldValue: curLabels.join(', ') || 'None', 
+          newValue: newLabels.join(', ') || 'None' 
+        });
+      }
+    }
+
+    // Insert all audited history items
+    for (const h of historyInserts) {
+      await pool.query(`
+        INSERT INTO history (issue_id, user_id, event_type, old_value, new_value, created_at)
+        VALUES ($1, $2, $3, $4, $5, NOW())
+      `, [issueId, updaterId, h.eventType, h.oldValue, h.newValue]);
+    }
+
+    // --- PREPARE UPDATE FIELDS ---
+    const fields = [];
+    const values = [];
+    let index = 1;
+
+    if (patch.title !== undefined) { fields.push(`title = $${index++}`); values.push(patch.title); }
+    if (patch.type !== undefined) { fields.push(`type = $${index++}`); values.push(patch.type); }
+    if (patch.status !== undefined) { fields.push(`status = $${index++}`); values.push(patch.status); }
+    if (patch.priority !== undefined) { fields.push(`priority = $${index++}`); values.push(patch.priority); }
+    if (patch.desc !== undefined) { fields.push(`description = $${index++}`); values.push(patch.desc); }
+    if (patch.sp !== undefined) { fields.push(`story_points = $${index++}`); values.push(patch.sp); }
+    if (patch.epic !== undefined) { fields.push(`epic_id = $${index++}`); values.push(patch.epic); }
+    if (patch.recurrence !== undefined) { fields.push(`recurrence = $${index++}`); values.push(patch.recurrence); }
+    if (patch.notification !== undefined) { fields.push(`notification = $${index++}`); values.push(patch.notification); }
+    if (patch.dueDate !== undefined) { fields.push(`due_date = $${index++}`); values.push(patch.dueDate || null); }
+
+    if (patch.assignee !== undefined) {
+      fields.push(`assignee_id = $${index++}`);
+      values.push(patch.assignee ? Number(patch.assignee) : null);
+    }
+
+    if (patch.reporter !== undefined) {
+      fields.push(`reporter_id = $${index++}`);
+      values.push(patch.reporter ? Number(patch.reporter) : null);
+    }
+
+    if (patch.sprint !== undefined) {
+      const sprintRes = await pool.query('SELECT id FROM sprints WHERE LOWER(name) = LOWER($1)', [patch.sprint]);
+      const sprintId = sprintRes.rows.length > 0 ? sprintRes.rows[0].id : 3;
+      fields.push(`sprint_id = $${index++}`);
+      values.push(sprintId);
+    }
+
+    // Always set updated_at to NOW() if any change occurred
+    if (fields.length > 0 || patch.labels !== undefined) {
+      fields.push(`updated_at = NOW()`);
+    }
+
+    if (fields.length > 0) {
+      values.push(key);
+      await pool.query(`
+        UPDATE issues 
+        SET ${fields.join(', ')} 
+        WHERE key = $${index}
+      `, values);
+    }
+
+
+    // Sync labels
+    if (patch.labels !== undefined) {
+      await pool.query('DELETE FROM issue_labels WHERE issue_id = $1', [issueId]);
+      for (const labelName of patch.labels) {
+        let labelRes = await pool.query('SELECT id FROM labels WHERE LOWER(name) = LOWER($1)', [labelName]);
+        let labelId;
+        if (labelRes.rows.length === 0) {
+          const insertLabel = await pool.query('INSERT INTO labels (name) VALUES ($1) RETURNING id', [labelName]);
+          labelId = insertLabel.rows[0].id;
+        } else {
+          labelId = labelRes.rows[0].id;
+        }
+        await pool.query('INSERT INTO issue_labels (issue_id, label_id) VALUES ($1, $2) ON CONFLICT DO NOTHING', [issueId, labelId]);
+      }
+    }
+
+    // ── Fire notifications for assignee change or completion ─────────────────
+    const fetchUser = async (uid) => uid
+      ? pool.query('SELECT id, name, email, phone, phone_verified, callmebot_apikey, notification_email, notification_whatsapp FROM users WHERE id = $1', [uid]).then(r => r.rows[0])
+      : null;
+
+    const updatedIssueRes = await pool.query('SELECT * FROM issues WHERE key = $1', [key]);
+    const updatedIssue = updatedIssueRes.rows[0];
+    const issueForNotify = {
+      key,
+      title:        updatedIssue.title,
+      priority:     updatedIssue.priority,
+      status:       updatedIssue.status,
+      due_date:     updatedIssue.due_date,
+      assigneeName: null,
+      reporterName: null,
+    };
+    const [assigneeUser, reporterUser] = await Promise.all([
+      fetchUser(updatedIssue.assignee_id),
+      fetchUser(updatedIssue.reporter_id),
+    ]);
+    if (assigneeUser) issueForNotify.assigneeName = assigneeUser.name;
+    if (reporterUser) issueForNotify.reporterName = reporterUser.name;
+
+    if (patch.assignee !== undefined && String(patch.assignee) !== String(existing.assignee_id)) {
+      notifyTaskAssigned({ issue: issueForNotify, newAssignee: assigneeUser, reporter: reporterUser }).catch(console.error);
+    }
+    if (patch.status === 'Done' && existing.status !== 'Done') {
+      notifyTaskCompleted({ issue: issueForNotify, assignee: assigneeUser, reporter: reporterUser }).catch(console.error);
+    }
+
+    res.json({ ok: true });
+  } catch (err) {
+    logError(err, 'db');
+    res.status(500).json({ error: 'Server error' });
+  }
+});
+
+app.delete('/api/issues/:key', async (req, res) => {
+  try {
+    const { key } = req.params;
+    await pool.query('DELETE FROM issues WHERE key = $1', [key]);
+    res.json({ ok: true });
+  } catch (err) {
+    logError(err, 'db');
+    res.status(500).json({ error: 'Server error' });
+  }
+});
+
+// ─── NOTIFICATIONS ENDPOINTS ────────────────────────────────────────────────
+app.get('/api/notifications', async (req, res) => {
+  try {
+    const result = await pool.query(`
+      SELECT id, type, user_id as "userId", message, time_label as "time", is_read as "read", issue_key as "issueKey"
+      FROM notifications
+      ORDER BY id DESC
+    `);
+    res.json(result.rows);
+  } catch (err) {
+    logError(err, 'db');
+    res.status(500).json({ error: 'Server error' });
+  }
+});
+
+app.post('/api/notifications', async (req, res) => {
+  try {
+    const { type, userId, message, issueKey } = req.body;
+    const result = await pool.query(`
+      INSERT INTO notifications (type, user_id, message, time_label, is_read, issue_key)
+      VALUES ($1, $2, $3, 'just now', false, $4)
+      RETURNING id
+    `, [type, userId, message, issueKey || null]);
+    res.json({ id: result.rows[0].id, type, userId, message, time: "just now", read: false, issueKey });
+  } catch (err) {
+    logError(err, 'db');
+    res.status(500).json({ error: 'Server error' });
+  }
+});
+
+app.put('/api/notifications/read', async (req, res) => {
+  try {
+    const { id } = req.body;
+    if (id) {
+      await pool.query('UPDATE notifications SET is_read = true WHERE id = $1', [id]);
+    } else {
+      await pool.query('UPDATE notifications SET is_read = true');
+    }
+    res.json({ ok: true });
+  } catch (err) {
+    logError(err, 'db');
+    res.status(500).json({ error: 'Server error' });
+  }
+});
+
+app.delete('/api/notifications/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    await pool.query('DELETE FROM notifications WHERE id = $1', [id]);
+    res.json({ ok: true });
+  } catch (err) {
+    logError(err, 'db');
+    res.status(500).json({ error: 'Server error' });
+  }
+});
+
+// ─── CHECKLISTS (TODOS) ENDPOINTS ───────────────────────────────────────────
+app.get('/api/todos', async (req, res) => {
+  try {
+    const result = await pool.query(`
+      SELECT id, role_id as "role", text, priority, category, is_done as "done"
+      FROM todos
+    `);
+    const todosMap = {
+      admin: [],
+      manager: [],
+      developer: [],
+      designer: [],
+      qa_engineer: [],
+      viewer: []
+    };
+    result.rows.forEach(row => {
+      const role = row.role;
+      if (todosMap[role]) {
+        todosMap[role].push({
+          id: row.id,
+          text: row.text,
+          priority: row.priority,
+          category: row.category,
+          done: row.done
+        });
+      }
+    });
+    res.json(todosMap);
+  } catch (err) {
+    logError(err, 'db');
+    res.status(500).json({ error: 'Server error' });
+  }
+});
+
+app.put('/api/todos/:id/toggle', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { done } = req.body;
+    await pool.query('UPDATE todos SET is_done = $1 WHERE id = $2', [done, id]);
+    res.json({ ok: true });
+  } catch (err) {
+    logError(err, 'db');
+    res.status(500).json({ error: 'Server error' });
+  }
+});
+
+// ─── SPRINTS & EPICS ENDPOINTS ──────────────────────────────────────────────
+app.get('/api/sprints', async (req, res) => {
+  try {
+    const result = await pool.query(`
+      SELECT id, name, is_backlog as "isBacklog", TO_CHAR(start_date, 'YYYY-MM-DD') as "startDate", TO_CHAR(end_date, 'YYYY-MM-DD') as "endDate", is_active as "isActive"
+      FROM sprints
+      ORDER BY id ASC
+    `);
+    res.json(result.rows);
+  } catch (err) {
+    logError(err, 'db');
+    res.status(500).json({ error: 'Server error' });
+  }
+});
+
+app.get('/api/epics', async (req, res) => {
+  try {
+    const result = await pool.query('SELECT id, name, color FROM epics ORDER BY id ASC');
+    res.json(result.rows);
+  } catch (err) {
+    logError(err, 'db');
+    res.status(500).json({ error: 'Server error' });
+  }
+});
+
 // The "catchall" handler: for any request that doesn't
 // match one above, send back React's index.html file.
 app.get(/(.*)/, (req, res) => {

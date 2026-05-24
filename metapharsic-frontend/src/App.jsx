@@ -979,6 +979,13 @@ export default function App() {
     } catch (err) {
       console.warn("Could not create department in DB", err);
     }
+
+    // 2. Perform background database creation
+    fetch('/api/issues', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(issue)
+    }).catch(err => console.warn("Database issue creation failed in background, running in local mode.", err));
   };
 
   const deleteIssue = (key) => {
@@ -1859,8 +1866,8 @@ function EditUserModal({ user, onClose, onSave }) {
           <div style={{ display:"flex", alignItems:"center", gap:12, padding:"6px 0" }}>
             <Avatar user={user} size={44} />
             <div>
-              <div style={{ fontWeight:600, color:"#e6edf3" }}>{user.name}</div>
-              <div style={{ fontSize:12, color:"#909dab" }}>{user.email}</div>
+              <div style={{ fontWeight:600, color:"#e6edf3" }}>{draft.name}</div>
+              <div style={{ fontSize:12, color:"#909dab" }}>{draft.email}</div>
             </div>
           </div>
 
