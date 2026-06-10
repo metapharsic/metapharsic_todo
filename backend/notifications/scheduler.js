@@ -15,7 +15,7 @@ function initScheduler(pool) {
   
   times.forEach(schedule => {
     cron.schedule(schedule, async () => {
-      console.log(`[Scheduler] 🕒 Running daily digest for schedule: ${schedule}`);
+      console.log(`[Scheduler]  Running daily digest for schedule: ${schedule}`);
       await sendDailyDigests(pool);
     });
   });
@@ -23,7 +23,7 @@ function initScheduler(pool) {
   // For testing purposes, we could add a shorter interval if needed, but 3 specific times were requested.
   // cron.schedule('*/30 * * * *', () => { ... });
 
-  console.log('[Scheduler] 🚀 Daily digests scheduled for 9:00 AM, 2:00 PM, and 8:00 PM.');
+  console.log('[Scheduler]  Daily digests scheduled for 9:00 AM, 2:00 PM, and 8:00 PM.');
 }
 
 /**
@@ -59,7 +59,7 @@ async function sendDailyDigests(pool) {
       // Skip if no tasks and not an admin
       if (tasksToSend.length === 0 && !isAdmin) continue;
 
-      // ── Email ──────────────────────────────────────────────────────────────
+      // -- Email --------------------------------------------------------------
       if (user.notification_email !== false && user.email) {
         const html = buildDigestEmail({ 
           userName: user.name, 
@@ -68,12 +68,12 @@ async function sendDailyDigests(pool) {
         });
         await sendEmail({ 
           to: user.email, 
-          subject: `📅 ${isAdmin ? 'System-wide' : 'Your'} Daily Task Digest`, 
+          subject: ` ${isAdmin ? 'System-wide' : 'Your'} Daily Task Digest`, 
           html 
         });
       }
 
-      // ── WhatsApp ───────────────────────────────────────────────────────────
+      // -- WhatsApp -----------------------------------------------------------
       if (user.notification_whatsapp && user.phone_verified && user.phone && user.callmebot_apikey) {
         const message = buildDigestWhatsAppMessage({ 
           userName: user.name, 
@@ -88,7 +88,7 @@ async function sendDailyDigests(pool) {
       }
     }
   } catch (err) {
-    console.error('[Scheduler] ❌ Error in daily digest loop:', err);
+    console.error('[Scheduler]  Error in daily digest loop:', err);
   }
 }
 

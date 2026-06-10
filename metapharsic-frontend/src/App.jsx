@@ -1,6 +1,6 @@
 import { useState, useRef, useMemo, useCallback, useEffect } from "react";
 
-// ─── TRANSLATIONS ────────────────────────────────────────────────────────────
+// --- TRANSLATIONS ------------------------------------------------------------
 const TRANSLATIONS = {
   en: {
     // Navigation
@@ -42,104 +42,122 @@ const TRANSLATIONS = {
     kpis: "Operational KPIs",
   },
   hi: {
-    board: "बोर्ड",
-    backlog: "बैकलॉग",
-    roadmap: "रोडमैप",
-    people: "लोग",
-    mytasks: "मेरे कार्य",
-    todos: "कार्य सूची",
-    departments: "विभाग",
-    users: "उपयोगकर्ता प्रबंधन",
-    settings: "सेटिंग्स",
-    components: "घटक",
-    architecture: "डेटाबेस स्कीमा",
-    project: "परियोजना",
-    core: "मुख्य",
-    save: "परिवर्तन सहेजें",
-    cancel: "रद्द करें",
-    search: "खोजें...",
-    create: "कार्य बनाएँ",
-    signOut: "साइन आउट",
-    loggedInAs: "के रूप में लॉग इन",
-    systemSettings: "सिस्टम सेटिंग्स",
-    appearance: "दिखावट और थीम",
-    appBehavior: "एप्लिकेशन व्यवहार",
-    localization: "स्थानीयकरण",
-    language: "सिस्टम भाषा",
-    timezone: "समय क्षेत्र",
-    commPrefs: "संचार प्राथमिकताएं",
-    enterpriseDepts: "उद्यम विभाग",
-    addDept: "विभाग जोड़ें",
-    units: "इकाइयां",
-    staff: "कर्मचारी",
-    purpose: "उद्देश्य",
-    roles: "मुख्य भूमिकाएँ",
-    kpis: "परिचालन KPIs",
+    board: "",
+    backlog: "",
+    roadmap: "",
+    people: "",
+    mytasks: " ",
+    todos: " ",
+    departments: "",
+    users: " ",
+    settings: "",
+    components: "",
+    architecture: " ",
+    project: "",
+    core: "",
+    save: " ",
+    cancel: " ",
+    search: "...",
+    create: " ",
+    signOut: " ",
+    loggedInAs: "    ",
+    systemSettings: " ",
+    appearance: "  ",
+    appBehavior: " ",
+    localization: "",
+    language: " ",
+    timezone: " ",
+    commPrefs: " ",
+    enterpriseDepts: " ",
+    addDept: " ",
+    units: "",
+    staff: "",
+    purpose: "",
+    roles: " ",
+    kpis: " KPIs",
   },
   ar: {
-    board: "لوحة",
-    backlog: "قائمة المهام",
-    roadmap: "خارطة الطريق",
-    people: "أشخاص",
-    mytasks: "مهامي",
-    todos: "قائمة المهام",
-    departments: "الأقسام",
-    users: "إدارة المستخدمين",
-    settings: "الإعدادات",
-    components: "المكونات",
-    architecture: "هيكل قاعدة البيانات",
-    project: "المشروع",
-    core: "الأساسي",
-    save: "حفظ التغييرات",
-    cancel: "إلغاء",
-    search: "بحث عن المهام...",
-    create: "إنشاء مهمة",
-    signOut: "تسجيل الخروج",
-    loggedInAs: "مسجل الدخول كـ",
-    systemSettings: "إعدادات النظام",
-    appearance: "المظهر والموضوع",
-    appBehavior: "سلوك التطبيق",
-    localization: "الترجمة",
-    language: "لغة النظام",
-    timezone: "المنطقة الزمنية",
-    commPrefs: "تفضيلات التواصل",
-    enterpriseDepts: "أقسام المؤسسة",
-    addDept: "إضافة قسم",
-    units: "وحدات",
-    staff: "الموظفين",
-    purpose: "الغرض",
-    roles: "الأدوار الرئيسية",
-    kpis: "مؤشرات الأداء",
+    board: "",
+    backlog: " ",
+    roadmap: " ",
+    people: "",
+    mytasks: "",
+    todos: " ",
+    departments: "",
+    users: " ",
+    settings: "",
+    components: "",
+    architecture: "  ",
+    project: "",
+    core: "",
+    save: " ",
+    cancel: "",
+    search: "  ...",
+    create: " ",
+    signOut: " ",
+    loggedInAs: "  ",
+    systemSettings: " ",
+    appearance: " ",
+    appBehavior: " ",
+    localization: "",
+    language: " ",
+    timezone: " ",
+    commPrefs: " ",
+    enterpriseDepts: " ",
+    addDept: " ",
+    units: "",
+    staff: "",
+    purpose: "",
+    roles: " ",
+    kpis: " ",
   }
 };
 
-// ─── DEPARTMENTS ─────────────────────────────────────────────────────────────
+// --- DEPARTMENTS -------------------------------------------------------------
 let DEPARTMENTS = {
-  hr:          { label: "Human Resources",        icon: "👥", color: "#ec4899", purpose: "Employee lifecycle & talent governance", roles: "HR Manager, Recruiter, Payroll Lead", kpis: "Retention Rate · Time-to-Hire · Training ROI" },
-  finance:     { label: "Finance",                icon: "💰", color: "#f59e0b", purpose: "Fiscal integrity & strategic budgeting", roles: "Finance Manager, Accountant, Finance Analyst", kpis: "Budget Variance · Cash Flow · Tax Compliance" },
-  it:          { label: "Information Technology", icon: "💻", color: "#3b82f6", purpose: "Enterprise infra & digital assets",      roles: "IT Manager, DBA, DevOps Engineer", kpis: "System Uptime · MTTR · Backup Success %" },
-  operations:  { label: "Operations",             icon: "⚙",  color: "#8b5cf6", purpose: "Process execution & operational excellence",roles: "General Manager, Ops Manager, Coordinator", kpis: "SLA Achievement · Process Efficiency · TAT" },
-  sales:       { label: "Sales",                  icon: "📈", color: "#10b981", purpose: "Revenue growth & account management",      roles: "Sales Manager, Account Manager, Sales Executive", kpis: "Target vs Actual · CAC · Lead Conversion" },
-  marketing:   { label: "Marketing",              icon: "📢", color: "#ef4444", purpose: "Brand positioning & digital footprint",    roles: "Brand Manager, Digital Marketer, SEO Analyst", kpis: "Brand Recall · Marketing ROI · Traffic Growth" },
-  support:     { label: "Customer Support",       icon: "🎧", color: "#0ea5e9", purpose: "Consumer satisfaction & issue resolution", roles: "Support Engineer, Helpdesk Agent", kpis: "CSAT Score · Ticket Resolution · First Response" },
-  legal:       { label: "Legal",                  icon: "⚖",  color: "#64748b", purpose: "Statutory compliance & risk mitigation",    roles: "Legal Advisor, Compliance Officer", kpis: "Litigation Status · Contract Turnaround · Audit Pass %" },
-  procurement: { label: "Procurement",            icon: "📦", color: "#f97316", purpose: "Strategic sourcing & vendor governance",   roles: "Purchase Exec, Vendor Manager", kpis: "Cost Saving · Vendor Performance · Lead Time" },
-  qa:          { label: "QA / QC",                icon: "🔬", color: "#14b8a6", purpose: "Quality assurance & laboratory control",   roles: "QA Manager, QC Technician, QA Analyst", kpis: "Batch Success · Lab Compliance · Error Rate" },
-  production:  { label: "Production",             icon: "🏭", color: "#eab308", purpose: "High-scale pharmaceutical manufacturing",  roles: "Plant Head, Production Supv, Operator", kpis: "Yield Efficiency · Plant Safety · Downtime %" },
-  rnd:         { label: "R&D",                    icon: "🧪", color: "#84cc16", purpose: "Formula innovation & clinical research",   roles: "R&D Manager, Scientist, Lab Tech", kpis: "Innovation Velocity · Patent Filing · Lab Safety" },
+  hr:          { label: "Human Resources",        icon: "", color: "#ec4899", purpose: "Employee lifecycle & talent governance", roles: "HR Manager, Recruiter, Payroll Lead", kpis: "Retention Rate  Time-to-Hire  Training ROI" },
+  finance:     { label: "Finance",                icon: "", color: "#f59e0b", purpose: "Fiscal integrity & strategic budgeting", roles: "Finance Manager, Accountant, Finance Analyst", kpis: "Budget Variance  Cash Flow  Tax Compliance" },
+  it:          { label: "Information Technology", icon: "", color: "#3b82f6", purpose: "Enterprise infra & digital assets",      roles: "IT Manager, DBA, DevOps Engineer", kpis: "System Uptime  MTTR  Backup Success %" },
+  operations:  { label: "Operations",             icon: "",  color: "#8b5cf6", purpose: "Process execution & operational excellence",roles: "General Manager, Ops Manager, Coordinator", kpis: "SLA Achievement  Process Efficiency  TAT" },
+  sales:       { label: "Sales",                  icon: "", color: "#10b981", purpose: "Revenue growth & account management",      roles: "Sales Manager, Account Manager, Sales Executive", kpis: "Target vs Actual  CAC  Lead Conversion" },
+  marketing:   { label: "Marketing",              icon: "", color: "#ef4444", purpose: "Brand positioning & digital footprint",    roles: "Brand Manager, Digital Marketer, SEO Analyst", kpis: "Brand Recall  Marketing ROI  Traffic Growth" },
+  support:     { label: "Customer Support",       icon: "", color: "#0ea5e9", purpose: "Consumer satisfaction & issue resolution", roles: "Support Engineer, Helpdesk Agent", kpis: "CSAT Score  Ticket Resolution  First Response" },
+  legal:       { label: "Legal",                  icon: "",  color: "#64748b", purpose: "Statutory compliance & risk mitigation",    roles: "Legal Advisor, Compliance Officer", kpis: "Litigation Status  Contract Turnaround  Audit Pass %" },
+  procurement: { label: "Procurement",            icon: "", color: "#f97316", purpose: "Strategic sourcing & vendor governance",   roles: "Purchase Exec, Vendor Manager", kpis: "Cost Saving  Vendor Performance  Lead Time" },
+  qa:          { label: "QA / QC",                icon: "", color: "#14b8a6", purpose: "Quality assurance & laboratory control",   roles: "QA Manager, QC Technician, QA Analyst", kpis: "Batch Success  Lab Compliance  Error Rate" },
+  production:  { label: "Production",             icon: "", color: "#eab308", purpose: "High-scale pharmaceutical manufacturing",  roles: "Plant Head, Production Supv, Operator", kpis: "Yield Efficiency  Plant Safety  Downtime %" },
+  rnd:         { label: "R&D",                    icon: "", color: "#84cc16", purpose: "Formula innovation & clinical research",   roles: "R&D Manager, Scientist, Lab Tech", kpis: "Innovation Velocity  Patent Filing  Lab Safety" },
 };
 
-// ─── ROLES ────────────────────────────────────────────────────────────────────
+// --- ROLES --------------------------------------------------------------------
 let ROLES = {
-  admin:        { label: "Admin",          permissions: ["create","edit","delete","assign","manage_users","view_all","manage_roles","approve"] },
-  manager:      { label: "Manager",        permissions: ["create","edit","assign","view_all","approve"] },
-  developer:    { label: "Developer",      permissions: ["create","edit","view_own"] },
-  designer:     { label: "Designer",       permissions: ["create","edit","view_own"] },
-  qa_engineer:  { label: "QA Engineer",    permissions: ["create","edit","view_own"] },
-  viewer:       { label: "Viewer",         permissions: ["view_own"] },
+  admin:       { label:"Administrator",   icon:"", color:"#ef4444", desc:"Full system access - all permissions",               permissions:["create","edit","delete","assign","manage_users","view_all","manage_roles","approve","view_reports","manage_dept"] },
+  manager:     { label:"Project Manager", icon:"", color:"#f59e0b", desc:"Manages projects, sprints and team output",           permissions:["create","edit","delete","assign","view_all","approve","view_reports","manage_dept"] },
+  team_lead:   { label:"Team Lead",       icon:"", color:"#6366f1", desc:"Leads a team, assigns and reviews work",             permissions:["create","edit","assign","view_all","approve","view_reports"] },
+  developer:   { label:"Developer",       icon:"", color:"#22c55e", desc:"Builds features and resolves issues",               permissions:["create","edit","assign","view_all"] },
+  designer:    { label:"Designer",        icon:"", color:"#a855f7", desc:"Owns UX/UI design and visual assets",               permissions:["create","edit","view_all"] },
+  qa_engineer: { label:"QA Engineer",     icon:"", color:"#06b6d4", desc:"Tests, validates and approves releases",            permissions:["create","edit","view_all","approve"] },
+  hr:          { label:"HR Manager",      icon:"", color:"#f97316", desc:"People operations and user management",             permissions:["view_all","manage_users","view_reports"] },
+  finance:     { label:"Finance Officer", icon:"", color:"#10b981", desc:"Read access with financial reporting",              permissions:["view_all","view_reports"] },
+  viewer:      { label:"Viewer",          icon:"",  color:"#768390", desc:"Read-only access to all project boards",           permissions:["view_all"] },
 };
 
-// ─── USERS ───────────────────────────────────────────────────────────────────
+// --- PERMISSIONS --------------------------------------------------------------
+const PERMISSION_META = {
+  create:       { label:"Create Issues",      icon:"", group:"Issues",   desc:"Create new tasks, bugs and stories" },
+  edit:         { label:"Edit Issues",        icon:"",  group:"Issues",   desc:"Modify details, status and priority" },
+  delete:       { label:"Delete Issues",      icon:"",  group:"Issues",   desc:"Permanently remove issues" },
+  assign:       { label:"Assign Issues",      icon:"", group:"Issues",   desc:"Assign issues to team members" },
+  view_all:     { label:"View All Issues",    icon:"",  group:"Access",   desc:"See all issues across departments" },
+  view_own:     { label:"View Own Issues",    icon:"", group:"Access",   desc:"See only personally assigned issues" },
+  approve:      { label:"Approve & Review",   icon:"", group:"Workflow", desc:"Approve issues and review requests" },
+  manage_users: { label:"Manage Users",       icon:"", group:"Admin",    desc:"Add, edit and deactivate team members" },
+  manage_roles: { label:"Manage Roles",       icon:"",  group:"Admin",    desc:"Edit role permissions system-wide" },
+  manage_dept:  { label:"Manage Departments", icon:"", group:"Admin",    desc:"Configure department structure" },
+  view_reports: { label:"View Reports",       icon:"", group:"Reports",  desc:"Access analytics and digest reports" },
+};
+
+// --- USERS -------------------------------------------------------------------
 const INITIAL_USERS = [
   { id:1, name:"Admin",       avatar:"AD", role:"admin",       department:"operations",  color:"#6366f1", email:"admin@metapharsic.io",    password:"admin123",   active:true,  joinDate:"2025-01-01" },
   { id:2, name:"Mannan",      avatar:"MN", role:"developer",   department:"it",          color:"#10b981", email:"mannan@metapharsic.io",   password:"mannan123",  active:true,  joinDate:"2025-02-10" },
@@ -148,7 +166,7 @@ const INITIAL_USERS = [
   { id:5, name:"DevOps Bot",  avatar:"DB", role:"developer",   department:"it",          color:"#ef4444", email:"devops@metapharsic.io",   password:"devops123",  active:false, joinDate:"2025-05-01" },
 ];
 
-// ─── TODO DEFINITIONS BY ROLE ─────────────────────────────────────────────────
+// --- TODO DEFINITIONS BY ROLE -------------------------------------------------
 const ROLE_TODOS = {
   admin: [
     { id:"a1", text:"Review and approve pending pull requests",     priority:"high",   category:"Management"  },
@@ -193,15 +211,15 @@ const ROLE_TODOS = {
   ],
 };
 
-// ─── NOTIFICATIONS ────────────────────────────────────────────────────────────
+// --- NOTIFICATIONS ------------------------------------------------------------
 const NOTIFICATION_TYPES = {
-  assignment:  { icon:"👤", color:"#46b3cf", label:"Assignment"   },
-  comment:     { icon:"💬", color:"#10b981", label:"Comment"      },
-  status:      { icon:"🔄", color:"#f59e0b", label:"Status Change"},
-  due:         { icon:"⏰", color:"#ef4444", label:"Due Soon"     },
-  role_change: { icon:"🛡", color:"#a855f7", label:"Role Change"  },
+  assignment:  { icon:"", color:"#46b3cf", label:"Assignment"   },
+  comment:     { icon:"", color:"#10b981", label:"Comment"      },
+  status:      { icon:"", color:"#f59e0b", label:"Status Change"},
+  due:         { icon:"", color:"#ef4444", label:"Due Soon"     },
+  role_change: { icon:"", color:"#a855f7", label:"Role Change"  },
   mention:     { icon:"@",  color:"#ec4899", label:"Mention"      },
-  system:      { icon:"⚙", color:"#6366f1", label:"System"       },
+  system:      { icon:"", color:"#6366f1", label:"System"       },
 };
 
 const SEED_NOTIFICATIONS = [
@@ -215,13 +233,13 @@ const SEED_NOTIFICATIONS = [
   { id:8, type:"mention",     userId:3, message:"Mannan mentioned you in PROJ-6: Fix in PR #42.",         time:"12h ago",  read:true,  issueKey:"PROJ-6" },
 ];
 
-// ─── ISSUE DATA ───────────────────────────────────────────────────────────────
+// --- ISSUE DATA ---------------------------------------------------------------
 const ISSUE_TYPES = {
-  task:    { label:"Task",    icon:"✓",  color:"#4ade80" },
-  bug:     { label:"Bug",     icon:"⬤",  color:"#f87171" },
-  story:   { label:"Story",   icon:"◈",  color:"#7dc3db" },
-  epic:    { label:"Epic",    icon:"⚡", color:"#c084fc" },
-  subtask: { label:"Subtask", icon:"⊏",  color:"#adbac7" },
+  task:    { label:"Task",    icon:"",  color:"#4ade80" },
+  bug:     { label:"Bug",     icon:"",  color:"#f87171" },
+  story:   { label:"Story",   icon:"",  color:"#7dc3db" },
+  epic:    { label:"Epic",    icon:"", color:"#c084fc" },
+  subtask: { label:"Subtask", icon:"",  color:"#adbac7" },
 };
 
 const STATUSES = ["To Do","In Progress","In Review","Done"];
@@ -233,11 +251,11 @@ const STATUS_COLORS = {
 };
 
 const PRIORITIES = {
-  highest: { label:"Highest", icon:"↑↑", color:"#ef4444" },
-  high:    { label:"High",    icon:"↑",   color:"#f97316" },
-  medium:  { label:"Medium",  icon:"→",   color:"#f59e0b" },
-  low:     { label:"Low",     icon:"↓",   color:"#22c55e" },
-  lowest:  { label:"Lowest",  icon:"↓↓",  color:"#909dab" },
+  highest: { label:"Highest", icon:"", color:"#ef4444" },
+  high:    { label:"High",    icon:"",   color:"#f97316" },
+  medium:  { label:"Medium",  icon:"",   color:"#f59e0b" },
+  low:     { label:"Low",     icon:"",   color:"#22c55e" },
+  lowest:  { label:"Lowest",  icon:"",  color:"#909dab" },
 };
 
 const EPICS = [
@@ -249,7 +267,7 @@ const EPICS = [
 const RECURRENCE_OPTIONS = ["none","daily","weekly","biweekly","monthly","yearly"];
 const ALL_LABELS = ["Frontend","Backend","API","Design","Testing","Docs","Bug","Enhancement"];
 
-let issueCounter = 8;
+let issueCounter = 100;
 const genKey = () => `PROJ-${++issueCounter}`;
 
 const SEED = [
@@ -263,13 +281,13 @@ const SEED = [
   { key:"PROJ-8", type:"task",  title:"Write API documentation",     status:"To Do",        priority:"lowest",  assignee:null,reporter:1,sp:3, epic:null,  labels:["Docs"],               desc:"OpenAPI 3.0 spec for all public endpoints.",     dueDate:"2026-06-15", sprint:"Backlog",  created:"2026-05-16 11:05:00", recurrence:"none",   notification:false, comments:[], watchers:[1], attach:0, department:"it" },
 ];
 
-// ─── ROOT ─────────────────────────────────────────────────────────────────────
+// --- ROOT ---------------------------------------------------------------------
 const S = {
   root: { display: "flex", height: "100vh", background: "var(--bg-main)", color: "var(--text-main)", fontFamily: "'DM Sans','Segoe UI',system-ui,sans-serif", fontSize: 14, overflow: "hidden" },
 
-  sidebar: { width: 240, background: "var(--bg-sidebar)", borderRight: "1px solid var(--border)", display: "flex", flexDirection: "column", flexShrink: 0, overflow: "auto", transition: "all 0.3s ease", zIndex: 1000 },
-  sidebarOverlay: { position: "fixed", inset: 0, background: "rgba(0,0,0,0.5)", zIndex: 999 },
-  sidebarMobile: { width: "100%", height: "auto", borderRight: "none", borderBottom: "1px solid var(--border)", position: "relative", zIndex: 100 },
+  sidebar: { width: 240, background: "var(--bg-sidebar)", borderRight: "1px solid var(--border)", display: "flex", flexDirection: "column", flexShrink: 0, overflow: "auto", transition: "all 0.3s ease", zIndex: 9999 },
+  sidebarOverlay: { position: "fixed", inset: 0, background: "rgba(0,0,0,0.7)", zIndex: 9998 },
+  sidebarMobile: { width: "280px", height: "100%", borderRight: "1px solid var(--border)", borderBottom: "none", position: "fixed", top: 0, left: 0, bottom: 0, zIndex: 9999 },
   sidebarTop: { display: "flex", alignItems: "center", gap: 12, padding: "18px 16px", borderBottom: "1px solid var(--border)" },
   logoImg: { width: 46, height: 46, borderRadius: "50%", objectFit: "contain", flexShrink: 0, background: "#fff", padding: 3, boxShadow: "0 2px 8px rgba(0,0,0,0.2)" },
   watermark: { position: "absolute", inset: 0, display: "flex", alignItems: "center", justifyContent: "center", pointerEvents: "none", zIndex: 0, opacity: 0.04, mixBlendMode: "screen" },
@@ -304,17 +322,17 @@ const S = {
   miniProgress: { width: 80, height: 4, background: "var(--border)", borderRadius: 2, overflow: "hidden" },
   miniProgressFill: { height: "100%", background: "#22c55e", borderRadius: 2, transition: "width 0.3s" },
 
-  cols: { display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))", gap: 10, alignItems: "start" },
-  col: { background: "var(--card-bg)", borderRadius: 10, padding: 10, border: "2px solid transparent", transition: "border-color 0.15s", minHeight: 120 },
-  colOver: { borderColor: "var(--accent)" },
+  cols: { display: "grid", gridTemplateColumns: "repeat(4, minmax(200px, 1fr))", gap: 10, alignItems: "start" },
+  col: { background: "var(--card-bg)", borderRadius: 10, padding: 10, border: "2px solid transparent", transition: "border-color 0.2s, box-shadow 0.2s", minHeight: 120 },
+  colOver: { borderColor: "var(--accent)", animation: "dropZonePulse 1.2s ease-in-out infinite" },
   colHeader: { display: "flex", alignItems: "center", gap: 7, marginBottom: 10, paddingBottom: 8, borderBottom: "1px solid var(--border)" },
   dot: { width: 7, height: 7, borderRadius: "50%", flexShrink: 0 },
   colTitle: { fontSize: 11, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.05em", flex: 1 },
   colCount: { background: "var(--border)", color: "var(--text-muted)", borderRadius: 4, padding: "1px 6px", fontSize: 11, fontWeight: 700 },
   colBody: { display: "flex", flexDirection: "column", gap: 8, minHeight: 40 },
-  emptyCol: { color: "var(--border)", fontSize: 11, textAlign: "center", padding: "16px 0", border: "2px dashed var(--border)", borderRadius: 8 },
+  emptyCol: { color: "var(--accent)", fontSize: 11, textAlign: "center", padding: "20px 0", border: "2px dashed var(--accent)", borderRadius: 8, opacity: 0.5 },
 
-  card: { background: "var(--bg-main)", borderRadius: 8, padding: 10, cursor: "pointer", border: "1px solid var(--border)", transition: "border-color 0.15s" },
+  card: { background: "var(--bg-main)", borderRadius: 8, padding: 10, cursor: "grab", border: "1px solid var(--border)", transition: "border-color 0.15s, opacity 0.2s, transform 0.15s" },
   cardTitle: { fontSize: 12, fontWeight: 500, color: "var(--text-main)", lineHeight: 1.45, marginBottom: 7 },
   cardFoot: { display: "flex", justifyContent: "space-between", alignItems: "center", marginTop: 6 },
   issueKey: { fontSize: 10, color: "var(--text-muted)", fontFamily: "monospace" },
@@ -416,7 +434,36 @@ const S = {
   userTableRow: { borderBottom: "1px solid var(--border)" },
   userTableCell: { padding: "12px 16px", color: "var(--text-main)", verticalAlign: "middle" },
   permTag: { background: "var(--sidebar-active)", color: "var(--accent)", borderRadius: 4, padding: "1px 6px", fontSize: 10, fontWeight: 600, whiteSpace: "nowrap" },
+
+  // Voice Assistant
+  voiceBtn: { background: "linear-gradient(135deg, #6366f1, #4f46e5)", color: "#fff", border: "none", borderRadius: "50%", width: 34, height: 34, display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", boxShadow: "0 2px 8px rgba(99, 102, 241, 0.4)", transition: "all 0.15s" },
+  voiceBtnActive: { background: "linear-gradient(135deg, #ef4444, #dc2626)", boxShadow: "0 0 15px rgba(239, 68, 68, 0.6)" },
+  voicePanel: { position: "fixed", bottom: 24, right: 24, width: 320, background: "var(--card-bg)", border: "1px solid var(--border)", borderRadius: 16, boxShadow: "0 20px 50px rgba(0,0,0,0.6)", zIndex: 10000, padding: 20, display: "flex", flexDirection: "column", gap: 12, animation: "slideUp 0.3s ease-out" },
+  voiceTranscript: { fontSize: 13, color: "var(--text-main)", fontStyle: "italic", background: "var(--bg-main)", padding: 10, borderRadius: 8, minHeight: 50, border: "1px solid var(--border)", lineHeight: 1.5 },
+  voiceStatus: { fontSize: 11, fontWeight: 700, color: "var(--text-muted)", textTransform: "uppercase", letterSpacing: "0.05em" },
+  voiceHelp: { fontSize: 11, color: "var(--text-muted)", background: "var(--bg-main)", padding: 8, borderRadius: 6, border: "1px dashed var(--border)" }
 };
+
+function getStoredAuth() {
+  try {
+    const stored = localStorage.getItem('auth_user');
+    if (!stored) return null;
+    const user = JSON.parse(stored);
+    if (user.token) {
+      const parts = user.token.split('.');
+      if (parts.length === 3) {
+        const payload = JSON.parse(atob(parts[1].replace(/-/g, '+').replace(/_/g, '/')));
+        if (payload.exp && Date.now() / 1000 > payload.exp) {
+          localStorage.removeItem('auth_user');
+          return null;
+        }
+      }
+    }
+    return user;
+  } catch {
+    return null;
+  }
+}
 
 export default function App() {
   const getCurrentDateTime = () => {
@@ -425,9 +472,9 @@ export default function App() {
     return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}`;
   };
 
-  const [loggedIn, setLoggedIn]         = useState(false);
-  const [forcePasswordChange, setForcePasswordChange] = useState(false);
-  const [currentUser, setCurrentUser]   = useState(null);
+  const [loggedIn, setLoggedIn]         = useState(() => { const u = getStoredAuth(); return !!u && !u.requirePasswordChange; });
+  const [forcePasswordChange, setForcePasswordChange] = useState(() => { const u = getStoredAuth(); return !!u && !!u.requirePasswordChange; });
+  const [currentUser, setCurrentUser]   = useState(() => getStoredAuth());
   const [theme, setTheme] = useState(() => localStorage.getItem("theme") || "dark");
 
   const lang = currentUser?.settingsLanguage || "en";
@@ -449,7 +496,10 @@ export default function App() {
   const [isRefreshing, setIsRefreshing] = useState(false);
 
   const [users, setUsers]             = useState(INITIAL_USERS);
-  const [view, setView]               = useState("board");
+  const [view, setViewRaw]             = useState("board");
+  const viewHistory                    = useRef([]);
+  const setView = (v) => { viewHistory.current.push(view); setViewRaw(v); };
+  const goBack  = () => { const prev = viewHistory.current.pop(); if (prev != null) setViewRaw(prev); };
   const [selected, setSelected]       = useState(null);
   const [showCreate, setShowCreate] = useState(false);
   const [showCreateDept, setShowCreateDept] = useState(false);
@@ -478,8 +528,10 @@ export default function App() {
   }, []);
 
   const [dragOver, setDragOver]       = useState(null);
+  const [draggingKey, setDraggingKey] = useState(null);
   const [notifications, setNotifs]    = useState(SEED_NOTIFICATIONS);
   const [showNotifs, setShowNotifs]   = useState(false);
+  const [showVoice, setShowVoice]     = useState(false);
   const [todos, setTodos]             = useState(() => {
     const map = {};
     Object.entries(ROLE_TODOS).forEach(([role, items]) => {
@@ -489,7 +541,7 @@ export default function App() {
   });
   const dragKey = useRef(null);
 
-  // ── Viewport Response State ──
+  // -- Viewport Response State --
   const [windowWidth, setWindowWidth] = useState(window.innerWidth);
   const isMobile = windowWidth < 768;
   const isTablet = windowWidth >= 768 && windowWidth < 1024;
@@ -528,6 +580,7 @@ export default function App() {
         return { error: data.error || 'Login failed.' };
       }
       setCurrentUser(data);
+      localStorage.setItem('auth_user', JSON.stringify(data));
       if (data.requirePasswordChange) {
         setForcePasswordChange(true);
       } else {
@@ -540,6 +593,7 @@ export default function App() {
       const matchedUser = users.find(u => u.email.toLowerCase() === email.toLowerCase() && u.password === password);
       if (matchedUser) {
         setCurrentUser(matchedUser);
+        localStorage.setItem('auth_user', JSON.stringify(matchedUser));
         setLoggedIn(true);
         setView("board");
         return { ok: true };
@@ -559,13 +613,22 @@ export default function App() {
       if (response.ok) {
         setForcePasswordChange(false);
         setLoggedIn(true);
+        setCurrentUser(p => {
+          const updated = { ...p, requirePasswordChange: false };
+          localStorage.setItem('auth_user', JSON.stringify(updated));
+          return updated;
+        });
       } else {
         return { error: 'Failed to update password.' };
       }
     } catch (err) {
       console.warn("Change password API offline, changing password locally.", err);
       setUsers(p => p.map(u => u.id === currentUser.id ? { ...u, password: newPassword, requirePasswordChange: false } : u));
-      setCurrentUser(p => ({ ...p, password: newPassword, requirePasswordChange: false }));
+      setCurrentUser(p => {
+        const updated = { ...p, password: newPassword, requirePasswordChange: false };
+        localStorage.setItem('auth_user', JSON.stringify(updated));
+        return updated;
+      });
       setForcePasswordChange(false);
       setLoggedIn(true);
       return { ok: true };
@@ -577,13 +640,29 @@ export default function App() {
     setForcePasswordChange(false);
     setCurrentUser(null);
     setView("board");
+    localStorage.removeItem('auth_user');
   };
+
+  const [adminUser, setAdminUser] = useState(null);
 
   const switchUser = (id) => {
     const u = users.find(u => u.id === +id);
+    if (!u || u.id === currentUser?.id) return;
+    if (!adminUser && currentUser?.role === 'admin') setAdminUser(currentUser);
     setCurrentUser(u);
+    localStorage.setItem('auth_user', JSON.stringify(u));
     setForcePasswordChange(u.requirePasswordChange || false);
     if (!u.requirePasswordChange) setLoggedIn(true);
+    setShowNotifs(false);
+  };
+
+  const returnToAdmin = () => {
+    if (!adminUser) return;
+    setCurrentUser(adminUser);
+    localStorage.setItem('auth_user', JSON.stringify(adminUser));
+    setForcePasswordChange(false);
+    setLoggedIn(true);
+    setAdminUser(null);
     setShowNotifs(false);
   };
 
@@ -594,7 +673,8 @@ export default function App() {
     return issues.filter(i => {
       const inScope = view === "board" ? i.sprint === sprint : view === "backlog" ? i.sprint === "Backlog" : true;
       
-      const departmentMatch = isAdmin || userDepts.includes(i.department) || i.assignee === currentUser.id;
+      const taskDept = i.department || 'it';
+      const departmentMatch = isAdmin || userDepts.includes(taskDept) || Number(i.assignee) === currentUser.id;
       if (!departmentMatch) return false;
 
       const s = debouncedSearch.toLowerCase().trim();
@@ -655,11 +735,12 @@ export default function App() {
       const byEpic     = filters.epic     === "all" || i.epic     === filters.epic;
       const byDomain   = filters.domain   === "all" || i.department === filters.domain;
       
-      return inScope && bySearch && byType && byPriority && byAssignee && byEpic && byDomain;
+      const effectiveScope = debouncedSearch.trim() ? true : inScope;
+      return effectiveScope && bySearch && byType && byPriority && byAssignee && byEpic && byDomain;
     });
   }, [issues, view, sprint, debouncedSearch, filters, currentUser, isAdmin, users]);
 
-  // ── Define addNotification FIRST so all functions below can reference it ──
+  // -- Define addNotification FIRST so all functions below can reference it --
   const addNotification = (n) => {
     const localId = Date.now();
     setNotifs(p => [{ id: localId, ...n, time: "just now", read: false }, ...p]);
@@ -1040,10 +1121,12 @@ export default function App() {
     }).catch(err => console.warn("Could not delete notification in DB", err));
   };
 
-  const onDragStart = (e, key) => { dragKey.current = key; e.dataTransfer.effectAllowed = "move"; };
+  const onDragStart = (e, key) => { dragKey.current = key; setDraggingKey(key); e.dataTransfer.effectAllowed = "move"; };
+  const onDragEnd   = () => { setDraggingKey(null); setDragOver(null); };
   const onDrop = (e, status) => {
     e.preventDefault();
     if (dragKey.current) { updateIssue(dragKey.current, { status }); dragKey.current = null; }
+    setDraggingKey(null);
     setDragOver(null);
   };
 
@@ -1051,20 +1134,20 @@ export default function App() {
 
   const userNotifs = isAdmin ? notifications : notifications.filter(n => currentUser && n.userId === currentUser.id);
 
-  // Nav items based on role — admins/managers see everything, regular users see filtered views
+  // Nav items based on role - admins/managers see everything, regular users see filtered views
   const navItems = [
-    { id:"board",   icon:"⊞", label:t("board"),   show: isAdmin || hasPermission("view_all"), section: "core" },
-    { id:"backlog", icon:"☰", label:t("backlog"),  show: isAdmin || hasPermission("view_all"), section: "core" },
-    { id:"roadmap", icon:"⊟", label:t("roadmap"),  show: isAdmin || hasPermission("view_all"), section: "core" },
-    { id:"people",  icon:"⬡", label:t("people"),   show: isAdmin || hasPermission("view_all"), section: "core" },
-    { id:"mytasks", icon:"☑", label:t("mytasks"), show: !isAdmin, section: "core" },
-    { id:"todos",   icon:"☑", label:t("todos"),show: isAdmin || hasPermission("view_all"), section: "core" },
+    { id:"board",   icon:"", label:t("board"),   show: isAdmin || hasPermission("view_all"), section: "core" },
+    { id:"backlog", icon:"", label:t("backlog"),  show: isAdmin || hasPermission("view_all"), section: "core" },
+    { id:"roadmap", icon:"", label:t("roadmap"),  show: isAdmin || hasPermission("view_all"), section: "core" },
+    { id:"people",  icon:"", label:t("people"),   show: isAdmin || hasPermission("view_all"), section: "core" },
+    { id:"mytasks", icon:"", label:t("mytasks"), show: !isAdmin, section: "core" },
+    { id:"todos",   icon:"", label:t("todos"),show: isAdmin || hasPermission("view_all"), section: "core" },
     
-    { id:"departments", icon:"🏢", label:t("departments"), show: true, section: "project" },
-    { id:"users",       icon:"👥", label:t("users"),   show: hasPermission("manage_users"), section: "project" },
-    { id:"settings",    icon:"⚙",  label:t("settings"),    show: hasPermission("manage_users"), section: "project" },
-    { id:"components",  icon:"◈",  label:t("components"),  show: true, section: "project" },
-    { id:"architecture",icon:"⛁",  label:t("architecture"),   show: isAdmin, section: "project" },
+    { id:"departments", icon:"", label:t("departments"), show: isAdmin || hasPermission("manage_dept"), section: "project" },
+    { id:"users",       icon:"", label:t("users"),   show: hasPermission("manage_users"), section: "project" },
+    { id:"settings",    icon:"",  label:t("settings"),    show: true, section: "project" },
+    { id:"components",  icon:"",  label:t("components"),  show: true, section: "project" },
+    { id:"architecture",icon:"",  label:t("architecture"),   show: isAdmin, section: "project" },
   ].filter(n => n.show);
 
   // Set default view per role
@@ -1091,17 +1174,17 @@ export default function App() {
 
   return (
     <div style={{ ...S.root, flexDirection: isMobile ? "column" : "row" }}>
-      {/* ── WATERMARK ── */}
+      {/* -- WATERMARK -- */}
       <div style={S.watermark}>
         <img src="/logo.png" style={S.watermarkImg} alt="" />
       </div>
 
-      {/* ── SIDEBAR OVERLAY ── */}
+      {/* -- SIDEBAR OVERLAY -- */}
       {isSmallScreen && sidebarOpen && (
         <div style={S.sidebarOverlay} onClick={() => setSidebarOpen(false)} />
       )}
 
-      {/* ── SIDEBAR ── */}
+      {/* -- SIDEBAR -- */}
       <aside style={currentSidebarStyle}>
         <div style={S.sidebarTop}>
           <img src="/logo.png" alt="Logo" style={S.logoImg} />
@@ -1109,7 +1192,7 @@ export default function App() {
             <div style={S.projName}>Metapharsic To Do</div>
             <div style={S.projType}>{isAdmin ? "Admin Portal" : "Team Portal"}</div>
           </div>
-          {isSmallScreen && <button style={{ ...S.iconBtn, marginInlineStart: "auto" }} onClick={() => setSidebarOpen(false)}>✕</button>}
+          {isSmallScreen && <button style={{ ...S.iconBtn, marginInlineStart: "auto" }} onClick={() => setSidebarOpen(false)}></button>}
         </div>
         
         <nav style={{ padding:"6px 0", flex: 1 }}>
@@ -1122,18 +1205,18 @@ export default function App() {
 
         {/* Role badge */}
 
-        <div style={{ margin:"8px 10px", padding:"8px 10px", background:"#2d333b", borderRadius:8, border:"1px solid #444c56" }}>
-          <div style={{ fontSize:10, color:"#768390", fontWeight:700, marginBottom:4, textTransform:"uppercase" }}>{t("loggedInAs")}</div>
+        <div style={{ margin:"8px 10px", padding:"8px 10px", background:"var(--card-bg)", borderRadius:8, border:"1px solid var(--border)" }}>
+          <div style={{ fontSize:10, color:"var(--text-muted)", fontWeight:700, marginBottom:4, textTransform:"uppercase" }}>{t("loggedInAs")}</div>
           <div style={{ display:"flex", alignItems:"center", gap:8, marginBottom:6 }}>
             <Avatar user={currentUser} size={24} />
-            <span style={{ color:"#cdd9e5", fontSize:13, fontWeight:600 }}>{currentUser?.name}</span>
+            <span style={{ color:"var(--text-header)", fontSize:13, fontWeight:600 }}>{currentUser?.name}</span>
           </div>
           <div style={{ display:"flex", gap:6, flexWrap:"wrap" }}>
             <span style={{ ...S.rolePill, background: (DEPARTMENTS[currentUser?.department]?.color||"#6366f1")+"25", color: DEPARTMENTS[currentUser?.department]?.color||"#6366f1" }}>
               {DEPARTMENTS[currentUser?.department]?.icon} {DEPARTMENTS[currentUser?.department]?.label}
             </span>
-            <span style={{ ...S.rolePill, background:"#444c56", color:"#adbac7" }}>
-              {ROLES[currentUser?.role]?.label}
+            <span style={{ ...S.rolePill, background: (ROLES[currentUser?.role]?.color||"#6366f1")+"25", color: ROLES[currentUser?.role]?.color||"#adbac7" }}>
+              {ROLES[currentUser?.role]?.icon} {ROLES[currentUser?.role]?.label}
             </span>
           </div>
           {isAdmin && (
@@ -1141,22 +1224,39 @@ export default function App() {
               {users.filter(u => u.active).map(u => <option key={u.id} value={u.id}>{u.name}</option>)}
             </select>
           )}
+          {adminUser && (
+            <button
+              onClick={returnToAdmin}
+              style={{ marginTop:6, width:"100%", background:"#0d2e42", color:"#58a6ff", border:"1px solid #1f4e79", borderRadius:6, padding:"5px 0", fontSize:12, cursor:"pointer", fontWeight:700 }}
+            >
+               Back to Admin
+            </button>
+          )}
           <button
             onClick={handleLogout}
             style={{ marginTop:8, width:"100%", background:"#3d1c1c", color:"#f87171", border:"1px solid #6b2121", borderRadius:6, padding:"5px 0", fontSize:12, cursor:"pointer", fontWeight:600 }}
           >
-            💪 {t("signOut")}
+             {t("signOut")}
           </button>
         </div>
       </aside>
 
-      {/* ── MAIN ── */}
+      {/* -- MAIN -- */}
       <div style={S.main}>
         {/* Top bar */}
         <header style={S.topBar}>
           <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
             {isSmallScreen && (
-              <button style={{ ...S.iconBtn, fontSize: 20 }} onClick={() => setSidebarOpen(true)}>☰</button>
+              <button style={{ ...S.iconBtn, fontSize: 20 }} onClick={() => setSidebarOpen(true)}></button>
+            )}
+            {viewHistory.current.length > 0 && (
+              <button
+                style={{ ...S.iconBtn, fontSize: 13, padding: "4px 8px", display: "flex", alignItems: "center", gap: 4 }}
+                onClick={goBack}
+                title="Go back"
+              >
+                 Back
+              </button>
             )}
             <div style={S.breadcrumb}>
               {!isMobile && <span style={S.breadProj}>Metapharsic To Do</span>}
@@ -1176,13 +1276,21 @@ export default function App() {
                 display: "inline-block", 
                 animation: isRefreshing ? "spin 1s linear infinite" : "none"
               }}>
-                🔄
+                
               </span>
+            </button>
+            {/* Voice Assistant Button */}
+            <button 
+              style={{ ...S.voiceBtn, ...(showVoice ? S.voiceBtnActive : {}) }} 
+              onClick={() => setShowVoice(!showVoice)}
+              title="Voice Assistant"
+            >
+              
             </button>
             {/* Notification Bell */}
             <div style={{ position:"relative" }}>
               <button style={{ ...S.iconBtn, position:"relative", fontSize:18 }} onClick={() => setShowNotifs(p => !p)}>
-                🔔
+                
                 {unreadCount > 0 && (
                   <span style={S.notifBadge}>{unreadCount > 9 ? "9+" : unreadCount}</span>
                 )}
@@ -1208,7 +1316,7 @@ export default function App() {
             <BoardView
               issues={visibleIssues} sprints={sprints} sprint={sprint} setSprint={setSprint}
               search={search} setSearch={setSearch} filters={filters} setFilters={setFilters}
-              onDragStart={onDragStart} onDrop={onDrop} dragOver={dragOver} setDragOver={setDragOver}
+              onDragStart={onDragStart} onDragEnd={onDragEnd} onDrop={onDrop} dragOver={dragOver} setDragOver={setDragOver} draggingKey={draggingKey}
               onSelect={setSelected}
               onCreate={(status) => {
                 setInitialCreateStatus(typeof status === 'string' ? status : "To Do");
@@ -1286,12 +1394,27 @@ export default function App() {
               t={t}
             />
           )}
-          {view === "settings" && <SettingsView theme={theme} setTheme={setTheme} currentUser={currentUser} updateUser={updateUser} users={users} t={t} />}
+          {view === "settings" && <SettingsView theme={theme} setTheme={setTheme} currentUser={currentUser} updateUser={updateUser} users={users} isMobile={isMobile} t={t} />}
           {view === "components" && <ComponentsView />}
         </div>
       </div>
 
-      {/* ── DETAIL PANEL ── */}
+      {/* -- VOICE ASSISTANT PANEL -- */}
+      {showVoice && (
+        <VoiceAssistant
+          issues={issues}
+          users={users}
+          updateIssue={updateIssue}
+          addComment={addComment}
+          setSelected={setSelected}
+          setView={setView}
+          setSearch={setSearch}
+          onClose={() => setShowVoice(false)}
+          t={t}
+        />
+      )}
+
+      {/* -- DETAIL PANEL -- */}
       {selected && (
         <DetailPanel
           issue={selected}
@@ -1306,7 +1429,7 @@ export default function App() {
         />
       )}
 
-      {/* ── CREATE MODAL ── */}
+      {/* -- CREATE MODAL -- */}
       {showCreate && hasPermission("create") && (
         <CreateModal
           initialStatus={initialCreateStatus}
@@ -1317,7 +1440,7 @@ export default function App() {
         />
       )}
 
-      {/* ── CREATE DEPARTMENT MODAL ── */}
+      {/* -- CREATE DEPARTMENT MODAL -- */}
       {showCreateDept && isAdmin && (
         <AddDeptModal
           onClose={() => setShowCreateDept(false)}
@@ -1334,7 +1457,228 @@ export default function App() {
   );
 }
 
-// ─── NOTIFICATION PANEL ───────────────────────────────────────────────────────
+// --- VOICE ASSISTANT ---------------------------------------------------------
+function VoiceAssistant({ issues, users, updateIssue, addComment, setSelected, setView, setSearch, onClose, t }) {
+  const [isListening, setIsListening] = useState(false);
+  const [transcript, setTranscript] = useState("");
+  const [status, setStatus] = useState("Click mic to speak...");
+  const recognitionRef = useRef(null);
+  const transcriptRef = useRef("");
+  const processCommandRef = useRef(null);
+
+  const speak = (text) => {
+    const synth = window.speechSynthesis;
+    if (synth) {
+      const utter = new SpeechSynthesisUtterance(text);
+      utter.rate = 1.0;
+      utter.pitch = 1.0;
+      synth.speak(utter);
+    }
+  };
+
+  useEffect(() => {
+    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+    if (!SpeechRecognition) {
+      setStatus("Speech recognition not supported in this browser.");
+      return;
+    }
+    const recognition = new SpeechRecognition();
+    recognition.continuous = false;
+    recognition.interimResults = true;
+    recognition.lang = 'en-US';
+
+    recognition.onstart = () => {
+      setIsListening(true);
+      setStatus("Listening...");
+    };
+
+    recognition.onresult = (event) => {
+      const current = event.resultIndex;
+      const trans = event.results[current][0].transcript;
+      setTranscript(trans);
+      transcriptRef.current = trans;
+    };
+
+    recognition.onend = () => {
+      setIsListening(false);
+      if (transcriptRef.current) processCommandRef.current(transcriptRef.current.toLowerCase());
+      transcriptRef.current = "";
+    };
+
+    recognition.onerror = (event) => {
+      console.error("Speech recognition error", event.error);
+      setIsListening(false);
+      setStatus("Error: " + event.error);
+    };
+
+    recognitionRef.current = recognition;
+  }, []);
+
+  const toggleListening = () => {
+    if (isListening) {
+      recognitionRef.current?.stop();
+    } else {
+      setTranscript("");
+      recognitionRef.current?.start();
+    }
+  };
+
+  const findTaskKey = (text) => {
+    // Matches patterns like "PROJ-1", "PROJ 1", "PRO 1", "PROJECT 1", "P-1"
+    const normalized = text.replace(/\b(project|pro|task|issue)\s*/gi, "PROJ-");
+    const match = normalized.match(/([a-z]+)[-\s]?(\d+)/i);
+    if (match) {
+      const prefix = match[1].toUpperCase();
+      const num = match[2];
+      // Try to find the exact match in issues
+      const exact = issues.find(i => i.key === `${prefix}-${num}` || i.key.endsWith(`-${num}`));
+      return exact ? exact.key : null;
+    }
+    return null;
+  };
+
+  const processCommand = (cmd) => {
+    if (!cmd) return;
+    setStatus("Thinking...");
+
+    // 1. Task Search / Filter
+    if (cmd.includes("search for") || cmd.includes("find tasks about") || cmd.includes("look for")) {
+      const query = cmd.replace(/(search for|find tasks about|look for)\s*/i, "").trim();
+      setSearch(query);
+      setView("board");
+      setStatus(`Searching for: ${query}`);
+      speak(`Searching for ${query}`);
+      return;
+    }
+
+    // 2. Status Update (Colloquial)
+    const taskKey = findTaskKey(cmd);
+    if (taskKey) {
+      const issue = issues.find(i => i.key === taskKey);
+      
+      // Move/Status logic
+      const stMatch = cmd.match(/(move|set|put|chuck|push|mark)\s+.*(to|in|as)\s+(to\s+do|in\s+progress|in\s+review|done|finished|completed)/i);
+      if (stMatch) {
+        let newStatus = stMatch[3].toLowerCase();
+        if (newStatus.includes("done") || newStatus.includes("finished") || newStatus.includes("completed")) newStatus = "Done";
+        else if (newStatus.includes("review")) newStatus = "In Review";
+        else if (newStatus.includes("progress")) newStatus = "In Progress";
+        else if (newStatus.includes("do")) newStatus = "To Do";
+
+        updateIssue(taskKey, { status: newStatus });
+        setStatus(`Updated ${taskKey} to ${newStatus}`);
+        speak(`${taskKey} is now ${newStatus}`);
+        return;
+      }
+
+      // Priority Change
+      const prioMatch = cmd.match(/(make|set|priority)\s+.*(to\s+)?(low|medium|high|critical)/i);
+      if (prioMatch) {
+        const prio = prioMatch[3].charAt(0).toUpperCase() + prioMatch[3].slice(1);
+        updateIssue(taskKey, { priority: prio });
+        setStatus(`Set ${taskKey} priority to ${prio}`);
+        speak(`${taskKey} priority set to ${prio}`);
+        return;
+      }
+
+      // Assign User
+      const assignMatch = cmd.match(/(assign|give|hand\s+over)\s+.*to\s+([a-z]+)/i);
+      if (assignMatch) {
+        const userName = assignMatch[2].toLowerCase();
+        const user = users.find(u => u.name.toLowerCase().includes(userName));
+        if (user) {
+          updateIssue(taskKey, { assignee: user.id });
+          setStatus(`Assigned ${taskKey} to ${user.name}`);
+          speak(`Assigned to ${user.name}`);
+          return;
+        }
+      }
+
+      // Add Comment
+      const commentMatch = cmd.match(/(comment|say|tell|note)\s+.*[:\s]+(.+)/i);
+      if (commentMatch) {
+        const text = commentMatch[2];
+        addComment(taskKey, text);
+        setStatus(`Note added to ${taskKey}`);
+        speak("Comment added.");
+        return;
+      }
+
+      // Show/Status/History Inquiry
+      if (cmd.includes("show") || cmd.includes("check") || cmd.includes("status") || cmd.includes("tell me about") || cmd.includes("history")) {
+        setSelected(issue);
+        setStatus(`Analyzing ${taskKey}...`);
+        
+        // Fetch history to provide a full summary
+        fetch(`/api/issues/${taskKey}/history`)
+          .then(res => res.json())
+          .then(history => {
+            let historySummary = "";
+            if (Array.isArray(history) && history.length > 0) {
+              const latest = history[history.length - 1];
+              historySummary = `It was last updated by ${latest.userName} on ${new Date(latest.date).toLocaleDateString()}.`;
+            }
+
+            const assigneeText = issue.assignee ? `assigned to ${issue.assignee}` : "currently unassigned";
+            const fullReport = `Task ${taskKey} is titled ${issue.title}. It is currently ${issue.status}, and ${assigneeText}. The priority is ${issue.priority}. ${historySummary}`;
+            
+            setStatus(`Summary: ${issue.status}`);
+            speak(fullReport);
+          })
+          .catch(() => {
+            const basicReport = `Task ${taskKey} is ${issue.status} and ${issue.assignee ? 'assigned to ' + issue.assignee : 'unassigned'}.`;
+            speak(basicReport);
+          });
+        return;
+      }
+    }
+
+    // 3. Navigation
+    if (cmd.match(/(go\s+to|open|show|take\s+me\s+to)\s+(board|backlog|roadmap|people|users|settings|profile)/i)) {
+      const target = cmd.match(/(board|backlog|roadmap|people|users|settings|profile)/i)[0];
+      setView(target === "people" ? "users" : target);
+      setStatus(`Navigated to ${target}`);
+      speak(`Opening ${target}`);
+      return;
+    }
+
+    setStatus("I didn't quite get that. Try 'Move Pro-1 to Done' or 'Assign Pro-1 to Mannan'.");
+    speak("I didn't understand that command.");
+  };
+
+  processCommandRef.current = processCommand;
+
+  return (
+    <div style={S.voicePanel}>
+      <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center" }}>
+        <span style={S.voiceStatus}>{isListening ? " Listening..." : " Smart Assistant"}</span>
+        <button style={S.iconBtn} onClick={onClose}></button>
+      </div>
+      <div style={S.voiceTranscript}>
+        {transcript || "Speak now... e.g., 'Put Pro-1 in Done'"}
+      </div>
+      <div style={{ color: "#7dc3db", fontSize: 12, fontWeight: 700, minHeight: 18 }}>{status}</div>
+      <div style={{ display:"flex", justifyContent:"center", padding: "10px 0" }}>
+        <button 
+          style={{ ...S.voiceBtn, ...(isListening ? S.voiceBtnActive : {}) }} 
+          onClick={toggleListening}
+        >
+          {isListening ? "" : ""}
+        </button>
+      </div>
+      <div style={S.voiceHelp}>
+        <strong>Colloquial Examples:</strong><br/>
+         "Chuck Pro-1 in Done"<br/>
+         "Tell Pro-1 it's finished"<br/>
+         "Hand over Pro-1 to Mannan"<br/>
+         "Take me to the roadmap"<br/>
+         "Find tasks about security"
+      </div>
+    </div>
+  );
+}
+
+// --- NOTIFICATION PANEL -------------------------------------------------------
 function NotificationPanel({ notifications, onClose, onMarkAllRead, onDismiss, onSelectIssue }) {
   const ref = useRef(null);
   useEffect(() => {
@@ -1349,7 +1693,7 @@ function NotificationPanel({ notifications, onClose, onMarkAllRead, onDismiss, o
         <span style={{ fontWeight:700, color:"#e6edf3" }}>Notifications</span>
         <div style={{ display:"flex", gap:6 }}>
           <button style={{ ...S.iconBtn, fontSize:11 }} onClick={onMarkAllRead}>Mark all read</button>
-          <button style={S.iconBtn} onClick={onClose}>✕</button>
+          <button style={S.iconBtn} onClick={onClose}></button>
         </div>
       </div>
       <div style={{ maxHeight:380, overflowY:"auto" }}>
@@ -1372,7 +1716,7 @@ function NotificationPanel({ notifications, onClose, onMarkAllRead, onDismiss, o
                 )}
               </div>
               {!n.read && <span style={{ width:7, height:7, borderRadius:"50%", background: nt?.color, flexShrink:0 }} />}
-              <button style={{ ...S.iconBtn, fontSize:11, flexShrink:0 }} onClick={() => onDismiss(n.id)}>✕</button>
+              <button style={{ ...S.iconBtn, fontSize:11, flexShrink:0 }} onClick={() => onDismiss(n.id)}></button>
             </div>
           );
         })}
@@ -1381,7 +1725,7 @@ function NotificationPanel({ notifications, onClose, onMarkAllRead, onDismiss, o
   );
 }
 
-// ─── TODO VIEW ────────────────────────────────────────────────────────────────
+// --- TODO VIEW ----------------------------------------------------------------
 function TodoView({ currentUser, todos, setTodos, issues, users, onSelectIssue }) {
   const role = currentUser.role;
   const myIssues = issues.filter(i => i.assignee === currentUser.id && i.status !== "Done");
@@ -1407,7 +1751,7 @@ function TodoView({ currentUser, todos, setTodos, issues, users, onSelectIssue }
         <div>
           <h2 style={S.pageH2}>My Task Dashboard</h2>
           <div style={{ fontSize:13, color:"#909dab" }}>
-            {ROLES[role]?.label} · {DEPARTMENTS[currentUser.department]?.label} Department
+            {ROLES[role]?.label}  {DEPARTMENTS[currentUser.department]?.label} Department
           </div>
         </div>
         <div style={{ display:"flex", gap:10 }}>
@@ -1428,7 +1772,7 @@ function TodoView({ currentUser, todos, setTodos, issues, users, onSelectIssue }
 
       {overdue.length > 0 && (
         <div style={S.overdueAlert}>
-          ⏰ <strong>Overdue Issues:</strong>{" "}
+           <strong>Overdue Issues:</strong>{" "}
           {overdue.map(i => (
             <button key={i.key} style={{ background:"none", border:"none", color:"#fbbf24", cursor:"pointer", fontWeight:600, fontSize:12, padding:"0 4px", textDecoration:"underline" }}
               onClick={() => onSelectIssue(i)}>
@@ -1442,11 +1786,11 @@ function TodoView({ currentUser, todos, setTodos, issues, users, onSelectIssue }
         {/* Assigned Issues */}
         <div style={S.todoSection}>
           <div style={S.todoSectionHdr}>
-            <span>📋 Assigned to Me</span>
+            <span> Assigned to Me</span>
             <span style={S.colCount}>{myIssues.length}</span>
           </div>
           {myIssues.length === 0 ? (
-            <div style={{ color:"#768390", fontSize:13, padding:"16px 0", textAlign:"center" }}>No open issues assigned 🎉</div>
+            <div style={{ color:"#768390", fontSize:13, padding:"16px 0", textAlign:"center" }}>No open issues assigned </div>
           ) : myIssues.map(i => {
             const sc = STATUS_COLORS[i.status];
             const pi = PRIORITIES[i.priority];
@@ -1470,7 +1814,7 @@ function TodoView({ currentUser, todos, setTodos, issues, users, onSelectIssue }
         {/* Role Checklist */}
         <div style={S.todoSection}>
           <div style={S.todoSectionHdr}>
-            <span>✅ Role Checklist — {ROLES[role]?.label}</span>
+            <span> Role Checklist - {ROLES[role]?.label}</span>
             <div style={{ ...S.miniProgress, width:80 }}>
               <div style={{ ...S.miniProgressFill, width: todos.length ? `${(done/todos.length)*100}%` : "0%" }} />
             </div>
@@ -1481,7 +1825,7 @@ function TodoView({ currentUser, todos, setTodos, issues, users, onSelectIssue }
               {items.map(t => (
                 <div key={t.id} style={S.checklistRow} onClick={() => toggleTodo(t.id)}>
                   <div style={{ ...S.checkbox, borderColor: t.done ? "#22c55e" : "#444c56", background: t.done ? "#22c55e" : "transparent" }}>
-                    {t.done && <span style={{ color:"#fff", fontSize:10, lineHeight:1 }}>✓</span>}
+                    {t.done && <span style={{ color:"#fff", fontSize:10, lineHeight:1 }}></span>}
                   </div>
                   <span style={{ flex:1, fontSize:12, color: t.done ? "#768390" : "#cdd9e5", textDecoration: t.done ? "line-through" : "none" }}>{t.text}</span>
                   <span style={{ width:8, height:8, borderRadius:"50%", background: priorityColor[t.priority], flexShrink:0 }} title={t.priority} />
@@ -1495,7 +1839,7 @@ function TodoView({ currentUser, todos, setTodos, issues, users, onSelectIssue }
   );
 }
 
-// ─── USER MANAGEMENT ──────────────────────────────────────────────────────────
+// --- USER MANAGEMENT ----------------------------------------------------------
 function UserManagement({ users, setUsers, currentUser, setCurrentUser, issues, addNotification, isMobile, setView, setFilters, t }) {
   const [editUser, setEditUser] = useState(null);
   const [showAdd, setShowAdd]   = useState(false);
@@ -1623,7 +1967,7 @@ function UserManagement({ users, setUsers, currentUser, setCurrentUser, issues, 
       <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:20, flexDirection: isMobile ? "column" : "row", gap: 14 }}>
         <div style={{ textAlign: isMobile ? "center" : "left" }}>
           <h2 style={S.pageH2}>User Management</h2>
-          <div style={{ fontSize:13, color:"#909dab" }}>{users.length} total · {users.filter(u=>u.active).length} active</div>
+          <div style={{ fontSize:13, color:"#909dab" }}>{users.length} total  {users.filter(u=>u.active).length} active</div>
         </div>
         <button style={{ ...S.createBtn, width: isMobile ? "100%" : "auto" }} onClick={() => setShowAdd(true)}>+ Add User</button>
       </div>
@@ -1636,7 +1980,7 @@ function UserManagement({ users, setUsers, currentUser, setCurrentUser, issues, 
         </select>
         <select style={{ ...S.sel, flex: isMobile ? 1 : "initial" }} value={filterRole} onChange={e => setFilterRole(e.target.value)}>
           <option value="all">All Roles</option>
-          {Object.entries(ROLES).map(([k,v]) => <option key={k} value={k}>{v.label}</option>)}
+          {Object.entries(ROLES).map(([k,v]) => <option key={k} value={k}>{v.icon} {v.label}</option>)}
         </select>
       </div>
 
@@ -1692,7 +2036,7 @@ function UserManagement({ users, setUsers, currentUser, setCurrentUser, issues, 
                       <div>
                         <div style={{ fontWeight:600, color:"var(--accent)", fontSize:13 }}>
                           {u.name} {isMe && <span style={{ fontSize:10, color:"#46b3cf" }}>(you)</span>}
-                          {u.phoneVerified && <span title="WhatsApp Verified" style={{ fontSize:12, marginLeft:4 }}>📱✅</span>}
+                          {u.phoneVerified && <span title="WhatsApp Verified" style={{ fontSize:12, marginLeft:4 }}></span>}
                         </div>
                         {!isMobile && <div style={{ fontSize:11, color:"#768390" }}>{u.email}</div>}
                       </div>
@@ -1712,7 +2056,9 @@ function UserManagement({ users, setUsers, currentUser, setCurrentUser, issues, 
                     </div>
                   </td>
                   <td style={S.userTableCell}>
-                    <span style={{ ...S.rolePill, background: "#2d4052", color:"#7dc3db" }}>{roleInfo?.label}</span>
+                    <span style={{ ...S.rolePill, background: (roleInfo?.color||"#6366f1")+"20", color: roleInfo?.color||"#adbac7", border:`1px solid ${(roleInfo?.color||"#6366f1")}40` }}>
+                      {roleInfo?.icon} {roleInfo?.label}
+                    </span>
                   </td>
                   {!isMobile && (
                     <td style={S.userTableCell}>
@@ -1776,7 +2122,7 @@ function UserManagement({ users, setUsers, currentUser, setCurrentUser, issues, 
   );
 }
 
-const ALL_PERMISSIONS = ["create", "edit", "delete", "assign", "manage_users", "view_all", "manage_roles", "approve"];
+const ALL_PERMISSIONS = ["create","edit","delete","assign","view_all","view_own","approve","manage_users","manage_roles","manage_dept","view_reports"];
 
 function EditUserModal({ user, onClose, onSave }) {
   const [draft, setDraft] = useState({
@@ -1810,6 +2156,16 @@ function EditUserModal({ user, onClose, onSave }) {
       role: newRole,
       permissions: ROLES[newRole]?.permissions || []
     }));
+  };
+
+  const toggleDept = (dk) => {
+    setDraft(prev => {
+      const current = prev.departments || [];
+      const next = current.includes(dk)
+        ? (current.length > 1 ? current.filter(x => x !== dk) : current)
+        : [...current, dk];
+      return { ...prev, departments: next, department: next[0] };
+    });
   };
 
   const sendOtp = async () => {
@@ -1858,8 +2214,8 @@ function EditUserModal({ user, onClose, onSave }) {
     <div style={S.modalOverlay} onClick={e => e.target===e.currentTarget && onClose()}>
       <div style={{ ...S.modal, width:480, maxHeight:"90vh", overflowY:"auto" }}>
         <div style={S.modalHdr}>
-          <span style={{ fontWeight:700, color:"#e6edf3" }}>Edit User — {user.name}</span>
-          <button style={S.iconBtn} onClick={onClose}>✕</button>
+          <span style={{ fontWeight:700, color:"#e6edf3" }}>Edit User - {user.name}</span>
+          <button style={S.iconBtn} onClick={onClose}></button>
         </div>
         <div style={{ ...S.modalBody, gap:14 }}>
           {/* Avatar + info */}
@@ -1875,6 +2231,19 @@ function EditUserModal({ user, onClose, onSave }) {
           <div>
             <label style={{ fontSize:12, color:"#909dab", fontWeight:600, display:"block", marginBottom:5 }}>Name</label>
             <input style={S.formInput} value={draft.name} onChange={e => setDraft(p => ({ ...p, name: e.target.value }))} />
+          </div>
+
+          {/* Email */}
+          <div>
+            <label style={{ fontSize:12, color:"#909dab", fontWeight:600, display:"block", marginBottom:5 }}>Email Address</label>
+            <input type="email" style={S.formInput} value={draft.email} onChange={e => setDraft(p => ({ ...p, email: e.target.value }))} />
+          </div>
+
+          {/* Phone */}
+          <div>
+            <label style={{ fontSize:12, color:"#909dab", fontWeight:600, display:"block", marginBottom:5 }}>WhatsApp Phone (with country code)</label>
+            <input type="tel" style={S.formInput} value={draft.phone} onChange={e => setDraft(p => ({ ...p, phone: e.target.value }))} />
+            <div style={{ fontSize:11, color:"#768390", marginTop:4 }}> Use country code, e.g. +919876543210</div>
           </div>
 
           {/* Department(s) */}
@@ -1893,7 +2262,7 @@ function EditUserModal({ user, onClose, onSave }) {
                     }}>
                     <span style={{ fontSize:14 }}>{dv.icon}</span>
                     <span style={{ fontSize:12, color: isSelected ? dv.color : "#adbac7", fontWeight: isSelected ? 700 : 400 }}>{dv.label}</span>
-                    {isSelected && <span style={{ marginLeft:"auto", color:dv.color, fontSize:10 }}>✓</span>}
+                    {isSelected && <span style={{ marginLeft:"auto", color:dv.color, fontSize:10 }}></span>}
                   </div>
                 );
               })}
@@ -1904,8 +2273,17 @@ function EditUserModal({ user, onClose, onSave }) {
           <div>
             <label style={{ fontSize:12, color:"#909dab", fontWeight:600, display:"block", marginBottom:5 }}>Role</label>
             <select style={S.formSel} value={draft.role} onChange={e => handleRoleChange(e.target.value)}>
-              {Object.entries(ROLES).map(([k,v]) => <option key={k} value={k}>{v.label}</option>)}
+              {Object.entries(ROLES).map(([k,v]) => <option key={k} value={k}>{v.icon} {v.label} - {v.desc}</option>)}
             </select>
+            {draft.role && ROLES[draft.role] && (
+              <div style={{ marginTop:6, padding:"6px 10px", background:(ROLES[draft.role].color)+"15", border:`1px solid ${ROLES[draft.role].color}40`, borderRadius:6, display:"flex", alignItems:"center", gap:8 }}>
+                <span style={{ fontSize:16 }}>{ROLES[draft.role].icon}</span>
+                <div>
+                  <div style={{ fontSize:12, fontWeight:700, color: ROLES[draft.role].color }}>{ROLES[draft.role].label}</div>
+                  <div style={{ fontSize:10, color:"#768390" }}>{ROLES[draft.role].desc}</div>
+                </div>
+              </div>
+            )}
           </div>
 
           {/* Force password change */}
@@ -1917,32 +2295,53 @@ function EditUserModal({ user, onClose, onSave }) {
 
           {/* Custom Permissions */}
           <div>
-            <div style={{ fontSize:12, color:"#909dab", fontWeight:600, marginBottom:8 }}>Configure Custom Permissions</div>
-            <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:8, background:"#22272e", padding:12, borderRadius:8, border:"1px solid #444c56" }}>
-              {ALL_PERMISSIONS.map(p => {
-                const has = draft.permissions.includes(p);
-                return (
-                  <label key={p} style={{ display:"flex", alignItems:"center", gap:8, fontSize:12, color:"#adbac7", cursor:"pointer", userSelect:"none" }}>
-                    <input type="checkbox" checked={has}
-                      onChange={() => {
-                        const next = has ? draft.permissions.filter(x => x !== p) : [...draft.permissions, p];
-                        setDraft(prev => ({ ...prev, permissions: next }));
-                      }} style={{ cursor:"pointer" }} />
-                    <span>{p}</span>
-                  </label>
-                );
-              })}
+            <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:10 }}>
+              <div style={{ fontSize:12, color:"#909dab", fontWeight:700, textTransform:"uppercase", letterSpacing:"0.06em" }}>Custom Permissions</div>
+              <div style={{ display:"flex", gap:6 }}>
+                <button type="button" onClick={() => setDraft(p => ({ ...p, permissions: ALL_PERMISSIONS }))} style={{ fontSize:10, padding:"2px 8px", background:"#2d333b", border:"1px solid #444c56", color:"#adbac7", borderRadius:4, cursor:"pointer" }}>Select All</button>
+                <button type="button" onClick={() => setDraft(p => ({ ...p, permissions: [] }))} style={{ fontSize:10, padding:"2px 8px", background:"#2d333b", border:"1px solid #444c56", color:"#adbac7", borderRadius:4, cursor:"pointer" }}>Clear</button>
+              </div>
             </div>
+            {["Issues","Access","Workflow","Admin","Reports"].map(group => {
+              const groupPerms = ALL_PERMISSIONS.filter(p => PERMISSION_META[p]?.group === group);
+              if (!groupPerms.length) return null;
+              return (
+                <div key={group} style={{ marginBottom:10 }}>
+                  <div style={{ fontSize:10, fontWeight:800, color:"#768390", letterSpacing:"0.1em", marginBottom:6, textTransform:"uppercase" }}>{group}</div>
+                  <div style={{ display:"flex", flexDirection:"column", gap:4 }}>
+                    {groupPerms.map(p => {
+                      const meta = PERMISSION_META[p] || { label:p, icon:"", desc:"" };
+                      const has = draft.permissions.includes(p);
+                      return (
+                        <label key={p} onClick={() => {
+                          const next = has ? draft.permissions.filter(x => x !== p) : [...draft.permissions, p];
+                          setDraft(prev => ({ ...prev, permissions: next }));
+                        }} style={{ display:"flex", alignItems:"center", gap:10, padding:"7px 10px", borderRadius:7, cursor:"pointer", userSelect:"none", border:"1px solid", background: has ? "#22c55e10" : "#22272e", borderColor: has ? "#22c55e40" : "#444c56", transition:"all 0.15s" }}>
+                          <div style={{ width:18, height:18, borderRadius:4, border:`1.5px solid ${has ? "#22c55e" : "#444c56"}`, background: has ? "#22c55e" : "transparent", display:"flex", alignItems:"center", justifyContent:"center", flexShrink:0, transition:"all 0.15s" }}>
+                            {has && <span style={{ color:"#fff", fontSize:11, lineHeight:1 }}></span>}
+                          </div>
+                          <span style={{ fontSize:14, flexShrink:0 }}>{meta.icon}</span>
+                          <div style={{ flex:1, minWidth:0 }}>
+                            <div style={{ fontSize:12, fontWeight:600, color: has ? "#e6edf3" : "#adbac7" }}>{meta.label}</div>
+                            <div style={{ fontSize:10, color:"#768390" }}>{meta.desc}</div>
+                          </div>
+                        </label>
+                      );
+                    })}
+                  </div>
+                </div>
+              );
+            })}
           </div>
 
-          {/* ── Notification Settings ── */}
+          {/* -- Notification Settings -- */}
           <div style={{ borderTop:"1px solid #30363d", paddingTop:14 }}>
-            <div style={{ fontSize:12, color:"#909dab", fontWeight:700, marginBottom:10, letterSpacing:"0.5px", textTransform:"uppercase" }}>📣 Notification Settings</div>
+            <div style={{ fontSize:12, color:"#909dab", fontWeight:700, marginBottom:10, letterSpacing:"0.5px", textTransform:"uppercase" }}> Notification Settings</div>
 
             {/* Email toggle */}
             <label style={{ display:"flex", alignItems:"center", justifyContent:"space-between", cursor:"pointer", marginBottom:10, padding:"8px 10px", background:"#22272e", borderRadius:8, border:"1px solid #30363d" }}>
               <div style={{ display:"flex", alignItems:"center", gap:8 }}>
-                <span style={{ fontSize:16 }}>📧</span>
+                <span style={{ fontSize:16 }}></span>
                 <div>
                   <div style={{ fontSize:13, fontWeight:600, color:"#e6edf3" }}>Email Notifications</div>
                   <div style={{ fontSize:11, color:"#768390" }}>Receive task alerts via email</div>
@@ -1965,14 +2364,14 @@ function EditUserModal({ user, onClose, onSave }) {
             <div style={waBoxStyle}>
               <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between" }}>
                 <div style={{ display:"flex", alignItems:"center", gap:8 }}>
-                  <span style={{ fontSize:16 }}>📱</span>
+                  <span style={{ fontSize:16 }}></span>
                   <div>
                     <div style={{ fontSize:13, fontWeight:600, color:"#e6edf3" }}>WhatsApp Notifications</div>
                     <div style={{ fontSize:11, color:"#768390" }}>Receive task alerts on WhatsApp</div>
                   </div>
                 </div>
                 {user.phoneVerified
-                  ? stepBadge("✅ Verified", "#22c55e")
+                  ? stepBadge(" Verified", "#22c55e")
                   : stepBadge("Not Verified", "#f59e0b")
                 }
               </div>
@@ -1991,11 +2390,11 @@ function EditUserModal({ user, onClose, onSave }) {
               {/* CallMeBot setup instructions */}
               {waStep === "idle" && !user.phoneVerified && (
                 <div style={{ background:"#0d1117", border:"1px solid #238636", borderRadius:8, padding:12 }}>
-                  <div style={{ fontSize:11, fontWeight:700, color:"#3fb950", marginBottom:8 }}>📋 One-time CallMeBot Setup (Free)</div>
+                  <div style={{ fontSize:11, fontWeight:700, color:"#3fb950", marginBottom:8 }}> One-time CallMeBot Setup (Free)</div>
                   <ol style={{ margin:0, paddingLeft:16, display:"flex", flexDirection:"column", gap:4 }}>
-                    <li style={{ fontSize:11, color:"#adbac7" }}>Open WhatsApp → message <strong style={{ color:"#7dc3db" }}>+34 644 78 81 73</strong></li>
+                    <li style={{ fontSize:11, color:"#adbac7" }}>Open WhatsApp  message <strong style={{ color:"#7dc3db" }}>+34 644 78 81 73</strong></li>
                     <li style={{ fontSize:11, color:"#adbac7" }}>Send: <em style={{ color:"#f0f6fc" }}>"I allow callmebot to send me messages"</em></li>
-                    <li style={{ fontSize:11, color:"#adbac7" }}>Wait for reply — it will contain your <strong style={{ color:"#7dc3db" }}>API key</strong></li>
+                    <li style={{ fontSize:11, color:"#adbac7" }}>Wait for reply - it will contain your <strong style={{ color:"#7dc3db" }}>API key</strong></li>
                     <li style={{ fontSize:11, color:"#adbac7" }}>Paste the API key below and click Send OTP</li>
                   </ol>
                 </div>
@@ -2023,7 +2422,7 @@ function EditUserModal({ user, onClose, onSave }) {
                       opacity: !draft.phone || !waApiKey ? 0.5 : 1
                     }}
                   >
-                    {waSending && waStep === "idle" ? "⏳ Sending..." : "📲 Send Verification Code"}
+                    {waSending && waStep === "idle" ? " Sending..." : " Send Verification Code"}
                   </button>
                 </div>
               )}
@@ -2036,7 +2435,7 @@ function EditUserModal({ user, onClose, onSave }) {
                     <label style={{ fontSize:11, color:"#768390", display:"block", marginBottom:4 }}>Enter 6-digit OTP</label>
                     <input
                       style={{ ...S.formInput, fontSize:18, fontWeight:700, letterSpacing:8, textAlign:"center" }}
-                      placeholder="● ● ● ● ● ●"
+                      placeholder="     "
                       maxLength={6}
                       value={waOtp}
                       onChange={e => setWaOtp(e.target.value.replace(/\D/g, ""))}
@@ -2053,7 +2452,7 @@ function EditUserModal({ user, onClose, onSave }) {
                         opacity: waOtp.length !== 6 ? 0.5 : 1
                       }}
                     >
-                      {waSending ? "⏳ Verifying..." : "✅ Verify Code"}
+                      {waSending ? " Verifying..." : " Verify Code"}
                     </button>
                     <button onClick={sendOtp} disabled={waSending}
                       style={{ background:"#22272e", color:"#768390", border:"1px solid #30363d", borderRadius:8, padding:"9px 12px", fontSize:12, cursor:"pointer" }}
@@ -2067,10 +2466,10 @@ function EditUserModal({ user, onClose, onSave }) {
               {/* Verified success */}
               {(waStep === "verified" || user.phoneVerified) && (
                 <div style={{ display:"flex", alignItems:"center", gap:8, background:"rgba(34,197,94,0.1)", border:"1px solid rgba(34,197,94,0.3)", borderRadius:8, padding:"10px 12px" }}>
-                  <span style={{ fontSize:18 }}>✅</span>
+                  <span style={{ fontSize:18 }}></span>
                   <div>
                     <div style={{ fontSize:12, fontWeight:700, color:"#4ade80" }}>WhatsApp Verified!</div>
-                    <div style={{ fontSize:11, color:"#768390" }}>{draft.phone || user.phone} — Notifications enabled</div>
+                    <div style={{ fontSize:11, color:"#768390" }}>{draft.phone || user.phone} - Notifications enabled</div>
                   </div>
                 </div>
               )}
@@ -2078,7 +2477,7 @@ function EditUserModal({ user, onClose, onSave }) {
               {/* Error */}
               {waError && (
                 <div style={{ background:"rgba(239,68,68,0.1)", border:"1px solid rgba(239,68,68,0.3)", borderRadius:8, padding:"8px 12px", fontSize:12, color:"#f87171" }}>
-                  ⚠️ {waError}
+                   {waError}
                 </div>
               )}
             </div>
@@ -2156,16 +2555,7 @@ function AddUserModal({ onClose, onAdd }) {
 
   const strength = getPasswordStrength(f.password);
 
-  const PERMISSION_METADATA = {
-    create:       { label: "Create Issues", desc: "Allow starting new tasks & epics", icon: "➕" },
-    edit:         { label: "Edit Issues", desc: "Allow modifying fields & details", icon: "✏️" },
-    delete:       { label: "Delete Issues", desc: "Allow permanently removing issues", icon: "🗑️" },
-    assign:       { label: "Assign Team", desc: "Allow delegating tasks to members", icon: "👥" },
-    manage_users: { label: "Manage Users", desc: "Allow adding & modifying members", icon: "🛡️" },
-    view_all:     { label: "View All Depts", desc: "Access boards of all departments", icon: "👁️" },
-    manage_roles: { label: "Manage Roles", desc: "Define category security structures", icon: "🔑" },
-    approve:      { label: "Approve Items", desc: "Transition tasks to Done status", icon: "✅" },
-  };
+  // Uses global PERMISSION_META defined at top of file
 
   return (
     <div style={{ ...S.modalOverlay, backdropFilter: "blur(12px)", background: "rgba(0,0,0,0.85)" }} onClick={e => e.target===e.currentTarget && onClose()}>
@@ -2180,7 +2570,7 @@ function AddUserModal({ onClose, onAdd }) {
       }}>
         <div style={{ ...S.modalHdr, borderBottom: "1px solid rgba(255, 255, 255, 0.06)", padding: "16px 24px" }}>
           <span style={{ fontWeight: 800, fontSize: 16, color: "#fff", letterSpacing: "-0.01em" }}>Add New User</span>
-          <button style={S.iconBtn} onClick={onClose}>✕</button>
+          <button style={S.iconBtn} onClick={onClose}></button>
         </div>
         <div style={{ ...S.modalBody, gap: 14, padding: "20px 24px" }}>
           <div>
@@ -2192,15 +2582,15 @@ function AddUserModal({ onClose, onAdd }) {
             <input type="email" style={S.formInput} placeholder="jane@metapharsic.io" value={f.email} onChange={e => set("email", e.target.value)} />
             {f.email && (
               <div style={{ fontSize: 11, color: isEmailValid(f.email) ? "#10b981" : "#ef4444", marginTop: 4, display:"flex", alignItems:"center", gap: 4 }}>
-                <span>{isEmailValid(f.email) ? "✓" : "⚠️"}</span>
+                <span>{isEmailValid(f.email) ? "" : ""}</span>
                 <span>{isEmailValid(f.email) ? "Valid email format" : "Enter a valid email format"}</span>
               </div>
             )}
           </div>
           <div>
-            <label style={{ fontSize:12, color:"#909dab", fontWeight:600, display:"block", marginBottom:5 }}>WhatsApp Phone <span style={{ fontWeight:400, color:"#768390" }}>(optional, for notifications)</span></label>
+            <label style={{ fontSize:12, color:"#909dab", fontWeight:600, display:"block", marginBottom:5 }}>WhatsApp Phone <span style={{ color:"#ef4444" }}>*</span></label>
             <input type="tel" style={S.formInput} placeholder="+919876543210" value={f.phone||""} onChange={e => set("phone", e.target.value)} />
-            <div style={{ fontSize:11, color:"#768390", marginTop:4 }}>📱 User can verify their WhatsApp from their profile after login.</div>
+            <div style={{ fontSize:11, color:"#768390", marginTop:4 }}> Use country code, e.g. +919876543210. Must be verified after login.</div>
           </div>
           <div>
             <label style={{ fontSize:12, color:"#909dab", fontWeight:600, display:"block", marginBottom:5 }}>Password</label>
@@ -2208,7 +2598,7 @@ function AddUserModal({ onClose, onAdd }) {
               <input
                 type="text"
                 style={{ ...S.formInput, flex: 1 }}
-                placeholder="••••••••"
+                placeholder=""
                 value={f.password}
                 onChange={e => set("password", e.target.value)}
               />
@@ -2229,12 +2619,12 @@ function AddUserModal({ onClose, onAdd }) {
                   whiteSpace: "nowrap"
                 }}
               >
-                ⚡ Auto
+                 Auto
               </button>
             </div>
             {copied && (
               <div style={{ fontSize: 11, color: "#10b981", marginTop: 4, display: "flex", alignItems: "center", gap: 4 }}>
-                <span>✓</span> Copied password to clipboard!
+                <span></span> Copied password to clipboard!
               </div>
             )}
             {f.password && (
@@ -2264,7 +2654,7 @@ function AddUserModal({ onClose, onAdd }) {
                     }}>
                     <span style={{ fontSize:14 }}>{dv.icon}</span>
                     <span style={{ fontSize:12, color: isSelected ? dv.color : "#adbac7", fontWeight: isSelected ? 700 : 400 }}>{dv.label}</span>
-                    {isSelected && <span style={{ marginLeft:"auto", color:dv.color, fontSize:10 }}>✓</span>}
+                    {isSelected && <span style={{ marginLeft:"auto", color:dv.color, fontSize:10 }}></span>}
                   </div>
                 );
               })}
@@ -2273,8 +2663,17 @@ function AddUserModal({ onClose, onAdd }) {
           <div>
             <label style={{ fontSize:12, color:"#909dab", fontWeight:600, display:"block", marginBottom:5 }}>Role</label>
             <select style={S.formSel} value={f.role} onChange={e => handleRoleChange(e.target.value)}>
-              {Object.entries(ROLES).map(([k,v]) => <option key={k} value={k}>{v.label}</option>)}
+              {Object.entries(ROLES).map(([k,v]) => <option key={k} value={k}>{v.icon} {v.label} - {v.desc}</option>)}
             </select>
+            {f.role && ROLES[f.role] && (
+              <div style={{ marginTop:6, padding:"6px 10px", background:(ROLES[f.role].color)+"15", border:`1px solid ${ROLES[f.role].color}40`, borderRadius:6, display:"flex", alignItems:"center", gap:8 }}>
+                <span style={{ fontSize:16 }}>{ROLES[f.role].icon}</span>
+                <div>
+                  <div style={{ fontSize:12, fontWeight:700, color: ROLES[f.role].color }}>{ROLES[f.role].label}</div>
+                  <div style={{ fontSize:10, color:"#768390" }}>{ROLES[f.role].desc}</div>
+                </div>
+              </div>
+            )}
           </div>
 
           <label style={{ display:"flex", alignItems:"center", gap:8, cursor:"pointer", userSelect:"none", margin: "4px 0" }}>
@@ -2288,52 +2687,43 @@ function AddUserModal({ onClose, onAdd }) {
           </label>
 
           <div>
-            <div style={{ fontSize:12, color:"#909dab", fontWeight:600, marginBottom:8 }}>Configure Custom Permissions</div>
-            <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:8, maxHeight:180, overflowY:"auto", paddingRight:4 }}>
-              {ALL_PERMISSIONS.map(p => {
-                const has = f.permissions.includes(p);
-                const meta = PERMISSION_METADATA[p] || { label: p, desc: "", icon: "⚙️" };
-                return (
-                  <div
-                    key={p}
-                    onClick={() => {
-                      const next = has
-                        ? f.permissions.filter(x => x !== p)
-                        : [...f.permissions, p];
-                      setF(prev => ({ ...prev, permissions: next }));
-                    }}
-                    style={{
-                      background: has ? "rgba(99, 102, 241, 0.1)" : "#22272e",
-                      border: has ? "1px solid rgba(99, 102, 241, 0.5)" : "1px solid rgba(255, 255, 255, 0.06)",
-                      borderRadius: 8,
-                      padding: "8px 12px",
-                      cursor: "pointer",
-                      display: "flex",
-                      alignItems: "center",
-                      gap: 8,
-                      transition: "all 0.2s",
-                      boxShadow: has ? "0 0 10px rgba(99, 102, 241, 0.15)" : "none"
-                    }}
-                  >
-                    <span style={{ fontSize: 15 }}>{meta.icon}</span>
-                    <div style={{ flex: 1 }}>
-                      <div style={{ fontSize: 11, fontWeight: 700, color: has ? "#8c8dfa" : "#adbac7" }}>{meta.label}</div>
-                      <div style={{ fontSize: 9, color: "#768390", marginTop: 1 }}>{meta.desc}</div>
-                    </div>
-                    <div
-                      style={{
-                        width: 12,
-                        height: 12,
-                        borderRadius: "50%",
-                        border: has ? "3.5px solid #6366f1" : "1.5px solid #768390",
-                        background: has ? "#fff" : "transparent",
-                        transition: "all 0.2s"
-                      }}
-                    />
-                  </div>
-                );
-              })}
+            <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:10 }}>
+              <div style={{ fontSize:12, color:"#909dab", fontWeight:700, textTransform:"uppercase", letterSpacing:"0.06em" }}>Custom Permissions</div>
+              <div style={{ display:"flex", gap:6 }}>
+                <button type="button" onClick={() => setF(p => ({ ...p, permissions: ALL_PERMISSIONS }))} style={{ fontSize:10, padding:"2px 8px", background:"#2d333b", border:"1px solid #444c56", color:"#adbac7", borderRadius:4, cursor:"pointer" }}>Select All</button>
+                <button type="button" onClick={() => setF(p => ({ ...p, permissions: [] }))} style={{ fontSize:10, padding:"2px 8px", background:"#2d333b", border:"1px solid #444c56", color:"#adbac7", borderRadius:4, cursor:"pointer" }}>Clear</button>
+              </div>
             </div>
+            {["Issues","Access","Workflow","Admin","Reports"].map(group => {
+              const groupPerms = ALL_PERMISSIONS.filter(p => PERMISSION_META[p]?.group === group);
+              if (!groupPerms.length) return null;
+              return (
+                <div key={group} style={{ marginBottom:10 }}>
+                  <div style={{ fontSize:10, fontWeight:800, color:"#768390", letterSpacing:"0.1em", marginBottom:6, textTransform:"uppercase" }}>{group}</div>
+                  <div style={{ display:"flex", flexDirection:"column", gap:4 }}>
+                    {groupPerms.map(p => {
+                      const meta = PERMISSION_META[p] || { label:p, icon:"", desc:"" };
+                      const has = f.permissions.includes(p);
+                      return (
+                        <label key={p} onClick={() => {
+                          const next = has ? f.permissions.filter(x => x !== p) : [...f.permissions, p];
+                          setF(prev => ({ ...prev, permissions: next }));
+                        }} style={{ display:"flex", alignItems:"center", gap:10, padding:"7px 10px", borderRadius:7, cursor:"pointer", userSelect:"none", border:"1px solid", background: has ? "#22c55e10" : "#22272e", borderColor: has ? "#22c55e40" : "#444c56", transition:"all 0.15s" }}>
+                          <div style={{ width:18, height:18, borderRadius:4, border:`1.5px solid ${has ? "#22c55e" : "#444c56"}`, background: has ? "#22c55e" : "transparent", display:"flex", alignItems:"center", justifyContent:"center", flexShrink:0, transition:"all 0.15s" }}>
+                            {has && <span style={{ color:"#fff", fontSize:11, lineHeight:1 }}></span>}
+                          </div>
+                          <span style={{ fontSize:14, flexShrink:0 }}>{meta.icon}</span>
+                          <div style={{ flex:1, minWidth:0 }}>
+                            <div style={{ fontSize:12, fontWeight:600, color: has ? "#e6edf3" : "#adbac7" }}>{meta.label}</div>
+                            <div style={{ fontSize:10, color:"#768390" }}>{meta.desc}</div>
+                          </div>
+                        </label>
+                      );
+                    })}
+                  </div>
+                </div>
+              );
+            })}
           </div>
         </div>
         <div style={{ ...S.modalFoot, borderTop: "1px solid rgba(255, 255, 255, 0.06)", padding: "12px 24px" }}>
@@ -2357,9 +2747,9 @@ function AddUserModal({ onClose, onAdd }) {
   );
 }
 
-// ─── BOARD VIEW ───────────────────────────────────────────────────────────────
+// --- BOARD VIEW ---------------------------------------------------------------
 function BoardView({ issues, sprints, sprint, setSprint, search, setSearch, filters, setFilters,
-                     onDragStart, onDrop, dragOver, setDragOver, onSelect, onCreate, allIssues, canCreate, users, isMobile, t, searchInputRef }) {
+                     onDragStart, onDragEnd, onDrop, dragOver, setDragOver, draggingKey, onSelect, onCreate, allIssues, canCreate, users, isMobile, t, searchInputRef }) {
   const total = issues.length;
   const done  = issues.filter(i => i.status === "Done").length;
   const pts   = issues.reduce((s,i) => s+(i.sp||0), 0);
@@ -2412,73 +2802,37 @@ function BoardView({ issues, sprints, sprint, setSprint, search, setSearch, filt
 
   return (
     <div>
-      <div style={S.toolbar}>
-        <div style={{ display:"flex", gap:8, alignItems:"center", flexWrap:"wrap" }}>
-          <select style={S.sel} value={sprint} onChange={e => setSprint(e.target.value)}>
-            {sprints.map(s => <option key={s} value={s}>{s}</option>)}
-          </select>
+      <div style={{ display:"flex", flexWrap:"wrap", alignItems:"center", gap:8, marginBottom:12 }}>
+        <select style={S.sel} value={sprint} onChange={e => setSprint(e.target.value)}>
+          {sprints.map(s => <option key={s} value={s}>{s}</option>)}
+        </select>
 
-          <div style={{ position: "relative", display: "flex", alignItems: "center", width: isMobile ? "100%" : "auto", minWidth: isMobile ? "none" : 200 }}>
-            <input 
-              ref={searchInputRef}
-              style={{ 
-                ...S.searchBox, 
-                paddingRight: search ? 30 : 10, 
-                width: "100%",
-                maxWidth: "100%",
-                fontSize: isMobile ? 16 : 13
-              }} 
-              placeholder={`🔍  ${t("search")}`} 
-              value={search} 
-              onChange={e => setSearch(e.target.value)} 
-              title="Search by title, key, desc, status, type, assignee, reporter, epic, or labels. Tokens: type:, p:, key:, assignee:, epic:, label:, status:"
-            />
-            {search && (
-              <button 
-                onClick={() => setSearch("")}
-                style={{
-                  position: "absolute",
-                  right: 8,
-                  top: "50%",
-                  transform: "translateY(-50%)",
-                  background: "none",
-                  border: "none",
-                  color: "var(--text-muted)",
-                  cursor: "pointer",
-                  fontSize: 14,
-                  padding: 8,
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center"
-                }}
-              >
-                ✕
-              </button>
-            )}
-          </div>
-
-          <Filters filters={filters} setFilters={setFilters} users={users} t={t} />
-          
-          <button style={{ 
-            background: showLog ? "#338ba820" : "transparent",
-            border: "1px solid",
-            borderColor: showLog ? "#338ba8" : "#444c56",
-            color: showLog ? "#7dc3db" : "#adbac7",
-            borderRadius: 6,
-            padding: "5px 12px",
-            fontSize: 12,
-            fontWeight: 600,
-            cursor: "pointer"
-          }} onClick={() => setShowLog(p => !p)}>
-            📅 {showLog ? "Hide Activity Log" : "Daily Activity Log"}
-          </button>
+        <div style={{ position:"relative", display:"flex", alignItems:"center", flex:"1 1 180px", minWidth:140, maxWidth:300 }}>
+          <input
+            ref={searchInputRef}
+            style={{ ...S.searchBox, width:"100%", maxWidth:"100%", paddingRight: search ? 28 : 10, boxSizing:"border-box" }}
+            placeholder={`  ${t("search")}`}
+            value={search}
+            onChange={e => setSearch(e.target.value)}
+            title="Search by title, key, desc, status, type, assignee, reporter, epic, or labels. Tokens: type:, p:, key:, assignee:, epic:, label:, status:"
+          />
+          {search && (
+            <button onClick={() => setSearch("")} style={{ position:"absolute", right:6, top:"50%", transform:"translateY(-50%)", background:"none", border:"none", color:"var(--text-muted)", cursor:"pointer", fontSize:13, lineHeight:1, padding:2 }}></button>
+          )}
         </div>
-        {canCreate && <button style={{ ...S.createBtn, width: isMobile ? "100%" : "auto" }} onClick={onCreate}>+ {t("create")}</button>}
+
+        <Filters filters={filters} setFilters={setFilters} users={users} t={t} />
+
+        <button style={{ background: showLog ? "#338ba820" : "transparent", border:"1px solid", borderColor: showLog ? "#338ba8" : "var(--border)", color: showLog ? "#7dc3db" : "var(--text-muted)", borderRadius:6, padding:"5px 10px", fontSize:12, fontWeight:600, cursor:"pointer", whiteSpace:"nowrap" }} onClick={() => setShowLog(p => !p)}>
+           {showLog ? "Hide Log" : "Activity Log"}
+        </button>
+
+        {canCreate && <button style={{ ...S.createBtn, marginLeft:"auto" }} onClick={onCreate}>+ {t("create")}</button>}
       </div>
       
       <div style={S.sprintBar}>
         <span style={S.sprintName}>{sprint}</span>
-        <span style={S.sprintMeta}>{total} issues · {done} done · {pts} story points</span>
+        <span style={S.sprintMeta}>{total} issues  {done} done  {pts} story points</span>
         <div style={{ flex:1 }} />
         <div style={S.miniProgress}><div style={{ ...S.miniProgressFill, width: total ? `${(done/total)*100}%` : "0%" }} /></div>
         <span style={{ fontSize:11, color:"#909dab" }}>{total ? Math.round((done/total)*100) : 0}%</span>
@@ -2496,7 +2850,7 @@ function BoardView({ issues, sprints, sprint, setSprint, search, setSearch, filt
                   onDragLeave={() => setDragOver(null)}
                   onDrop={e => onDrop(e, status)}>
                   <div style={{ ...S.colHeader, display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-                    <div style={{ display: "flex", alignItems: "center" }}>
+                    <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
                       <span style={{ ...S.dot, background: sc.dot }} />
                       <span style={{ ...S.colTitle, color: sc.text }}>{status}</span>
                       <span style={S.colCount}>{col.length}</span>
@@ -2529,7 +2883,7 @@ function BoardView({ issues, sprints, sprint, setSprint, search, setSearch, filt
                   </div>
                   <div style={S.colBody}>
                     {col.map(issue => (
-                      <IssueCard key={issue.key} issue={issue} onDragStart={onDragStart} onClick={() => onSelect(issue)} users={users} />
+                      <IssueCard key={issue.key} issue={issue} onDragStart={onDragStart} onDragEnd={onDragEnd} draggingKey={draggingKey} onClick={() => onSelect(issue)} users={users} />
                     ))}
                     {col.length === 0 && <div style={S.emptyCol}>Drop here</div>}
                   </div>
@@ -2554,9 +2908,9 @@ function BoardView({ issues, sprints, sprint, setSprint, search, setSearch, filt
           }}>
             <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", borderBottom:"1px solid #444c56", paddingBottom:8 }}>
               <span style={{ fontWeight:700, color:"#e6edf3", display:"flex", alignItems:"center", gap:6 }}>
-                <span>📅 Daily Log Tracker</span>
+                <span> Daily Log Tracker</span>
               </span>
-              <button style={{ ...S.iconBtn, fontSize:12 }} onClick={() => setShowLog(false)}>✕</button>
+              <button style={{ ...S.iconBtn, fontSize:12 }} onClick={() => setShowLog(false)}></button>
             </div>
 
             {/* Date Select Calendar */}
@@ -2629,17 +2983,23 @@ function BoardView({ issues, sprints, sprint, setSprint, search, setSearch, filt
   );
 }
 
-// ─── ISSUE CARD ───────────────────────────────────────────────────────────────
-function IssueCard({ issue, onDragStart, onClick, users }) {
+// --- ISSUE CARD ---------------------------------------------------------------
+function IssueCard({ issue, onDragStart, onDragEnd, draggingKey, onClick, users }) {
   const ti = ISSUE_TYPES[issue.type];
   const pi = PRIORITIES[issue.priority];
   const ep = EPICS.find(e => e.id === issue.epic);
   const au = users.find(u => u.id === issue.assignee);
+  const isDragging = draggingKey === issue.key;
   return (
-    <div style={S.card} draggable onDragStart={e => onDragStart(e, issue.key)} onClick={onClick}
-      onMouseEnter={e => e.currentTarget.style.borderColor="#46b3cf"}
-      onMouseLeave={e => e.currentTarget.style.borderColor="#444c56"}>
-      {ep && <div style={{ ...S.epicTag, background: ep.color+"25", color: ep.color }}>⚡ {ep.name}</div>}
+    <div
+      style={{ ...S.card, ...(isDragging ? { opacity: 0.35, transform: "scale(0.97)", cursor: "grabbing" } : {}) }}
+      draggable
+      onDragStart={e => onDragStart(e, issue.key)}
+      onDragEnd={onDragEnd}
+      onClick={onClick}
+      onMouseEnter={e => { if (!isDragging) e.currentTarget.style.borderColor = "#46b3cf"; }}
+      onMouseLeave={e => { e.currentTarget.style.borderColor = "var(--border)"; }}>
+      {ep && <div style={{ ...S.epicTag, background: ep.color+"25", color: ep.color }}> {ep.name}</div>}
       <div style={S.labelRow}>{issue.labels.slice(0,2).map(l => <span key={l} style={S.labelChip}>{l}</span>)}</div>
       <div style={S.cardTitle}>{issue.title}</div>
       <div style={S.cardFoot}>
@@ -2649,8 +3009,8 @@ function IssueCard({ issue, onDragStart, onClick, users }) {
           <span style={{ color: pi.color, fontSize:11 }}>{pi.icon}</span>
         </div>
         <div style={{ display:"flex", alignItems:"center", gap:5 }}>
-          {issue.comments.length > 0 && <span style={S.cardStat}>💬{issue.comments.length}</span>}
-          {issue.attach > 0 && <span style={S.cardStat}>📎{issue.attach}</span>}
+          {issue.comments.length > 0 && <span style={S.cardStat}>{issue.comments.length}</span>}
+          {issue.attach > 0 && <span style={S.cardStat}>{issue.attach}</span>}
           {issue.sp > 0 && <span style={S.spBadge}>{issue.sp}</span>}
           <div title={DEPARTMENTS[issue.department]?.label} style={{ fontSize:12, cursor:"help", marginLeft:2 }}>
             {DEPARTMENTS[issue.department]?.icon}
@@ -2662,55 +3022,26 @@ function IssueCard({ issue, onDragStart, onClick, users }) {
   );
 }
 
-// ─── BACKLOG VIEW ─────────────────────────────────────────────────────────────
+// --- BACKLOG VIEW -------------------------------------------------------------
 function BacklogView({ issues, search, setSearch, filters, setFilters, onSelect, onCreate, canCreate, users, isMobile, t, searchInputRef }) {
   return (
     <div>
-      <div style={S.toolbar}>
-        <div style={{ display:"flex", gap:8, alignItems:"center", flexWrap:"wrap" }}>
-          
-          <div style={{ position: "relative", display: "flex", alignItems: "center", width: isMobile ? "100%" : "auto", minWidth: isMobile ? "none" : 200 }}>
-            <input 
-              ref={searchInputRef}
-              style={{ 
-                ...S.searchBox, 
-                paddingRight: search ? 30 : 10, 
-                width: "100%",
-                maxWidth: "100%",
-                fontSize: isMobile ? 16 : 13
-              }} 
-              placeholder={`🔍  ${t("search")}`} 
-              value={search} 
-              onChange={e => setSearch(e.target.value)} 
-              title="Search by title, key, desc, status, type, assignee, reporter, epic, or labels. Tokens: type:, p:, key:, assignee:, epic:, label:, status:"
-            />
-            {search && (
-              <button 
-                onClick={() => setSearch("")}
-                style={{
-                  position: "absolute",
-                  right: 8,
-                  top: "50%",
-                  transform: "translateY(-50%)",
-                  background: "none",
-                  border: "none",
-                  color: "var(--text-muted)",
-                  cursor: "pointer",
-                  fontSize: 14,
-                  padding: 8,
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center"
-                }}
-              >
-                ✕
-              </button>
-            )}
-          </div>
-
-          <Filters filters={filters} setFilters={setFilters} users={users} t={t} />
+      <div style={{ display:"flex", flexWrap:"wrap", alignItems:"center", gap:8, marginBottom:12 }}>
+        <div style={{ position:"relative", display:"flex", alignItems:"center", flex:"1 1 180px", minWidth:140, maxWidth:300 }}>
+          <input
+            ref={searchInputRef}
+            style={{ ...S.searchBox, width:"100%", maxWidth:"100%", paddingRight: search ? 28 : 10, boxSizing:"border-box" }}
+            placeholder={`  ${t("search")}`}
+            value={search}
+            onChange={e => setSearch(e.target.value)}
+            title="Search by title, key, desc, status, type, assignee, reporter, epic, or labels. Tokens: type:, p:, key:, assignee:, epic:, label:, status:"
+          />
+          {search && (
+            <button onClick={() => setSearch("")} style={{ position:"absolute", right:6, top:"50%", transform:"translateY(-50%)", background:"none", border:"none", color:"var(--text-muted)", cursor:"pointer", fontSize:13, lineHeight:1, padding:2 }}></button>
+          )}
         </div>
-        {canCreate && <button style={S.createBtn} onClick={onCreate}>+ {t("create")}</button>}
+        <Filters filters={filters} setFilters={setFilters} users={users} t={t} />
+        {canCreate && <button style={{ ...S.createBtn, marginLeft:"auto" }} onClick={onCreate}>+ {t("create")}</button>}
       </div>
       <div style={S.backlogBox}>
         <div style={S.backlogHdr}>
@@ -2728,7 +3059,7 @@ function BacklogView({ issues, search, setSearch, filters, setFilters, onSelect,
               <span style={{ color: ti.color, fontSize:13, width:16 }}>{ti.icon}</span>
               <span style={S.backlogKey}>{issue.key}</span>
               <span style={S.backlogTitle}>{issue.title}</span>
-              {ep && <span style={{ ...S.epicTag, background: ep.color+"25", color: ep.color, flexShrink:0 }}>⚡ {ep.name}</span>}
+              {ep && <span style={{ ...S.epicTag, background: ep.color+"25", color: ep.color, flexShrink:0 }}> {ep.name}</span>}
               <div style={{ display:"flex", alignItems:"center", gap:8, marginLeft:"auto", flexShrink:0 }}>
                 {issue.labels.slice(0,1).map(l => <span key={l} style={S.labelChip}>{l}</span>)}
                 <span style={{ color: pi.color, fontSize:11 }}>{pi.icon}</span>
@@ -2743,7 +3074,7 @@ function BacklogView({ issues, search, setSearch, filters, setFilters, onSelect,
   );
 }
 
-// ─── ROADMAP ──────────────────────────────────────────────────────────────────
+// --- ROADMAP ------------------------------------------------------------------
 function RoadmapView({ issues, onSelect, isMobile }) {
   const start = new Date("2026-05-01");
   const end   = new Date("2026-07-31");
@@ -2803,8 +3134,8 @@ function RoadmapView({ issues, onSelect, isMobile }) {
   );
 }
 
-// ─── PEOPLE VIEW ──────────────────────────────────────────────────────────────
-// ─── USER HISTORY MODAL ──────────────────────────────────────────────────────
+// --- PEOPLE VIEW --------------------------------------------------------------
+// --- USER HISTORY MODAL ------------------------------------------------------
 function UserHistoryModal({ user, issues, onClose }) {
   const [startDate, setStartDate] = useState("2025-01-01");
   const [endDate, setEndDate] = useState("2026-12-31");
@@ -2841,9 +3172,9 @@ function UserHistoryModal({ user, issues, onClose }) {
       <div style={{ ...S.modal, width: 500 }}>
         <div style={S.modalHdr}>
           <span style={{ fontWeight:700, color:"#e6edf3", display:"flex", alignItems:"center", gap:8 }}>
-            <span>📊 Work History & Timeline</span>
+            <span> Work History & Timeline</span>
           </span>
-          <button style={S.iconBtn} onClick={onClose}>✕</button>
+          <button style={S.iconBtn} onClick={onClose}></button>
         </div>
         <div style={{ ...S.modalBody, gap:14 }}>
           {/* User Profile Summary */}
@@ -2852,7 +3183,10 @@ function UserHistoryModal({ user, issues, onClose }) {
               <Avatar user={user} size={48} />
               <div>
                 <div style={{ fontWeight:700, color:"#e6edf3", fontSize:15 }}>{user.name}</div>
-                <div style={{ fontSize:12, color:"#909dab" }}>{ROLES[user.role]?.label}</div>
+                <div style={{ display:"flex", alignItems:"center", gap:5, marginTop:2 }}>
+                  <span style={{ fontSize:11, color: ROLES[user.role]?.color||"#909dab", fontWeight:700 }}>{ROLES[user.role]?.icon} {ROLES[user.role]?.label}</span>
+                </div>
+                <div style={{ fontSize:10, color:"#768390", marginTop:1 }}>{ROLES[user.role]?.desc}</div>
               </div>
             </div>
             <span style={{ ...S.rolePill, background: (dept?.color||"#6366f1")+"20", color: dept?.color||"#6366f1", fontSize:12, padding:"4px 10px" }}>
@@ -2900,7 +3234,7 @@ function UserHistoryModal({ user, issues, onClose }) {
             <div style={{ fontSize:11, color:"#909dab", fontWeight:700, textTransform:"uppercase", marginBottom:6, letterSpacing:"0.04em" }}>Activity Timeline</div>
             <div style={{ maxHeight: 220, overflowY: "auto", display:"flex", flexDirection:"column", gap:8, paddingRight:4 }}>
               {filteredTasks.map(t => {
-                const typeInfo = ISSUE_TYPES[t.type] || { icon:"❓", color:"#768390" };
+                const typeInfo = ISSUE_TYPES[t.type] || { icon:"", color:"#768390" };
                 const sc = STATUS_COLORS[t.status] || { bg:"#444c56", text:"#adbac7" };
                 return (
                   <div key={t.key} style={{ background:"#22272e", border:"1px solid #444c56", padding:10, borderRadius:8, display:"flex", justifyContent:"space-between", alignItems:"center" }}>
@@ -2911,7 +3245,7 @@ function UserHistoryModal({ user, issues, onClose }) {
                         <span style={{ fontSize:9, fontWeight:700, background: sc.bg, color: sc.text, borderRadius:4, padding:"1px 6px" }}>{t.status}</span>
                       </div>
                       <div style={{ fontSize:13, fontWeight:600, color:"#e6edf3", marginTop:4 }}>{t.title}</div>
-                      <div style={{ fontSize:11, color:"#768390", marginTop:2 }}>Created: {t.created} · Due: {t.dueDate || "None"}</div>
+                      <div style={{ fontSize:11, color:"#768390", marginTop:2 }}>Created: {t.created}  Due: {t.dueDate || "None"}</div>
                     </div>
                     <div style={{ textAlign:"right", flexShrink:0 }}>
                       <span style={{ background:"#2d333b", border:"1px solid #444c56", color:"#adbac7", borderRadius:4, padding:"2px 6px", fontSize:10, fontWeight:700 }}>{t.sp} SP</span>
@@ -2961,7 +3295,7 @@ function PeopleView({ users, issues, isAdmin, isMobile, t }) {
               type="text" 
               value={search}
               onChange={e => setSearch(e.target.value)}
-              placeholder={`🔍  Search team...`}
+              placeholder={`  Search team...`}
               style={{ 
                 ...S.searchBox, 
                 width:"100%", 
@@ -2988,7 +3322,7 @@ function PeopleView({ users, issues, isAdmin, isMobile, t }) {
                   justifyContent: "center"
                 }}
               >
-                ✕
+                
               </button>
             )}
           </div>
@@ -2998,7 +3332,7 @@ function PeopleView({ users, issues, isAdmin, isMobile, t }) {
           </select>
         </div>
       </div>
-      {!isAdmin && <div style={{ color:"#f87171", fontSize:13, marginBottom:16 }}>⚠ Admin access required to manage team members.</div>}
+      {!isAdmin && <div style={{ color:"#f87171", fontSize:13, marginBottom:16 }}> Admin access required to manage team members.</div>}
       <div style={S.peopleGrid}>
         {filtered.map(u => {
           const ui   = issues.filter(i => i.assignee === u.id);
@@ -3023,8 +3357,13 @@ function PeopleView({ users, issues, isAdmin, isMobile, t }) {
               </div>
               <div style={{ marginTop:10 }}>
                 <div style={{ fontWeight:600, color:"#e6edf3", fontSize:15 }}>{u.name}</div>
-                <div style={{ fontSize:11, color:"#909dab", marginBottom:4 }}>{ROLES[u.role]?.label}</div>
-                {!u.active && <div style={{ fontSize:10, color:"#ef4444", marginBottom:6 }}>⛔ Inactive</div>}
+                <div style={{ display:"flex", alignItems:"center", gap:5, marginBottom:2 }}>
+                  <span style={{ fontSize:11, color: ROLES[u.role]?.color||"#909dab", fontWeight:700 }}>
+                    {ROLES[u.role]?.icon} {ROLES[u.role]?.label}
+                  </span>
+                </div>
+                <div style={{ fontSize:10, color:"#768390", marginBottom:4 }}>{ROLES[u.role]?.desc}</div>
+                {!u.active && <div style={{ fontSize:10, color:"#ef4444", marginBottom:6 }}> Inactive</div>}
               </div>
               {[
                 { label:"To Do",       val:todo, color:"#46b3cf" },
@@ -3054,7 +3393,7 @@ function PeopleView({ users, issues, isAdmin, isMobile, t }) {
   );
 }
 
-// ─── DETAIL PANEL ─────────────────────────────────────────────────────────────
+// --- DETAIL PANEL -------------------------------------------------------------
 function DetailPanel({ issue, onClose, onUpdate, onDelete, onComment, currentUser, isAdmin, hasPermission, users }) {
   const [tab, setTab]         = useState("details");
   const [commentTxt, setCTxt] = useState("");
@@ -3179,7 +3518,7 @@ ACTIVITY HISTORY LOG (${historyList.length})
 
   const handleCopyReport = () => {
     navigator.clipboard.writeText(generateReportText());
-    alert("📋 Detailed task report copied to clipboard!");
+    alert(" Detailed task report copied to clipboard!");
   };
 
   const handleDownloadReport = () => {
@@ -3273,15 +3612,15 @@ ACTIVITY HISTORY LOG (${historyList.length})
                   gap: 4
                 }}
               >
-                ✏️ Edit Task
+                 Edit Task
               </button>
             )}
-            {isAdmin && <button style={S.iconBtn} onClick={onDelete} title="Delete">🗑</button>}
-            <button style={S.iconBtn} onClick={onClose}>✕</button>
+            {isAdmin && <button style={S.iconBtn} onClick={onDelete} title="Delete"></button>}
+            <button style={S.iconBtn} onClick={onClose}></button>
           </div>
         </div>
 
-        {/* ── PROCESS FLOW (STEPPER) ── */}
+        {/* -- PROCESS FLOW (STEPPER) -- */}
         <div style={S.processFlow}>
           {STATUSES.map((st, i) => {
             const isActive = issue.status === st;
@@ -3294,7 +3633,7 @@ ACTIVITY HISTORY LOG (${historyList.length})
                   onClick={() => canEdit && !isEditing && onUpdate({ status: st })}
                 >
                   <div style={{ ...S.processDot, background: bg, color }}>
-                    {isPast ? "✓" : (i+1)}
+                    {isPast ? "" : (i+1)}
                   </div>
                   <span style={{ fontSize:12, fontWeight:isActive?700:500, color:isActive?"#cdd9e5":"#768390", whiteSpace:"nowrap" }}>{st}</span>
                 </div>
@@ -3400,7 +3739,7 @@ ACTIVITY HISTORY LOG (${historyList.length})
                   ep && (
                     <div style={S.fieldGroup}>
                       <div style={S.fieldLabel}>Epic</div>
-                      <span style={{ ...S.epicTag, background: ep.color+"25", color: ep.color }}>⚡ {ep.name}</span>
+                      <span style={{ ...S.epicTag, background: ep.color+"25", color: ep.color }}> {ep.name}</span>
                     </div>
                   )
                 )}
@@ -3417,7 +3756,7 @@ ACTIVITY HISTORY LOG (${historyList.length})
                       {RECURRENCE_OPTIONS.map(r => <option key={r} value={r}>{r.charAt(0).toUpperCase()+r.slice(1)}</option>)}
                     </select>
                   ) : (
-                    <span style={{ fontSize:13, color:"#adbac7", textTransform: "capitalize" }}>🔄 {issue.recurrence}</span>
+                    <span style={{ fontSize:13, color:"#adbac7", textTransform: "capitalize" }}> {issue.recurrence}</span>
                   )}
                 </div>
 
@@ -3431,10 +3770,10 @@ ACTIVITY HISTORY LOG (${historyList.length})
                         checked={draft.notification} 
                         onChange={e => setDraft(p => ({ ...p, notification: e.target.checked }))} 
                       />
-                      <span style={{ fontSize:13, color:"#adbac7" }}>{draft.notification ? "🔔 Enabled" : "🔕 Disabled"}</span>
+                      <span style={{ fontSize:13, color:"#adbac7" }}>{draft.notification ? " Enabled" : " Disabled"}</span>
                     </label>
                   ) : (
-                    <span style={{ fontSize:13, color:"#adbac7" }}>{issue.notification ? "🔔 Active" : "🔕 Suppressed"}</span>
+                    <span style={{ fontSize:13, color:"#adbac7" }}>{issue.notification ? " Active" : " Suppressed"}</span>
                   )}
                 </div>
 
@@ -3442,19 +3781,19 @@ ACTIVITY HISTORY LOG (${historyList.length})
                 {!isEditing && (
                   <div style={{ background: "#22272e", border: "1px solid #444c56", borderRadius: 8, padding: 12, display: "flex", flexDirection: "column", gap: 10, marginTop: 8 }}>
                     <div style={{ fontSize: 11, fontWeight: 700, color: "#7dc3db", borderBottom: "1px solid #444c56", paddingBottom: 6, textTransform: "uppercase", letterSpacing: 0.5 }}>
-                      ⏱️ Auditing & Timing Analysis
+                       Auditing & Timing Analysis
                     </div>
                     <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
                       <div>
                         <div style={{ fontSize: 10, color: "#768390" }}>Task Age (Total Duration)</div>
                         <div style={{ fontSize: 13, fontWeight: 800, color: "#7dc3db", textShadow: "0 0 8px rgba(125,195,219,0.3)", marginTop: 2 }}>
-                          🕒 {getDurationString(issue.created)}
+                           {getDurationString(issue.created)}
                         </div>
                       </div>
                       <div>
                         <div style={{ fontSize: 10, color: "#768390" }}>Time in Status ({issue.status})</div>
                         <div style={{ fontSize: 13, fontWeight: 800, color: "#fbbf24", textShadow: "0 0 8px rgba(251,191,36,0.3)", marginTop: 2 }}>
-                          ⚡ {getTimeInStatusString()}
+                           {getTimeInStatusString()}
                         </div>
                       </div>
                     </div>
@@ -3513,7 +3852,7 @@ ACTIVITY HISTORY LOG (${historyList.length})
                         {users.map(u => <option key={u.id} value={u.id}>{u.name}</option>)}
                       </select>
                     ) : (
-                      <span style={{ fontSize:13, color:"#adbac7" }}>👤 {au?.name || "Unassigned"}</span>
+                      <span style={{ fontSize:13, color:"#adbac7" }}> {au?.name || "Unassigned"}</span>
                     )
                   },
                   { 
@@ -3523,7 +3862,7 @@ ACTIVITY HISTORY LOG (${historyList.length})
                         {users.map(u => <option key={u.id} value={u.id}>{u.name}</option>)}
                       </select>
                     ) : (
-                      <span style={{ fontSize:13, color:"#adbac7" }}>📢 {ru?.name || "Unknown"}</span>
+                      <span style={{ fontSize:13, color:"#adbac7" }}> {ru?.name || "Unknown"}</span>
                     )
                   },
                   { 
@@ -3533,7 +3872,7 @@ ACTIVITY HISTORY LOG (${historyList.length})
                         {Object.entries(DEPARTMENTS).map(([k,v]) => <option key={k} value={k}>{v.label}</option>)}
                       </select>
                     ) : (
-                      <span style={{ fontSize:13, color:"#adbac7" }}>🏢 {DEPARTMENTS[issue.department]?.label || issue.department}</span>
+                      <span style={{ fontSize:13, color:"#adbac7" }}> {DEPARTMENTS[issue.department]?.label || issue.department}</span>
                     )
                   },
                   { 
@@ -3557,24 +3896,24 @@ ACTIVITY HISTORY LOG (${historyList.length})
                         <option>Sprint 1</option><option>Sprint 2</option><option>Backlog</option>
                       </select>
                     ) : (
-                      <span style={{ fontSize:13, color:"#adbac7" }}>🏃 {issue.sprint}</span>
+                      <span style={{ fontSize:13, color:"#adbac7" }}> {issue.sprint}</span>
                     )
                   },
                   { 
                     label:"Due Date", 
                     el: isEditing ? (
                       <input 
-                        type="date" 
+                        type="datetime-local" 
                         style={S.fieldInput} 
                         value={draft.dueDate || ""} 
                         onChange={e => setDraft(p => ({ ...p, dueDate: e.target.value || "" }))} 
                       />
                     ) : (
-                      <span style={{ fontSize:13, color: issue.dueDate ? "#adbac7" : "#768390" }}>📅 {issue.dueDate || "No due date"}</span>
+                      <span style={{ fontSize:13, color: issue.dueDate ? "#adbac7" : "#768390" }}> {issue.dueDate || "No due date"}</span>
                     )
                   },
-                  { label:"Watchers",    el: <span style={{ fontSize:13, color:"#adbac7" }}>👁️ {issue.watchers.length} watchers</span> },
-                  { label:"Attachments", el: <span style={{ fontSize:13, color:"#adbac7" }}>📎 {issue.attach} files</span> },
+                  { label:"Watchers",    el: <span style={{ fontSize:13, color:"#adbac7" }}> {issue.watchers.length} watchers</span> },
+                  { label:"Attachments", el: <span style={{ fontSize:13, color:"#adbac7" }}> {issue.attach} files</span> },
                 ].map(({label,el}) => (
                   <div key={label} style={{ ...S.rightField, borderBottom: "1px solid rgba(255, 255, 255, 0.04)", paddingBottom: 8, marginBottom: 8 }}>
                     <div style={S.rightLabel}>{label}</div>
@@ -3605,7 +3944,7 @@ ACTIVITY HISTORY LOG (${historyList.length})
               })}
               <div style={{ display:"flex", gap:10, marginTop:14 }}>
                 <Avatar user={currentUser} size={28} />
-                <textarea style={S.commentArea} rows={3} placeholder="Add a comment…"
+                <textarea style={S.commentArea} rows={3} placeholder="Add a comment"
                   value={commentTxt} onChange={e => setCTxt(e.target.value)} />
               </div>
               <div style={{ display:"flex", justifyContent:"flex-end", marginTop:8 }}>
@@ -3646,7 +3985,7 @@ ACTIVITY HISTORY LOG (${historyList.length})
           )}
         </div>
 
-        {/* ── FOOTER ACTIONS ── */}
+        {/* -- FOOTER ACTIONS -- */}
         <div style={{ 
           padding: "12px 20px", 
           borderTop: "1px solid var(--border)", 
@@ -3673,7 +4012,7 @@ ACTIVITY HISTORY LOG (${historyList.length})
                   cursor: "pointer"
                 }}
               >
-                📋 Copy Report
+                 Copy Report
               </button>
               <button 
                 onClick={handleDownloadReport}
@@ -3688,7 +4027,7 @@ ACTIVITY HISTORY LOG (${historyList.length})
                   cursor: "pointer"
                 }}
               >
-                📥 Download Report
+                 Download Report
               </button>
             </div>
           ) : (
@@ -3711,7 +4050,7 @@ ACTIVITY HISTORY LOG (${historyList.length})
                   cursor: "pointer"
                 }}
               >
-                ✕ Cancel
+                 Cancel
               </button>
               <button 
                 onClick={handleSaveChanges}
@@ -3727,7 +4066,7 @@ ACTIVITY HISTORY LOG (${historyList.length})
                   boxShadow: "0 0 12px rgba(51,139,168,0.4)"
                 }}
               >
-                💾 Save Changes
+                 Save Changes
               </button>
             </div>
           ) : (
@@ -3751,7 +4090,7 @@ ACTIVITY HISTORY LOG (${historyList.length})
   );
 }
 
-// ─── CREATE MODAL ─────────────────────────────────────────────────────────────
+// --- CREATE MODAL -------------------------------------------------------------
 function CreateModal({ onClose, onCreate, currentUser, users, initialStatus = "To Do" }) {
   const [f, setF] = useState({
     title:"", type:"task", priority:"medium", assignee: String(currentUser.id),
@@ -3767,11 +4106,11 @@ function CreateModal({ onClose, onCreate, currentUser, users, initialStatus = "T
       <div style={S.modal}>
         <div style={S.modalHdr}>
           <span style={{ fontWeight:700, fontSize:15, color:"#e6edf3" }}>Create Issue</span>
-          <button style={S.iconBtn} onClick={onClose}>✕</button>
+          <button style={S.iconBtn} onClick={onClose}></button>
         </div>
         <div style={S.modalBody}>
           <Row label="Title *">
-            <input style={S.formInput} placeholder="Issue title…" value={f.title} onChange={e => set("title",e.target.value)} autoFocus />
+            <input style={S.formInput} placeholder="Issue title" value={f.title} onChange={e => set("title",e.target.value)} autoFocus />
           </Row>
           <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:10 }}>
             <Row label="Department">
@@ -3815,7 +4154,7 @@ function CreateModal({ onClose, onCreate, currentUser, users, initialStatus = "T
               </select>
             </Row>
             <Row label="Due Date">
-              <input type="date" style={S.formInput} value={f.dueDate} onChange={e => set("dueDate",e.target.value)} />
+              <input type="datetime-local" style={S.formInput} value={f.dueDate} onChange={e => set("dueDate",e.target.value)} />
             </Row>
             <Row label="Recurrence">
               <select style={S.formSel} value={f.recurrence} onChange={e => set("recurrence",e.target.value)}>
@@ -3824,7 +4163,7 @@ function CreateModal({ onClose, onCreate, currentUser, users, initialStatus = "T
             </Row>
           </div>
           <Row label="Description">
-            <textarea style={S.formTextarea} rows={3} placeholder="Describe the issue…" value={f.desc} onChange={e => set("desc",e.target.value)} />
+            <textarea style={S.formTextarea} rows={3} placeholder="Describe the issue" value={f.desc} onChange={e => set("desc",e.target.value)} />
           </Row>
           <Row label="Labels">
             <div style={{ display:"flex", flexWrap:"wrap", gap:6 }}>
@@ -3855,42 +4194,188 @@ function Row({ label, children }) {
   );
 }
 
-// ─── FILTERS ──────────────────────────────────────────────────────────────────
+// --- FILTERS ------------------------------------------------------------------
 function Filters({ filters, setFilters, users }) {
-  const set = (k,v) => setFilters(p => ({...p,[k]:v}));
-  const active = Object.values(filters).filter(v => v!=="all").length;
+  const [open, setOpen] = useState(false);
+  const [panelPos, setPanelPos] = useState({ top: 0, left: 0 });
+  const btnRef  = useRef(null);
+  const panelRef = useRef(null);
+  const set = (k, v) => setFilters(p => ({ ...p, [k]: v }));
+  const clearAll = () => setFilters({ type:"all", priority:"all", assignee:"all", epic:"all", domain:"all" });
+  const active = Object.values(filters).filter(v => v !== "all").length;
+
+  const toggleOpen = () => {
+    if (!open && btnRef.current) {
+      const r = btnRef.current.getBoundingClientRect();
+      const panelW = 420;
+      const left = Math.min(r.left, window.innerWidth - panelW - 12);
+      setPanelPos({ top: r.bottom + 8, left: Math.max(8, left) });
+    }
+    setOpen(p => !p);
+  };
+
+  useEffect(() => {
+    if (!open) return;
+    const close = (e) => {
+      if (panelRef.current && !panelRef.current.contains(e.target) &&
+          btnRef.current && !btnRef.current.contains(e.target)) setOpen(false);
+    };
+    document.addEventListener("mousedown", close);
+    return () => document.removeEventListener("mousedown", close);
+  }, [open]);
+
+  const PRIORITY_META = { critical:{ color:"#a855f7", bg:"#a855f720", icon:"" }, high:{ color:"#ef4444", bg:"#ef444420", icon:"" }, medium:{ color:"#f59e0b", bg:"#f59e0b20", icon:"" }, low:{ color:"#22c55e", bg:"#22c55e20", icon:"" } };
+  const TYPE_META     = Object.entries(ISSUE_TYPES).map(([k,v]) => ({ val:k, label:v.label, icon:v.icon, color:v.color }));
+  const activeUsers   = (users||[]).filter(u => u.active);
+
+  const PillBtn = ({ active: isActive, onClick, children, color, bg }) => (
+    <button onClick={onClick} style={{
+      display:"inline-flex", alignItems:"center", gap:5,
+      padding:"4px 10px", borderRadius:20, fontSize:11, fontWeight:600, cursor:"pointer", whiteSpace:"nowrap", border:"1px solid",
+      background:   isActive ? (bg  || "var(--accent)20") : "transparent",
+      borderColor:  isActive ? (color || "var(--accent)") : "var(--border)",
+      color:        isActive ? (color || "var(--accent)") : "var(--text-muted)",
+      transition:   "all 0.15s",
+    }}>{children}</button>
+  );
+
+  const Section = ({ label, icon, children }) => (
+    <div style={{ display:"flex", flexDirection:"column", gap:8 }}>
+      <div style={{ display:"flex", alignItems:"center", gap:6 }}>
+        <span style={{ fontSize:10, fontWeight:800, color:"var(--text-muted)", letterSpacing:"0.1em", textTransform:"uppercase" }}>{icon} {label}</span>
+        <div style={{ flex:1, height:1, background:"var(--border)" }} />
+      </div>
+      <div style={{ display:"flex", flexWrap:"wrap", gap:6 }}>{children}</div>
+    </div>
+  );
+
   return (
-    <div style={{ display:"flex", gap:6, alignItems:"center", flexWrap:"wrap" }}>
-      <select style={S.sel} value={filters.type}     onChange={e => set("type",e.target.value)}>
-        <option value="all">All Types</option>
-        {Object.entries(ISSUE_TYPES).map(([k,v]) => <option key={k} value={k}>{v.label}</option>)}
-      </select>
-      <select style={S.sel} value={filters.priority} onChange={e => set("priority",e.target.value)}>
-        <option value="all">All Priorities</option>
-        {Object.entries(PRIORITIES).map(([k,v]) => <option key={k} value={k}>{v.label}</option>)}
-      </select>
-      <select style={S.sel} value={filters.assignee} onChange={e => set("assignee",e.target.value)}>
-        <option value="all">All Assignees</option>
-        {(users||[]).map(u => <option key={u.id} value={String(u.id)}>{u.name}</option>)}
-      </select>
-      <select style={S.sel} value={filters.epic}     onChange={e => set("epic",e.target.value)}>
-        <option value="all">All Epics</option>
-        {EPICS.map(ep => <option key={ep.id} value={ep.id}>{ep.name}</option>)}
-      </select>
-      <select style={S.sel} value={filters.domain}   onChange={e => set("domain",e.target.value)}>
-        <option value="all">All Domains</option>
-        {Object.entries(DEPARTMENTS).map(([k,v]) => <option key={k} value={k}>{v.icon} {v.label}</option>)}
-      </select>
-      {active > 0 && (
-        <button style={S.clearBtn} onClick={() => setFilters({ type:"all", priority:"all", assignee:"all", epic:"all", domain:"all" })}>
-          ✕ Clear ({active})
-        </button>
+    <div style={{ position:"relative", display:"inline-flex", alignItems:"center" }}>
+      {/* -- Trigger button -- */}
+      <button ref={btnRef} onClick={toggleOpen} style={{
+        display:"flex", alignItems:"center", gap:6,
+        background: active > 0 ? "var(--accent)15" : "var(--card-bg)",
+        border: `1px solid ${active > 0 ? "var(--accent)" : "var(--border)"}`,
+        color:  active > 0 ? "var(--accent)" : "var(--text-muted)",
+        borderRadius:6, padding:"5px 10px", fontSize:12, fontWeight: active > 0 ? 700 : 500,
+        cursor:"pointer", whiteSpace:"nowrap",
+      }}>
+        <span style={{ fontSize:13 }}></span> Filters
+        {active > 0 && (
+          <span style={{ background:"var(--accent)", color:"#fff", borderRadius:"50%", width:16, height:16, display:"inline-flex", alignItems:"center", justifyContent:"center", fontSize:10, fontWeight:800, flexShrink:0 }}>
+            {active}
+          </span>
+        )}
+      </button>
+
+      {/* -- Dropdown panel -- */}
+      {open && (
+        <div ref={panelRef} style={{
+          position:"fixed", top:panelPos.top, left:panelPos.left, zIndex:9999,
+          width:420, background:"var(--bg-sidebar)", border:"1px solid var(--border)",
+          borderRadius:14, boxShadow:"0 20px 48px rgba(0,0,0,0.55)", overflow:"hidden",
+        }}>
+          {/* Header */}
+          <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", padding:"14px 18px", borderBottom:"1px solid var(--border)", background:"var(--bg-header)" }}>
+            <div style={{ display:"flex", alignItems:"center", gap:8 }}>
+              <span style={{ fontSize:15 }}></span>
+              <span style={{ fontWeight:800, fontSize:14, color:"var(--text-header)" }}>Filter Issues</span>
+              {active > 0 && <span style={{ background:"var(--accent)", color:"#fff", borderRadius:10, padding:"1px 7px", fontSize:10, fontWeight:800 }}>{active} active</span>}
+            </div>
+            <div style={{ display:"flex", gap:8, alignItems:"center" }}>
+              {active > 0 && (
+                <button onClick={clearAll} style={{ background:"transparent", border:"1px solid var(--border)", color:"var(--text-muted)", borderRadius:6, padding:"3px 10px", fontSize:11, cursor:"pointer", fontWeight:600 }}>
+                  Reset all
+                </button>
+              )}
+              <button onClick={() => setOpen(false)} style={{ background:"transparent", border:"none", color:"var(--text-muted)", cursor:"pointer", fontSize:16, lineHeight:1, padding:4 }}></button>
+            </div>
+          </div>
+
+          {/* Body */}
+          <div style={{ padding:"16px 18px", display:"flex", flexDirection:"column", gap:18, maxHeight:"70vh", overflowY:"auto" }}>
+
+            {/* Type */}
+            <Section label="Issue Type" icon="">
+              <PillBtn active={filters.type === "all"} onClick={() => set("type","all")}>All</PillBtn>
+              {TYPE_META.map(t => (
+                <PillBtn key={t.val} active={filters.type === t.val} onClick={() => set("type", t.val)} color={t.color} bg={t.color+"20"}>
+                  <span style={{ fontSize:12 }}>{t.icon}</span> {t.label}
+                </PillBtn>
+              ))}
+            </Section>
+
+            {/* Priority */}
+            <Section label="Priority" icon="">
+              <PillBtn active={filters.priority === "all"} onClick={() => set("priority","all")}>All</PillBtn>
+              {Object.entries(PRIORITY_META).map(([k, m]) => (
+                <PillBtn key={k} active={filters.priority === k} onClick={() => set("priority", k)} color={m.color} bg={m.bg}>
+                  {m.icon} {k.charAt(0).toUpperCase()+k.slice(1)}
+                </PillBtn>
+              ))}
+            </Section>
+
+            {/* Assignee */}
+            <Section label="Assignee" icon="">
+              <PillBtn active={filters.assignee === "all"} onClick={() => set("assignee","all")}>All</PillBtn>
+              <PillBtn active={filters.assignee === "unassigned"} onClick={() => set("assignee","unassigned")} color="#768390" bg="#76839020">
+                ? Unassigned
+              </PillBtn>
+              {activeUsers.map(u => (
+                <button key={u.id} onClick={() => set("assignee", String(u.id))} style={{
+                  display:"inline-flex", alignItems:"center", gap:6, padding:"3px 10px 3px 4px",
+                  borderRadius:20, fontSize:11, fontWeight:600, cursor:"pointer", border:"1px solid",
+                  background:   filters.assignee === String(u.id) ? (u.color||"#6366f1")+"25" : "transparent",
+                  borderColor:  filters.assignee === String(u.id) ? (u.color||"#6366f1") : "var(--border)",
+                  color:        filters.assignee === String(u.id) ? (u.color||"#6366f1") : "var(--text-muted)",
+                  transition:"all 0.15s",
+                }}>
+                  <div style={{ width:20, height:20, borderRadius:"50%", background:u.color||"#6366f1", display:"flex", alignItems:"center", justifyContent:"center", fontSize:9, fontWeight:800, color:"#fff", flexShrink:0 }}>
+                    {u.avatar}
+                  </div>
+                  {u.name}
+                </button>
+              ))}
+            </Section>
+
+            {/* Epic */}
+            <Section label="Epic" icon="">
+              <PillBtn active={filters.epic === "all"} onClick={() => set("epic","all")}>All</PillBtn>
+              {EPICS.map(ep => (
+                <PillBtn key={ep.id} active={filters.epic === ep.id} onClick={() => set("epic", ep.id)} color={ep.color} bg={ep.color+"20"}>
+                   {ep.name}
+                </PillBtn>
+              ))}
+            </Section>
+
+            {/* Department */}
+            <Section label="Department" icon="">
+              <PillBtn active={filters.domain === "all"} onClick={() => set("domain","all")}>All</PillBtn>
+              {Object.entries(DEPARTMENTS).map(([k, v]) => (
+                <PillBtn key={k} active={filters.domain === k} onClick={() => set("domain", k)} color={v.color} bg={(v.color||"#6366f1")+"20"}>
+                  {v.icon} {v.label}
+                </PillBtn>
+              ))}
+            </Section>
+
+          </div>
+
+          {/* Footer */}
+          <div style={{ padding:"12px 18px", borderTop:"1px solid var(--border)", background:"var(--bg-header)", display:"flex", justifyContent:"flex-end" }}>
+            <button onClick={() => setOpen(false)} style={{
+              background:"var(--accent)", color:"#fff", border:"none", borderRadius:8,
+              padding:"7px 20px", fontSize:12, fontWeight:700, cursor:"pointer",
+            }}>
+              Done
+            </button>
+          </div>
+        </div>
       )}
     </div>
   );
 }
 
-// ─── AVATAR ───────────────────────────────────────────────────────────────────
+// --- AVATAR -------------------------------------------------------------------
 function Avatar({ user, size=32 }) {
   return (
     <div style={{
@@ -3903,9 +4388,9 @@ function Avatar({ user, size=32 }) {
   );
 }
 
-// ─── STYLES ───────────────────────────────────────────────────────────────────
+// --- STYLES -------------------------------------------------------------------
 
-// ─── DB ARCHITECTURE VIEW ──────────────────────────────────────────────────
+// --- DB ARCHITECTURE VIEW --------------------------------------------------
 function ArchitectureView() {
   const schema = [
     { name: "issues", desc: "Core entity", keys: ["id(PK)", "key(UQ)", "assignee_id(FK->users)", "reporter_id(FK->users)", "epic_id(FK->epics)", "sprint_id(FK->sprints)"] },
@@ -3966,7 +4451,7 @@ function ArchitectureView() {
                       <span style={{ color }}>{cleanName}</span>
                       {badge && <span style={{ fontSize:9, background:badgeColor, color:"#fff", padding:"2px 4px", borderRadius:3, fontWeight:700 }}>{badge}</span>}
                     </div>
-                    {fkTarget && <span style={{ fontSize:10, color:"#768390", fontFamily:"monospace" }}>→ {fkTarget}</span>}
+                    {fkTarget && <span style={{ fontSize:10, color:"#768390", fontFamily:"monospace" }}> {fkTarget}</span>}
                   </div>
                 );
               })}
@@ -3978,7 +4463,7 @@ function ArchitectureView() {
   );
 }
 
-// ─── CHANGE PASSWORD SCREEN ──────────────────────────────────────────────────
+// --- CHANGE PASSWORD SCREEN --------------------------------------------------
 function ChangePasswordScreen({ user, onChange, onLogout }) {
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
@@ -4016,7 +4501,7 @@ function ChangePasswordScreen({ user, onChange, onLogout }) {
               <label style={{ display:"block", fontSize:12, fontWeight:600, color:"#8b949e", marginBottom:6 }}>CONFIRM NEW PASSWORD</label>
               <input type="password" style={{ ...S.formInput, width:"100%" }} value={confirmPassword} onChange={e => setConfirmPassword(e.target.value)} required />
             </div>
-            {error && <div style={{ color:"#f87171", fontSize:13, marginBottom:16 }}>⚠ {error}</div>}
+            {error && <div style={{ color:"#f87171", fontSize:13, marginBottom:16 }}> {error}</div>}
             <button type="submit" disabled={loading} style={{ width:"100%", background:"linear-gradient(135deg,#338ba8,#6366f1)", border:"none", borderRadius:8, padding:"12px", color:"#fff", fontWeight:700, cursor:"pointer" }}>
               {loading ? "Updating..." : "Update Password"}
             </button>
@@ -4030,127 +4515,352 @@ function ChangePasswordScreen({ user, onChange, onLogout }) {
   );
 }
 
-// ─── LOGIN SCREEN ──────────────────────────────────────────────────────────────
-function LoginScreen({ users, onLogin }) {
-  const [email, setEmail]       = useState("");
-  const [password, setPassword] = useState("");
-  const [showPw, setShowPw]     = useState(false);
-  const [error, setError]       = useState("");
-  const [loading, setLoading]   = useState(false);
-
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    setLoading(true);
-    setError("");
-    await new Promise(r => setTimeout(r, 500)); // brief loading feel
-    const result = await onLogin(email.trim(), password);
-    if (result && result.error) {
-      setError(result.error);
-    }
-    setLoading(false);
-  };
-
-  const quickLogin = async (user) => {
-    await onLogin(user.email, user.password);
-  };
-
+// --- LOGIN SCREEN --------------------------------------------------------------
+// PageWrap is defined OUTSIDE LoginScreen so React never treats it as a new
+// component type on re-render (which would unmount the form and steal focus).
+function LoginPageWrap({ children }) {
   return (
-    <div style={{
-      minHeight:"100vh", background:"#0d1117", display:"flex", alignItems:"center",
-      justifyContent:"center", fontFamily:"'Inter',system-ui,sans-serif", position:"relative", overflow:"hidden"
-    }}>
-
-
-      {/* Ambient glow */}
-      <div style={{ position:"absolute", top:"20%", left:"30%", width:600, height:600, borderRadius:"50%", background:"radial-gradient(circle, #338ba820 0%, transparent 70%)", pointerEvents:"none" }} />
-      <div style={{ position:"absolute", bottom:"10%", right:"20%", width:400, height:400, borderRadius:"50%", background:"radial-gradient(circle, #6366f120 0%, transparent 70%)", pointerEvents:"none" }} />
-
-      <div style={{ width:"100%", maxWidth:420, padding:24, position:"relative", zIndex:1 }}>
-        {/* Logo */}
-        <div style={{ textAlign:"center", marginBottom:32 }}>
-          <img src="/logo.png" alt="Logo" style={{ width:56, height:56, borderRadius:12, marginBottom:12, objectFit:"contain" }} onError={e=>e.target.style.display='none'} />
-          <div style={{ fontSize:24, fontWeight:800, color:"#e6edf3", letterSpacing:"-0.5px" }}>Metapharsic</div>
-          <div style={{ fontSize:14, color:"#768390", marginTop:4 }}>Enterprise To Do · Sign in to continue</div>
+    <div style={{ minHeight:'100vh', background:'#0d1117', display:'flex', alignItems:'center',
+      justifyContent:'center', fontFamily:"'Inter',system-ui,sans-serif", position:'relative', overflow:'hidden' }}>
+      <div style={{ position:'absolute', top:'20%', left:'30%', width:600, height:600, borderRadius:'50%',
+        background:'radial-gradient(circle, #338ba820 0%, transparent 70%)', pointerEvents:'none' }} />
+      <div style={{ position:'absolute', bottom:'10%', right:'20%', width:400, height:400, borderRadius:'50%',
+        background:'radial-gradient(circle, #6366f120 0%, transparent 70%)', pointerEvents:'none' }} />
+      <div style={{ width:'100%', maxWidth:420, padding:24, position:'relative', zIndex:1 }}>
+        <div style={{ textAlign:'center', marginBottom:32 }}>
+          <img src="/logo.png" alt="Logo" style={{ width:56, height:56, borderRadius:12, marginBottom:12, objectFit:'contain' }} onError={e=>e.target.style.display='none'} />
+          <div style={{ fontSize:24, fontWeight:800, color:'#e6edf3', letterSpacing:'-0.5px' }}>Metapharsic</div>
+          <div style={{ fontSize:14, color:'#768390', marginTop:4 }}>ERP Suite  Sign in to continue</div>
         </div>
-
-        {/* Card */}
-        <div style={{ background:"#161b22", border:"1px solid #30363d", borderRadius:16, padding:32 }}>
-          <form onSubmit={handleSubmit}>
-            <div style={{ marginBottom:18 }}>
-              <label style={{ display:"block", fontSize:12, fontWeight:600, color:"#8b949e", marginBottom:6, textTransform:"uppercase", letterSpacing:"0.5px" }}>Email</label>
-              <input
-                type="email" value={email} onChange={e => setEmail(e.target.value)}
-                placeholder="you@metapharsic.io" required autoFocus
-                style={{ width:"100%", background:"#0d1117", border:"1px solid #30363d", borderRadius:8, padding:"10px 14px", color:"#e6edf3", fontSize:14, outline:"none", boxSizing:"border-box",
-                  transition:"border-color 0.2s" }}
-                onFocus={e => e.target.style.borderColor="#338ba8"}
-                onBlur={e => e.target.style.borderColor="#30363d"}
-              />
-            </div>
-            <div style={{ marginBottom:24 }}>
-              <label style={{ display:"block", fontSize:12, fontWeight:600, color:"#8b949e", marginBottom:6, textTransform:"uppercase", letterSpacing:"0.5px" }}>Password</label>
-              <div style={{ position:"relative" }}>
-                <input
-                  type={showPw ? "text" : "password"} value={password} onChange={e => setPassword(e.target.value)}
-                  placeholder="Enter your password" required
-                  style={{ width:"100%", background:"#0d1117", border:"1px solid #30363d", borderRadius:8, padding:"10px 40px 10px 14px", color:"#e6edf3", fontSize:14, outline:"none", boxSizing:"border-box",
-                    transition:"border-color 0.2s" }}
-                  onFocus={e => e.target.style.borderColor="#338ba8"}
-                  onBlur={e => e.target.style.borderColor="#30363d"}
-                />
-                <button type="button" onClick={() => setShowPw(p => !p)}
-                  style={{ position:"absolute", right:10, top:"50%", transform:"translateY(-50%)", background:"none", border:"none", color:"#768390", cursor:"pointer", fontSize:16, padding:0 }}>
-                  {showPw ? "🙈" : "👁"}
-                </button>
-              </div>
-            </div>
-            {error && (
-              <div style={{ background:"#3d1c1c", border:"1px solid #6b2121", borderRadius:8, padding:"10px 14px", marginBottom:16, color:"#f87171", fontSize:13 }}>
-                ⚠ {error}
-              </div>
-            )}
-            <button type="submit" disabled={loading}
-              style={{ width:"100%", background: loading ? "#444c56" : "linear-gradient(135deg,#338ba8,#6366f1)", border:"none", borderRadius:8, padding:"11px", color:"#fff", fontWeight:700, fontSize:15, cursor: loading ? "not-allowed" : "pointer", transition:"opacity 0.2s" }}>
-              {loading ? "Signing in…" : "Sign In →"}
-            </button>
-          </form>
-
-          {/* Quick Access panel hidden by user request */}
-          {/*
-          <div style={{ marginTop:24, borderTop:"1px solid #30363d", paddingTop:20 }}>
-            <div style={{ fontSize:11, color:"#8b949e", textTransform:"uppercase", fontWeight:600, letterSpacing:"0.5px", marginBottom:12 }}>Quick Access</div>
-            <div style={{ display:"flex", flexDirection:"column", gap:8 }}>
-              {users.filter(u => u.active).map(u => {
-                const dept = DEPARTMENTS[u.department];
-                const roleLabel = ROLES[u.role]?.label;
-                return (
-                  <button key={u.id} onClick={() => quickLogin(u)}
-                    style={{ display:"flex", alignItems:"center", gap:12, background:"#0d1117", border:"1px solid #30363d", borderRadius:8, padding:"10px 14px", cursor:"pointer", textAlign:"left", transition:"border-color 0.2s" }}
-                    onMouseEnter={e => e.currentTarget.style.borderColor="#338ba8"}
-                    onMouseLeave={e => e.currentTarget.style.borderColor="#30363d"}>
-                    <div style={{ width:32, height:32, borderRadius:8, background: u.color+"30", color:u.color, display:"flex", alignItems:"center", justifyContent:"center", fontWeight:700, fontSize:13, flexShrink:0 }}>
-                      {u.avatar}
-                    </div>
-                    <div style={{ flex:1, minWidth:0 }}>
-                      <div style={{ fontSize:13, fontWeight:600, color:"#e6edf3" }}>{u.name}</div>
-                      <div style={{ fontSize:11, color:"#768390" }}>{dept?.icon} {dept?.label} · {roleLabel}</div>
-                    </div>
-                    <div style={{ fontSize:10, color:"#8b949e", fontFamily:"monospace", background:"#1c2128", padding:"2px 6px", borderRadius:4 }}>{u.password}</div>
-                  </button>
-                );
-              })}
-            </div>
-          </div>
-          */}
+        <div style={{ background:'#161b22', border:'1px solid #30363d', borderRadius:16, padding:32 }}>
+          {children}
         </div>
       </div>
     </div>
   );
 }
 
-// ─── USER DASHBOARD (non-admin personal view) ───────────────────────────────
+// Shared input style (plain function, not a component - safe to define anywhere)
+const loginInp = (extra={}) => ({
+  width:'100%', background:'#0d1117', border:'1px solid #30363d', borderRadius:8,
+  padding:'10px 14px', color:'#e6edf3', fontSize:14, outline:'none',
+  boxSizing:'border-box', transition:'border-color 0.2s', ...extra,
+});
+
+// Password strength (plain function)
+const loginPwStrength = (p) => {
+  if (!p) return { score:0, label:'', color:'#30363d' };
+  let s = 0;
+  if (p.length >= 6)  s++;
+  if (p.length >= 10) s++;
+  if (/[0-9]/.test(p)) s++;
+  if (/[!@#$%^&*_+]/.test(p)) s++;
+  if (s <= 1) return { score:s, label:'Weak',   color:'#ef4444' };
+  if (s <= 3) return { score:s, label:'Medium', color:'#f59e0b' };
+  return             { score:s, label:'Strong', color:'#22c55e' };
+};
+
+function LoginScreen({ users, onLogin }) {
+  // Detect reset token in URL on first render (e.g. ?reset_token=abc123)
+  const _urlToken = new URLSearchParams(window.location.search).get('reset_token') || '';
+
+  const [mode, setMode]           = useState(_urlToken ? 'reset' : 'login');
+  const [email, setEmail]         = useState('');
+  const [password, setPassword]   = useState('');
+  const [showPw, setShowPw]       = useState(false);
+  const [newPw, setNewPw]         = useState('');
+  const [confirmPw, setConfirmPw] = useState('');
+  const [showNewPw, setShowNewPw]       = useState(false);
+  const [showConfirmPw, setShowConfirmPw] = useState(false);
+  const [resetToken]  = useState(_urlToken);
+  const [error, setError]   = useState('');
+  const [loading, setLoading] = useState(false);
+
+  // Clean the token out of the URL bar (cosmetic)
+  useEffect(() => {
+    if (_urlToken) window.history.replaceState({}, document.title, window.location.pathname);
+  }, []); // eslint-disable-line
+
+  // -- Handlers -----------------------------------------------------------------
+  const handleLogin = async (e) => {
+    e.preventDefault();
+    setLoading(true); setError('');
+    await new Promise(r => setTimeout(r, 400));
+    const result = await onLogin(email.trim(), password);
+    if (result?.error) setError(result.error);
+    setLoading(false);
+  };
+
+  const handleForgot = async (e) => {
+    e.preventDefault();
+    setLoading(true); setError('');
+    try {
+      const r = await fetch('/api/auth/forgot-password', {
+        method:'POST', headers:{'Content-Type':'application/json'},
+        body: JSON.stringify({ email: email.trim() }),
+      });
+      const d = await r.json();
+      if (r.ok) { setMode('sent'); }
+      else { setError(d.error || 'Something went wrong. Please try again.'); }
+    } catch { setError('Network error. Please try again.'); }
+    setLoading(false);
+  };
+
+  const handleReset = async (e) => {
+    e.preventDefault();
+    if (newPw !== confirmPw) { setError('Passwords do not match.'); return; }
+    if (newPw.length < 6)   { setError('Password must be at least 6 characters.'); return; }
+    setLoading(true); setError('');
+    try {
+      const r = await fetch('/api/auth/reset-password', {
+        method:'POST', headers:{'Content-Type':'application/json'},
+        body: JSON.stringify({ token: resetToken, newPassword: newPw }),
+      });
+      const d = await r.json();
+      if (r.ok) { setMode('done'); }
+      else { setError(d.error || 'Reset failed. The link may have expired.'); }
+    } catch { setError('Network error. Please try again.'); }
+    setLoading(false);
+  };
+
+  // Inline error banner - plain JSX expression, not a component
+  const errBanner = error
+    ? <div style={{ background:'#3d1c1c', border:'1px solid #6b2121', borderRadius:8,
+        padding:'10px 14px', marginBottom:16, color:'#f87171', fontSize:13 }}> {error}</div>
+    : null;
+
+  // Inline back-link style (reused object)
+  const backLinkStyle = { background:'none', border:'none', color:'#768390', fontSize:13,
+    cursor:'pointer', marginTop:18, display:'block', width:'100%', textAlign:'center',
+    textDecoration:'underline', textUnderlineOffset:3 };
+
+  // -- MODE: SIGN IN ------------------------------------------------------------
+  if (mode === 'login') return (
+    <LoginPageWrap>
+      <form onSubmit={handleLogin}>
+        <div style={{ marginBottom:18 }}>
+          <label style={{ display:'block', fontSize:12, fontWeight:600, color:'#8b949e', marginBottom:6, textTransform:'uppercase', letterSpacing:'0.5px' }}>Email</label>
+          <input type="email" value={email} onChange={e=>setEmail(e.target.value)}
+            placeholder="you@metapharsic.io" required autoFocus style={loginInp()}
+            onFocus={e=>e.target.style.borderColor='#338ba8'}
+            onBlur={e=>e.target.style.borderColor='#30363d'} />
+        </div>
+        <div style={{ marginBottom:8 }}>
+          <label style={{ display:'block', fontSize:12, fontWeight:600, color:'#8b949e', marginBottom:6, textTransform:'uppercase', letterSpacing:'0.5px' }}>Password</label>
+          <div style={{ position:'relative' }}>
+            <input type={showPw?'text':'password'} value={password} onChange={e=>setPassword(e.target.value)}
+              placeholder="Enter your password" required style={loginInp({ paddingRight:40 })}
+              onFocus={e=>e.target.style.borderColor='#338ba8'}
+              onBlur={e=>e.target.style.borderColor='#30363d'} />
+            <button type="button" onClick={()=>setShowPw(p=>!p)}
+              style={{ position:'absolute', right:10, top:'50%', transform:'translateY(-50%)', background:'none', border:'none', color:'#768390', cursor:'pointer', fontSize:16, padding:0 }}>
+              {showPw ? '' : ''}
+            </button>
+          </div>
+        </div>
+        <div style={{ textAlign:'right', marginBottom:20 }}>
+          <button type="button" onClick={()=>{ setMode('forgot'); setError(''); }}
+            style={{ background:'none', border:'none', color:'#58a6ff', fontSize:12, cursor:'pointer', padding:0, textDecoration:'underline', textUnderlineOffset:3 }}>
+            Forgot password?
+          </button>
+        </div>
+        {errBanner}
+        <button type="submit" disabled={loading}
+          style={{ width:'100%', background:loading?'#444c56':'linear-gradient(135deg,#338ba8,#6366f1)', border:'none', borderRadius:8, padding:'11px', color:'#fff', fontWeight:700, fontSize:15, cursor:loading?'not-allowed':'pointer', transition:'opacity 0.2s' }}>
+          {loading ? 'Signing in' : 'Sign In '}
+        </button>
+      </form>
+    </LoginPageWrap>
+  );
+
+  // -- MODE: FORGOT PASSWORD ----------------------------------------------------
+  if (mode === 'forgot') return (
+    <LoginPageWrap>
+      <div style={{ textAlign:'center', marginBottom:24 }}>
+        <div style={{ fontSize:36, marginBottom:8 }}></div>
+        <div style={{ fontWeight:800, color:'#e6edf3', fontSize:18 }}>Forgot your password?</div>
+        <div style={{ color:'#768390', fontSize:13, marginTop:6, lineHeight:1.5 }}>
+          Enter your account email and we'll send you a secure reset link.
+        </div>
+      </div>
+      <form onSubmit={handleForgot}>
+        <div style={{ marginBottom:20 }}>
+          <label style={{ display:'block', fontSize:12, fontWeight:600, color:'#8b949e', marginBottom:6, textTransform:'uppercase', letterSpacing:'0.5px' }}>Email Address</label>
+          <input type="email" value={email} onChange={e=>setEmail(e.target.value)}
+            placeholder="you@metapharsic.io" required autoFocus style={loginInp()}
+            onFocus={e=>e.target.style.borderColor='#338ba8'}
+            onBlur={e=>e.target.style.borderColor='#30363d'} />
+        </div>
+        {errBanner}
+        <button type="submit" disabled={loading || !email.trim()}
+          style={{ width:'100%', background:(loading||!email.trim())?'#2d333b':'linear-gradient(135deg,#338ba8,#6366f1)', border:'none', borderRadius:8, padding:'11px', color:(loading||!email.trim())?'#768390':'#fff', fontWeight:700, fontSize:15, cursor:(loading||!email.trim())?'not-allowed':'pointer', transition:'all 0.2s' }}>
+          {loading ? ' Sending' : ' Send Reset Link'}
+        </button>
+      </form>
+      <button type="button" style={backLinkStyle} onClick={()=>{ setMode('login'); setError(''); }}> Back to Sign In</button>
+    </LoginPageWrap>
+  );
+
+  // -- MODE: EMAIL SENT ---------------------------------------------------------
+  if (mode === 'sent') return (
+    <LoginPageWrap>
+      <div style={{ textAlign:'center', padding:'8px 0 24px' }}>
+        <div style={{ fontSize:48, marginBottom:16 }}></div>
+        <div style={{ fontWeight:800, color:'#e6edf3', fontSize:18, marginBottom:12 }}>Check your inbox</div>
+        <div style={{ color:'#768390', fontSize:13, lineHeight:1.7 }}>
+          If an account with <strong style={{ color:'#cdd9e5' }}>{email || 'that email'}</strong> exists,
+          a password reset link has been sent.
+        </div>
+        <div style={{ marginTop:16, padding:'12px 16px', background:'#0d1117', border:'1px solid #30363d', borderRadius:8 }}>
+          <div style={{ fontSize:12, color:'#768390', lineHeight:1.6 }}>
+             The link expires in <strong style={{ color:'#cdd9e5' }}>1 hour</strong>.<br/>
+             Check your spam/junk folder if you don't see it.<br/>
+             Sent to the email address you registered with
+          </div>
+        </div>
+      </div>
+      <button type="button" onClick={()=>{ setMode('forgot'); setError(''); setEmail(''); }}
+        style={{ width:'100%', background:'#22272e', border:'1px solid #30363d', borderRadius:8, padding:'10px', color:'#adbac7', fontWeight:600, fontSize:14, cursor:'pointer' }}>
+         Try a different email
+      </button>
+      <button type="button" style={backLinkStyle} onClick={()=>{ setMode('login'); setError(''); }}> Back to Sign In</button>
+    </LoginPageWrap>
+  );
+
+  // -- MODE: SET NEW PASSWORD ----------------------------------------------------
+  if (mode === 'reset') {
+    const strength = loginPwStrength(newPw);
+    return (
+      <LoginPageWrap>
+        <div style={{ textAlign:'center', marginBottom:24 }}>
+          <div style={{ fontSize:36, marginBottom:8 }}></div>
+          <div style={{ fontWeight:800, color:'#e6edf3', fontSize:18 }}>Set a new password</div>
+          <div style={{ color:'#768390', fontSize:13, marginTop:6 }}>Choose a strong password for your account.</div>
+        </div>
+        <form onSubmit={handleReset}>
+          <div style={{ marginBottom:14 }}>
+            <label style={{ display:'block', fontSize:12, fontWeight:600, color:'#8b949e', marginBottom:6, textTransform:'uppercase', letterSpacing:'0.5px' }}>New Password</label>
+            <div style={{ position:'relative' }}>
+              <input type={showNewPw?'text':'password'} value={newPw} onChange={e=>setNewPw(e.target.value)}
+                placeholder="At least 6 characters" required autoFocus style={loginInp({ paddingRight:40 })}
+                onFocus={e=>e.target.style.borderColor='#338ba8'}
+                onBlur={e=>e.target.style.borderColor='#30363d'} />
+              <button type="button" onClick={()=>setShowNewPw(p=>!p)}
+                style={{ position:'absolute', right:10, top:'50%', transform:'translateY(-50%)', background:'none', border:'none', color:'#768390', cursor:'pointer', fontSize:16, padding:0 }}>
+                {showNewPw?'':''}
+              </button>
+            </div>
+            {newPw && (
+              <div style={{ marginTop:6 }}>
+                <div style={{ display:'flex', justifyContent:'space-between', marginBottom:4 }}>
+                  <span style={{ fontSize:11, color:'#768390' }}>Strength</span>
+                  <span style={{ fontSize:11, fontWeight:700, color:strength.color }}>{strength.label}</span>
+                </div>
+                <div style={{ height:4, background:'#22272e', borderRadius:2, overflow:'hidden' }}>
+                  <div style={{ height:'100%', width:`${(strength.score/4)*100}%`, background:strength.color, transition:'width 0.3s, background 0.3s' }} />
+                </div>
+              </div>
+            )}
+          </div>
+          <div style={{ marginBottom:20 }}>
+            <label style={{ display:'block', fontSize:12, fontWeight:600, color:'#8b949e', marginBottom:6, textTransform:'uppercase', letterSpacing:'0.5px' }}>Confirm Password</label>
+            <div style={{ position:'relative' }}>
+              <input type={showConfirmPw?'text':'password'} value={confirmPw} onChange={e=>setConfirmPw(e.target.value)}
+                placeholder="Re-enter your new password" required
+                style={loginInp({ paddingRight:40, borderColor: confirmPw && confirmPw!==newPw ? '#ef4444' : confirmPw && confirmPw===newPw ? '#22c55e' : '#30363d' })}
+                onFocus={e=>{ if (!confirmPw) e.target.style.borderColor='#338ba8'; }}
+                onBlur={e=>{  if (!confirmPw) e.target.style.borderColor='#30363d'; }} />
+              <button type="button" onClick={()=>setShowConfirmPw(p=>!p)}
+                style={{ position:'absolute', right:10, top:'50%', transform:'translateY(-50%)', background:'none', border:'none', color:'#768390', cursor:'pointer', fontSize:16, padding:0 }}>
+                {showConfirmPw?'':''}
+              </button>
+            </div>
+            {confirmPw && (
+              <div style={{ fontSize:11, marginTop:5, color: confirmPw===newPw?'#22c55e':'#ef4444' }}>
+                {confirmPw===newPw ? ' Passwords match' : ' Passwords do not match'}
+              </div>
+            )}
+          </div>
+          {errBanner}
+          <button type="submit" disabled={loading || !newPw || newPw!==confirmPw}
+            style={{ width:'100%', background:(loading||!newPw||newPw!==confirmPw)?'#2d333b':'linear-gradient(135deg,#22c55e,#16a34a)', border:'none', borderRadius:8, padding:'11px', color:(loading||!newPw||newPw!==confirmPw)?'#768390':'#fff', fontWeight:700, fontSize:15, cursor:(loading||!newPw||newPw!==confirmPw)?'not-allowed':'pointer', transition:'all 0.2s' }}>
+            {loading ? ' Resetting' : ' Set New Password'}
+          </button>
+        </form>
+        <button type="button" style={backLinkStyle} onClick={()=>{ setMode('login'); setError(''); }}> Cancel, back to Sign In</button>
+      </LoginPageWrap>
+    );
+  }
+
+  // -- MODE: RESET COMPLETE ------------------------------------------------------
+  if (mode === 'done') return (
+    <LoginPageWrap>
+      <div style={{ textAlign:'center', padding:'8px 0 28px' }}>
+        <div style={{ fontSize:52, marginBottom:16 }}></div>
+        <div style={{ fontWeight:800, color:'#e6edf3', fontSize:20, marginBottom:10 }}>Password updated!</div>
+        <div style={{ color:'#768390', fontSize:13, lineHeight:1.7 }}>
+          Your Metapharsic ERP password has been changed successfully.<br/>
+          You can now sign in with your new password.
+        </div>
+      </div>
+      <button type="button" onClick={()=>{ setMode('login'); setError(''); setNewPw(''); setConfirmPw(''); }}
+        style={{ width:'100%', background:'linear-gradient(135deg,#338ba8,#6366f1)', border:'none', borderRadius:8, padding:'12px', color:'#fff', fontWeight:700, fontSize:15, cursor:'pointer' }}>
+        Sign In 
+      </button>
+    </LoginPageWrap>
+  );
+
+  return null;
+}
+
+// --- USER DASHBOARD (non-admin personal view) -------------------------------
+function DonutChart({ segments, size = 130 }) {
+  const total = segments.reduce((s, d) => s + d.value, 0);
+  if (total === 0) return <div style={{ width:size, height:size, display:"flex", alignItems:"center", justifyContent:"center", color:"var(--text-muted)", fontSize:11 }}>No data</div>;
+  const cx = size / 2, cy = size / 2, R = size * 0.36, innerR = size * 0.22;
+  let angle = -Math.PI / 2;
+  const paths = segments.map((seg, i) => {
+    if (!seg.value) return null;
+    const frac = seg.value / total;
+    const a1 = angle, a2 = angle + frac * 2 * Math.PI - 0.01;
+    angle = a2 + 0.01;
+    const x1 = cx + R * Math.cos(a1), y1 = cy + R * Math.sin(a1);
+    const x2 = cx + R * Math.cos(a2), y2 = cy + R * Math.sin(a2);
+    const xi1 = cx + innerR * Math.cos(a1), yi1 = cy + innerR * Math.sin(a1);
+    const xi2 = cx + innerR * Math.cos(a2), yi2 = cy + innerR * Math.sin(a2);
+    const large = frac > 0.5 ? 1 : 0;
+    return <path key={i} fill={seg.color} opacity={0.88}
+      d={`M${x1},${y1} A${R},${R} 0 ${large},1 ${x2},${y2} L${xi2},${yi2} A${innerR},${innerR} 0 ${large},0 ${xi1},${yi1} Z`} />;
+  });
+  return (
+    <svg width={size} height={size}>
+      <circle cx={cx} cy={cy} r={R + 2} fill="none" stroke="var(--border)" strokeWidth={1} />
+      {paths}
+      <text x={cx} y={cy - 7} textAnchor="middle" fill="var(--text-header)" fontSize={size * 0.155} fontWeight={800}>{total}</text>
+      <text x={cx} y={cy + 10} textAnchor="middle" fill="var(--text-muted)" fontSize={size * 0.09}>issues</text>
+    </svg>
+  );
+}
+
+function HBarChart({ data }) {
+  const max = Math.max(...data.map(d => d.value), 1);
+  return (
+    <div style={{ display:"flex", flexDirection:"column", gap:9 }}>
+      {data.map((d, i) => (
+        <div key={i} style={{ display:"flex", alignItems:"center", gap:10 }}>
+          <span style={{ width:72, fontSize:11, color:"var(--text-muted)", textAlign:"right", flexShrink:0, overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap" }}>{d.label}</span>
+          <div style={{ flex:1, height:10, background:"var(--border)", borderRadius:5, overflow:"hidden" }}>
+            <div style={{ height:"100%", width:`${(d.value / max) * 100}%`, background:d.color, borderRadius:5, transition:"width 0.6s ease" }} />
+          </div>
+          <span style={{ width:22, fontSize:11, fontWeight:700, color:d.color, textAlign:"right" }}>{d.value}</span>
+        </div>
+      ))}
+    </div>
+  );
+}
+
 function UserDashboard({ currentUser, isAdmin, todos, setTodos, issues, users, onSelectIssue, onCreateIssue, isMobile, search, setSearch, searchInputRef, t }) {
-  const myIssues  = issues.filter(i => i.assignee === currentUser.id);
+  const myIssues  = issues.filter(i => Number(i.assignee) === currentUser.id);
   const myTodo    = myIssues.filter(i => i.status === "To Do");
   const myActive  = myIssues.filter(i => i.status === "In Progress" || i.status === "In Review");
   const myDone    = myIssues.filter(i => i.status === "Done");
@@ -4197,7 +4907,7 @@ function UserDashboard({ currentUser, isAdmin, todos, setTodos, issues, users, o
         <div style={{ flex:1 }}>
           <div style={{ fontSize:20, fontWeight:800, color:"#e6edf3" }}>Welcome, {currentUser.name.split(" ")[0]}!</div>
           <div style={{ fontSize:13, color:"#768390", marginTop:2 }}>
-            {dept?.icon} {dept?.label} · {ROLES[currentUser.role]?.label}
+            {dept?.icon} {dept?.label}  {ROLES[currentUser.role]?.label}
           </div>
         </div>
         {!isAdmin && (
@@ -4216,7 +4926,7 @@ function UserDashboard({ currentUser, isAdmin, todos, setTodos, issues, users, o
               type="text" 
               value={search}
               onChange={e => setSearch(e.target.value)}
-              placeholder={`🔍  ${t("search")}`}
+              placeholder={`  ${t("search")}`}
               style={{ 
                 ...S.searchBox, 
                 width:"100%", 
@@ -4245,7 +4955,7 @@ function UserDashboard({ currentUser, isAdmin, todos, setTodos, issues, users, o
                   justifyContent: "center"
                 }}
               >
-                ✕
+                
               </button>
             )}
          </div>
@@ -4260,6 +4970,49 @@ function UserDashboard({ currentUser, isAdmin, todos, setTodos, issues, users, o
           </div>
         ))}
       </div>
+
+      {/* Analytics Charts */}
+      {issues.length > 0 && (
+        <div style={{ marginBottom:28 }}>
+          <div style={{ fontSize:12, fontWeight:800, color:"var(--text-muted)", letterSpacing:"0.07em", marginBottom:14 }}> ANALYTICS</div>
+          <div style={{ display:"grid", gridTemplateColumns: isMobile ? "1fr" : "1fr 1fr", gap:14 }}>
+            {/* Status donut */}
+            <div style={{ background:"var(--card-bg)", border:"1px solid var(--border)", borderRadius:10, padding:16 }}>
+              <div style={{ fontSize:11, fontWeight:700, color:"var(--text-muted)", marginBottom:12, letterSpacing:"0.05em" }}>BY STATUS</div>
+              <div style={{ display:"flex", alignItems:"center", gap:16 }}>
+                <DonutChart size={110} segments={STATUSES.map(s => ({ value: issues.filter(i => i.status === s).length, color: STATUS_COLORS[s].dot }))} />
+                <div style={{ flex:1, display:"flex", flexDirection:"column", gap:7 }}>
+                  {STATUSES.map(s => {
+                    const count = issues.filter(i => i.status === s).length;
+                    if (!count) return null;
+                    const pct = Math.round((count / issues.length) * 100);
+                    return (
+                      <div key={s} style={{ display:"flex", alignItems:"center", gap:7 }}>
+                        <span style={{ width:8, height:8, borderRadius:"50%", background:STATUS_COLORS[s].dot, flexShrink:0 }} />
+                        <span style={{ fontSize:11, color:"var(--text-muted)", flex:1 }}>{s}</span>
+                        <span style={{ fontSize:11, fontWeight:700, color:STATUS_COLORS[s].dot }}>{count}</span>
+                        <span style={{ fontSize:10, color:"var(--text-muted)", width:30, textAlign:"right" }}>{pct}%</span>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            </div>
+            {/* Priority bar chart */}
+            <div style={{ background:"var(--card-bg)", border:"1px solid var(--border)", borderRadius:10, padding:16 }}>
+              <div style={{ fontSize:11, fontWeight:700, color:"var(--text-muted)", marginBottom:12, letterSpacing:"0.05em" }}>BY PRIORITY</div>
+              <HBarChart data={Object.entries(PRIORITIES).map(([k, v]) => ({ label: v.label, value: issues.filter(i => i.priority === k).length, color: v.color })).filter(d => d.value > 0)} />
+            </div>
+          </div>
+          {/* Team workload (admin only) */}
+          {isAdmin && users.filter(u => u.active).some(u => issues.some(i => Number(i.assignee) === u.id)) && (
+            <div style={{ background:"var(--card-bg)", border:"1px solid var(--border)", borderRadius:10, padding:16, marginTop:14 }}>
+              <div style={{ fontSize:11, fontWeight:700, color:"var(--text-muted)", marginBottom:12, letterSpacing:"0.05em" }}>TEAM WORKLOAD (OPEN ISSUES)</div>
+              <HBarChart data={users.filter(u => u.active).map(u => ({ label: u.name.split(" ")[0], value: issues.filter(i => Number(i.assignee) === u.id && i.status !== "Done").length, color: u.color })).filter(d => d.value > 0).sort((a, b) => b.value - a.value).slice(0, 8)} />
+            </div>
+          )}
+        </div>
+      )}
 
       <div style={{ display:"grid", gridTemplateColumns: isMobile ? "1fr" : "1fr 340px", gap:20 }}>
         {/* Issue sections */}
@@ -4293,7 +5046,7 @@ function UserDashboard({ currentUser, isAdmin, todos, setTodos, issues, users, o
           )}
           {myIssues.length === 0 && (
             <div style={{ textAlign:"center", padding:"40px 0", color:"#768390" }}>
-              <div style={{ fontSize:32, marginBottom:10 }}>✅</div>
+              <div style={{ fontSize:32, marginBottom:10 }}></div>
               <div style={{ fontSize:14 }}>No issues assigned to you yet.</div>
             </div>
           )}
@@ -4302,7 +5055,7 @@ function UserDashboard({ currentUser, isAdmin, todos, setTodos, issues, users, o
         {/* Checklist sidebar */}
         <div style={{ background:"#2d333b", border:"1px solid #444c56", borderRadius:10, padding:16, height:"fit-content" }}>
           <div style={{ fontWeight:700, color:"#e6edf3", fontSize:13, marginBottom:14, paddingBottom:10, borderBottom:"1px solid #444c56" }}>
-            ☑ Role Checklist
+             Role Checklist
             <span style={{ marginLeft:8, fontSize:11, color:"#768390" }}>{roleTodos.filter(t=>t.done).length}/{roleTodos.length} done</span>
           </div>
           {roleTodos.map(t => {
@@ -4312,7 +5065,7 @@ function UserDashboard({ currentUser, isAdmin, todos, setTodos, issues, users, o
                 style={{ display:"flex", alignItems:"flex-start", gap:9, padding:"8px 0", cursor:"pointer", borderBottom:"1px solid #22272e", opacity: t.done ? 0.5 : 1 }}>
                 <div style={{ width:16, height:16, borderRadius:4, border:`2px solid ${t.done?"#4ade80":pColor}`, background: t.done?"#4ade80":"transparent",
                   display:"flex", alignItems:"center", justifyContent:"center", flexShrink:0, marginTop:1, transition:"all 0.15s" }}>
-                  {t.done && <span style={{ color:"#0d1117", fontSize:10, fontWeight:800 }}>✓</span>}
+                  {t.done && <span style={{ color:"#0d1117", fontSize:10, fontWeight:800 }}></span>}
                 </div>
                 <span style={{ fontSize:12, color: t.done ? "#4ade80" : "#cdd9e5", textDecoration: t.done ? "line-through" : "none", lineHeight:1.4 }}>{t.text}</span>
               </div>
@@ -4323,7 +5076,7 @@ function UserDashboard({ currentUser, isAdmin, todos, setTodos, issues, users, o
     </div>
   );
 }
-// ─── DEPARTMENTS VIEW ────────────────────────────────────────────────────────
+// --- DEPARTMENTS VIEW --------------------------------------------------------
 function DepartmentsView({ currentUser, isAdmin, users = [], onAdd, isMobile, t }) {
   const [search, setSearch] = useState("");
   
@@ -4359,7 +5112,7 @@ function DepartmentsView({ currentUser, isAdmin, users = [], onAdd, isMobile, t 
               type="text" 
               value={search}
               onChange={e => setSearch(e.target.value)}
-              placeholder={`🔍  Search depts...`}
+              placeholder={`  Search depts...`}
               style={{ 
                 ...S.searchBox, 
                 width:"100%", 
@@ -4386,7 +5139,7 @@ function DepartmentsView({ currentUser, isAdmin, users = [], onAdd, isMobile, t 
                   justifyContent: "center"
                 }}
               >
-                ✕
+                
               </button>
             )}
           </div>
@@ -4469,9 +5222,9 @@ function DepartmentsView({ currentUser, isAdmin, users = [], onAdd, isMobile, t 
                   <div style={{ flex:1 }}>
                     <div style={S.fieldLabel}>Operational KPIs</div>
                     <div style={{ display:"flex", flexWrap:"wrap", gap:4 }}>
-                      {(d.kpis||"").split("·").slice(0,1).map(k => (
+                      {(d.kpis||"").split("").slice(0,1).map(k => (
                         <span key={k} style={{ color:d.color, fontSize:10, fontWeight:600 }}>
-                          📈 {k.trim()}
+                           {k.trim()}
                         </span>
                       ))}
                     </div>
@@ -4490,7 +5243,7 @@ function AddDeptModal({ onClose, onAdd }) {
   const [f, setF] = useState({
     id: "",
     label: "",
-    icon: "🏢",
+    icon: "",
     color: "#6366f1",
     purpose: "",
     roles: "",
@@ -4503,7 +5256,7 @@ function AddDeptModal({ onClose, onAdd }) {
       <div style={S.modal}>
         <div style={S.modalHdr}>
           <span style={{ fontWeight:700, fontSize:15, color:"#e6edf3" }}>Add New Department</span>
-          <button style={S.iconBtn} onClick={onClose}>✕</button>
+          <button style={S.iconBtn} onClick={onClose}></button>
         </div>
         <div style={S.modalBody}>
           <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:12 }}>
@@ -4516,7 +5269,7 @@ function AddDeptModal({ onClose, onAdd }) {
           </div>
           <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:12 }}>
             <Row label="Icon (Emoji)">
-              <input style={S.formInput} placeholder="🏢" value={f.icon} onChange={e => set("icon", e.target.value)} />
+              <input style={S.formInput} placeholder="" value={f.icon} onChange={e => set("icon", e.target.value)} />
             </Row>
             <Row label="Brand Color">
               <input type="color" style={{ ...S.formInput, height:38, padding:2 }} value={f.color} onChange={e => set("color", e.target.value)} />
@@ -4528,8 +5281,8 @@ function AddDeptModal({ onClose, onAdd }) {
           <Row label="Key Roles (Comma separated)">
             <input style={S.formInput} placeholder="Manager, Developer, Designer" value={f.roles} onChange={e => set("roles", e.target.value)} />
           </Row>
-          <Row label="Operational KPIs (Separated by ·)">
-            <input style={S.formInput} placeholder="Uptime · MTTR · Success Rate" value={f.kpis} onChange={e => set("kpis", e.target.value)} />
+          <Row label="Operational KPIs (Separated by )">
+            <input style={S.formInput} placeholder="Uptime  MTTR  Success Rate" value={f.kpis} onChange={e => set("kpis", e.target.value)} />
           </Row>
         </div>
         <div style={S.modalFoot}>
@@ -4544,16 +5297,18 @@ function AddDeptModal({ onClose, onAdd }) {
 }
 
 
-// ─── SETTINGS VIEW ───────────────────────────────────────────────────────────
-function SettingsView({ theme, setTheme, currentUser, updateUser, users }) {
+// --- SETTINGS VIEW -----------------------------------------------------------
+function SettingsView({ theme, setTheme, currentUser, updateUser, users, isMobile, t }) {
+  if (!currentUser) return <div style={{ padding: 40, color: "var(--text-muted)" }}>Please log in to view settings.</div>;
+
   const [profile, setProfile] = useState({
     name: currentUser?.name || "",
-    avatar: currentUser?.avatar || "👤",
+    avatar: currentUser?.avatar || "",
     email: currentUser?.email || ""
   });
 
   const lang = currentUser?.settingsLanguage || "en";
-  const t = (key) => TRANSLATIONS[lang]?.[key] || TRANSLATIONS.en[key] || key;
+  // const t = (key) => TRANSLATIONS[lang]?.[key] || TRANSLATIONS.en[key] || key;
 
   const toggleBehavior = (key, field) => {
     const newVal = !currentUser[field];
@@ -4577,16 +5332,16 @@ function SettingsView({ theme, setTheme, currentUser, updateUser, users }) {
 
       <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr" : "repeat(auto-fit, minmax(380px, 1fr))", gap: 24 }}>
         
-        {/* ── PROFILE SECTION ── */}
+        {/* -- PROFILE SECTION -- */}
         <section style={{ background: "var(--card-bg)", border: "1px solid var(--border)", borderRadius: 12, padding: 24, display: "flex", flexDirection: "column", gap: 20 }}>
           <h3 style={{ fontSize: 16, fontWeight: 700, color: "var(--text-header)", display: "flex", alignItems: "center", gap: 10, margin: 0 }}>
-            👤 User Profile
+             User Profile
           </h3>
           <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
             <div style={{ position: "relative" }}>
               <Avatar user={currentUser} size={64} />
               <button style={{ position: "absolute", bottom: -4, right: -4, width: 24, height: 24, borderRadius: "50%", background: "var(--accent)", color: "#fff", border: "2px solid var(--card-bg)", fontSize: 12, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}>
-                ✎
+                
               </button>
             </div>
             <div style={{ flex: 1 }}>
@@ -4600,50 +5355,57 @@ function SettingsView({ theme, setTheme, currentUser, updateUser, users }) {
             </div>
           </div>
           <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-            <button style={{ ...S.btnGhost, width: "100%", textAlign: "left", padding: "10px 14px" }}>🔐 Change Password</button>
-            <button style={{ ...S.btnGhost, width: "100%", textAlign: "left", padding: "10px 14px", color: "#f87171" }}>🚪 Sign Out of All Devices</button>
+            <button style={{ ...S.btnGhost, width: "100%", textAlign: "left", padding: "10px 14px" }}> Change Password</button>
+            <button style={{ ...S.btnGhost, width: "100%", textAlign: "left", padding: "10px 14px", color: "#f87171" }}> Sign Out of All Devices</button>
           </div>
         </section>
 
-        {/* ── THEME SECTION ── */}
+        {/* -- THEME SECTION -- */}
         <section style={{ background: "var(--card-bg)", border: "1px solid var(--border)", borderRadius: 12, padding: 24 }}>
           <h3 style={{ fontSize: 16, fontWeight: 700, color: "var(--text-header)", marginBottom: 20, display: "flex", alignItems: "center", gap: 10 }}>
-            🎨 {t("appearance")}
+             {t("appearance")}
           </h3>
-          <div style={{ display: "flex", gap: 12 }}>
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(5,1fr)", gap: 10 }}>
             {[
-              { id: "dark", label: "Deep Space", icon: "🌙" },
-              { id: "light", label: "Pure Light", icon: "☀️" },
-              { id: "blue", label: "Oceanic", icon: "🌊" }
-            ].map(t => (
+              { id: "dark",   label: "Deep Space", icon: "", colors: ["#22272e","#58a6ff","#1c2128"] },
+              { id: "light",  label: "Pure Light",  icon: "", colors: ["#ffffff","#0969da","#f6f8fa"] },
+              { id: "shade",  label: "Dark Shade",  icon: "", colors: ["#2d333b","#539bf5","#22272e"] },
+              { id: "ocean",  label: "Deep Ocean",  icon: "", colors: ["#0d1b2a","#00bcd4","#091520"] },
+              { id: "purple", label: "Nebula",      icon: "", colors: ["#1a0a2e","#a855f7","#140722"] },
+            ].map(th => (
               <div
-                key={t.id}
-                onClick={() => setTheme(t.id)}
+                key={th.id}
+                onClick={() => setTheme(th.id)}
                 style={{
-                  flex: 1, padding: 16, borderRadius: 12, cursor: "pointer",
-                  border: `2px solid ${theme === t.id ? "var(--accent)" : "var(--border)"}`,
-                  background: theme === t.id ? "var(--accent)10" : "var(--bg-main)",
-                  textAlign: "center", transition: "all 0.2s transform active:scale(0.95)"
+                  padding: "12px 8px", borderRadius: 10, cursor: "pointer", textAlign: "center",
+                  border: `2px solid ${theme === th.id ? "var(--accent)" : "var(--border)"}`,
+                  background: theme === th.id ? "var(--accent)12" : "var(--bg-main)",
+                  transition: "all 0.2s",
                 }}
               >
-                <div style={{ fontSize: 24, marginBottom: 8 }}>{t.icon}</div>
-                <div style={{ fontSize: 12, fontWeight: 700, color: theme === t.id ? "var(--accent)" : "var(--text-header)" }}>{t.label}</div>
+                <div style={{ display:"flex", justifyContent:"center", gap:3, marginBottom:8 }}>
+                  {th.colors.map((c, i) => (
+                    <div key={i} style={{ width:12, height:12, borderRadius:"50%", background:c, border:"1px solid rgba(255,255,255,0.15)" }} />
+                  ))}
+                </div>
+                <div style={{ fontSize: 16, marginBottom: 4 }}>{th.icon}</div>
+                <div style={{ fontSize: 10, fontWeight: 700, color: theme === th.id ? "var(--accent)" : "var(--text-muted)" }}>{th.label}</div>
               </div>
             ))}
           </div>
         </section>
 
-        {/* ── NOTIFICATIONS SECTION ── */}
+        {/* -- NOTIFICATIONS SECTION -- */}
         <section style={{ background: "var(--card-bg)", border: "1px solid var(--border)", borderRadius: 12, padding: 24, gridRow: "span 2" }}>
           <h3 style={{ fontSize: 16, fontWeight: 700, color: "var(--text-header)", marginBottom: 20, display: "flex", alignItems: "center", gap: 10 }}>
-            📣 {t("commPrefs")}
+             {t("commPrefs")}
           </h3>
           <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
             {[
-              { id: "email",    field: "notificationEmail",    label: t("email"), desc: "Receive real-time alerts for task activity", icon: "📧" },
-              { id: "whatsapp", field: "notificationWhatsapp", label: t("whatsapp"), desc: "Automated updates via CallMeBot gateway", icon: "📱" },
-              { id: "inApp",    field: "notificationInApp",    label: "In-App Notifications", desc: "Browser-level alerts and sidebar badges", icon: "🔔" },
-              { id: "digest",   field: "notificationDigest",   label: "Daily Task Digest", desc: "3x daily summary of pending responsibilities", icon: "📅" }
+              { id: "email",    field: "notificationEmail",    label: t("email"), desc: "Receive real-time alerts for task activity", icon: "" },
+              { id: "whatsapp", field: "notificationWhatsapp", label: t("whatsapp"), desc: "Automated updates via CallMeBot gateway", icon: "" },
+              { id: "inApp",    field: "notificationInApp",    label: "In-App Notifications", desc: "Browser-level alerts and sidebar badges", icon: "" },
+              { id: "digest",   field: "notificationDigest",   label: "Daily Task Digest", desc: "3x daily summary of pending responsibilities", icon: "" }
             ].map((s) => (
               <div key={s.id} onClick={() => toggleNotif(s.id, s.field)} style={{ display: "flex", alignItems: "center", gap: 14, padding: "12px 14px", background: "var(--bg-main)", borderRadius: 10, cursor: "pointer", border: "1px solid var(--border)" }}>
                 <span style={{ fontSize: 20 }}>{s.icon}</span>
@@ -4659,10 +5421,10 @@ function SettingsView({ theme, setTheme, currentUser, updateUser, users }) {
           </div>
         </section>
 
-        {/* ── BEHAVIOR SECTION ── */}
+        {/* -- BEHAVIOR SECTION -- */}
         <section style={{ background: "var(--card-bg)", border: "1px solid var(--border)", borderRadius: 12, padding: 24 }}>
           <h3 style={{ fontSize: 16, fontWeight: 700, color: "var(--text-header)", marginBottom: 20, display: "flex", alignItems: "center", gap: 10 }}>
-            ⚙️ {t("appBehavior")}
+             {t("appBehavior")}
           </h3>
           <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
             {[
@@ -4686,17 +5448,17 @@ function SettingsView({ theme, setTheme, currentUser, updateUser, users }) {
           </div>
         </section>
 
-        {/* ── LOCALIZATION SECTION ── */}
+        {/* -- LOCALIZATION SECTION -- */}
         <section style={{ background: "var(--card-bg)", border: "1px solid var(--border)", borderRadius: 12, padding: 24 }}>
           <h3 style={{ fontSize: 16, fontWeight: 700, color: "var(--text-header)", marginBottom: 20, display: "flex", alignItems: "center", gap: 10 }}>
-            🌍 {t("localization")}
+             {t("localization")}
           </h3>
           <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
             <Row label={t("language")}>
               <select style={S.formSel} value={currentUser.settingsLanguage} onChange={e => changeLang(e.target.value)}>
                 <option value="en">English (United States)</option>
-                <option value="hi">Hindi (हिन्दी)</option>
-                <option value="ar">Arabic (العربية)</option>
+                <option value="hi">Hindi ()</option>
+                <option value="ar">Arabic ()</option>
               </select>
             </Row>
             <Row label={t("timezone")}>
@@ -4715,7 +5477,7 @@ function SettingsView({ theme, setTheme, currentUser, updateUser, users }) {
   );
 }
 
-// ─── COMPONENTS VIEW ─────────────────────────────────────────────────────────
+// --- COMPONENTS VIEW ---------------------------------------------------------
 function ComponentsView() {
   return (
     <div>
@@ -4728,8 +5490,8 @@ function ComponentsView() {
           <div style={{ display:"flex", gap:10, flexWrap:"wrap", marginTop:10 }}>
             <button style={S.btnPrimary}>Primary Action</button>
             <button style={S.btnGhost}>Secondary</button>
-            <button style={S.iconBtn}>⚙️</button>
-            <button style={S.iconBtn}>🗑️</button>
+            <button style={S.iconBtn}></button>
+            <button style={S.iconBtn}></button>
           </div>
         </div>
 

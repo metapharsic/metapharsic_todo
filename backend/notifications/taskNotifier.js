@@ -7,10 +7,13 @@ const { sendWhatsApp, buildTaskWhatsAppMessage } = require('./whatsapp');
 const APP_URL = process.env.APP_BASE_URL || 'http://localhost:5173';
 
 /**
- * Internal helper — notify a single user via their enabled channels
+ * Internal helper - notify a single user via their enabled channels
  */
 async function _notify({ user, action, issue, comment }) {
   if (!user || !user.email) return;
+
+  // Use notify_email (real inbox) if set, otherwise fall back to login email
+  const recipientEmail = user.notify_email || user.email;
 
   const payload = {
     action,
@@ -27,22 +30,22 @@ async function _notify({ user, action, issue, comment }) {
 
   const promises = [];
 
-  // ── Email ─────────────────────────────────────────────────────────────────
-  if (user.notification_email !== false && user.email) {
+  // -- Email -----------------------------------------------------------------
+  if (user.notification_email !== false && recipientEmail) {
     const actionLabels = {
-      'Task Created':   '🆕 New Task Created',
-      'Task Assigned':  '📌 Task Assigned to You',
-      'Task Modified':  '✏️ Task Modified',
-      'Task Completed': '✅ Task Marked as Done',
-      'Comment Added':  '💬 New Comment on Task',
+      'Task Created':   ' New Task Created',
+      'Task Assigned':  ' Task Assigned to You',
+      'Task Modified':  ' Task Modified',
+      'Task Completed': ' Task Marked as Done',
+      'Comment Added':  ' New Comment on Task',
     };
     const subject = `${actionLabels[action] || action}: [${issue.key}] ${issue.title}`;
     promises.push(
-      sendEmail({ to: user.email, subject, html: buildTaskEmail(payload) })
+      sendEmail({ to: recipientEmail, subject, html: buildTaskEmail(payload) })
     );
   }
 
-  // ── WhatsApp ───────────────────────────────────────────────────────────────
+  // -- WhatsApp ---------------------------------------------------------------
   if (user.notification_whatsapp && user.phone_verified && user.phone && user.callmebot_apikey) {
     promises.push(
       sendWhatsApp({
@@ -56,7 +59,7 @@ async function _notify({ user, action, issue, comment }) {
   await Promise.allSettled(promises);
 }
 
-// ─── Public Notifiers ─────────────────────────────────────────────────────────
+// --- Public Notifiers ---------------------------------------------------------
 
 /**
  * Fired when a new task/issue is created

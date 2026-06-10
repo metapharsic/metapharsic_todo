@@ -41,9 +41,9 @@ async function runMigration() {
       WHERE updated_at IS NULL OR updated_at = created_at;
     `);
 
-    console.log("✅ Database migration completed successfully!");
+    console.log(" Database migration completed successfully!");
   } catch (err) {
-    console.error("❌ Migration failed:", err);
+    console.error(" Migration failed:", err);
     process.exit(1);
   } finally {
     client.release();

@@ -43,6 +43,36 @@ body.theme-shade {
   --input-bg: #2d333b;
 }
 
+body.theme-ocean {
+  --bg-main: #0d1b2a;
+  --bg-sidebar: #091520;
+  --bg-header: #0d1b2a;
+  --text-main: #b2cfe8;
+  --text-header: #d8eaf8;
+  --text-muted: #5d8aad;
+  --border: #1d3a52;
+  --accent: #00bcd4;
+  --accent-hover: #0097a7;
+  --sidebar-active: #0d2e42;
+  --card-bg: #102436;
+  --input-bg: #0d1b2a;
+}
+
+body.theme-purple {
+  --bg-main: #1a0a2e;
+  --bg-sidebar: #140722;
+  --bg-header: #1a0a2e;
+  --text-main: #c4b5d8;
+  --text-header: #e2d8f0;
+  --text-muted: #7c6a9a;
+  --border: #2e1b47;
+  --accent: #a855f7;
+  --accent-hover: #9333ea;
+  --sidebar-active: #2a1345;
+  --card-bg: #22103c;
+  --input-bg: #1a0a2e;
+}
+
 body, html, #root {
   margin: 0;
   padding: 0;
@@ -53,9 +83,20 @@ body, html, #root {
   transition: background-color 0.3s, color 0.3s;
 }
 
+/* Themed scrollbars */
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: var(--text-muted); }
+
 @keyframes spin {
   from { transform: rotate(0deg); }
   to { transform: rotate(360deg); }
+}
+
+@keyframes dropZonePulse {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(88,166,255,0.3); }
+  50%       { box-shadow: 0 0 0 6px rgba(88,166,255,0); }
 }
 
 

@@ -22,9 +22,9 @@ async function sendWhatsApp({ phone, apiKey, message }) {
     const encodedMsg = encodeURIComponent(message);
     const url = `${CALLMEBOT_BASE}?phone=${phone}&text=${encodedMsg}&apikey=${apiKey}`;
     const resp = await axios.get(url, { timeout: 10000 });
-    console.log(`[WhatsApp] ✅ Sent to ${phone} — status: ${resp.status}`);
+    console.log(`[WhatsApp]  Sent to ${phone} - status: ${resp.status}`);
   } catch (err) {
-    console.error(`[WhatsApp] ❌ Failed to send to ${phone}:`, err.message);
+    console.error(`[WhatsApp]  Failed to send to ${phone}:`, err.message);
   }
 }
 
@@ -43,7 +43,7 @@ async function sendWhatsApp({ phone, apiKey, message }) {
  * @param {string} otp - 6-digit code
  */
 async function sendOtpWhatsApp({ phone, apiKey, otp }) {
-  const message = `🔐 *Metapharsic ERP Verification*\n\nYour verification code is:\n\n*${otp}*\n\nThis code expires in 10 minutes.\nDo not share this code with anyone.`;
+  const message = ` *Metapharsic ERP Verification*\n\nYour verification code is:\n\n*${otp}*\n\nThis code expires in 10 minutes.\nDo not share this code with anyone.`;
   return sendWhatsApp({ phone, apiKey, message });
 }
 
@@ -51,22 +51,22 @@ async function sendOtpWhatsApp({ phone, apiKey, otp }) {
  * Build a task notification WhatsApp message
  */
 function buildTaskWhatsAppMessage({ action, key, title, priority, status, assigneeName, reporterName, dueDate, comment, appUrl }) {
-  const priorityEmoji = { high: '🔴', medium: '🟡', low: '🟢', critical: '🟣' };
-  const emoji = priorityEmoji[priority?.toLowerCase()] || '⚪';
+  const priorityEmoji = { high: '', medium: '', low: '', critical: '' };
+  const emoji = priorityEmoji[priority?.toLowerCase()] || '';
 
   let lines = [
-    `📋 *${action}*`,
-    `*${key} — ${title}*`,
+    ` *${action}*`,
+    `*${key} - ${title}*`,
     ``,
     `${emoji} Priority: ${priority || 'Medium'}`,
-    `📊 Status: ${status || 'To Do'}`,
-    `👤 Assignee: ${assigneeName || 'Unassigned'}`,
+    ` Status: ${status || 'To Do'}`,
+    ` Assignee: ${assigneeName || 'Unassigned'}`,
   ];
 
-  if (dueDate) lines.push(`📅 Due: ${dueDate}`);
-  if (reporterName) lines.push(`📝 By: ${reporterName}`);
-  if (comment) lines.push(``, `💬 Comment: _"${comment}"_`);
-  if (appUrl) lines.push(``, `👉 ${appUrl}`);
+  if (dueDate) lines.push(` Due: ${dueDate}`);
+  if (reporterName) lines.push(` By: ${reporterName}`);
+  if (comment) lines.push(``, ` Comment: _"${comment}"_`);
+  if (appUrl) lines.push(``, ` ${appUrl}`);
 
   return lines.join('\n');
 }
@@ -76,22 +76,22 @@ function buildTaskWhatsAppMessage({ action, key, title, priority, status, assign
  */
 function buildDigestWhatsAppMessage({ userName, tasks, appUrl }) {
   let lines = [
-    `📅 *Daily Task Digest*`,
+    ` *Daily Task Digest*`,
     `Hello ${userName}, here is your summary for today:`,
     ``
   ];
 
   if (tasks.length === 0) {
-    lines.push(`✅ No active tasks. Enjoy your day!`);
+    lines.push(` No active tasks. Enjoy your day!`);
   } else {
     tasks.forEach(t => {
-      const priorityEmoji = { high: '🔴', medium: '🟡', low: '🟢', critical: '🟣' }[t.priority?.toLowerCase()] || '⚪';
+      const priorityEmoji = { high: '', medium: '', low: '', critical: '' }[t.priority?.toLowerCase()] || '';
       lines.push(`${priorityEmoji} *${t.key}*: ${t.title} (${t.status})`);
     });
   }
 
   if (appUrl) {
-    lines.push(``, `🚀 Dashboard: ${appUrl}`);
+    lines.push(``, ` Dashboard: ${appUrl}`);
   }
 
   return lines.join('\n');

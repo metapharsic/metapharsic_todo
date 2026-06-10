@@ -1,21 +1,20 @@
 module.exports = {
   apps: [
     {
-      name: 'metapharsic-todo',
+      name: 'metapharsic-todo-backend',
       script: './backend/server.js',
+      cwd: '/u01/apps/metapharsic_todo',
       instances: 1,
       autorestart: true,
       watch: false,
-      max_memory_restart: '1G',
+      max_memory_restart: '512M',
       env: {
         NODE_ENV: 'production',
-        PORT: 3001,
-        DB_USER: 'postgres',
-        DB_HOST: 'localhost',
-        DB_NAME: 'metapharsic_todo_db',
-        DB_PASSWORD: 'admin',
-        DB_PORT: 5432
-      }
+        PORT: 3001
+      },
+      error_file: '/u01/apps/metapharsic_todo/logs/err.log',
+      out_file: '/u01/apps/metapharsic_todo/logs/out.log',
+      log_date_format: 'YYYY-MM-DD HH:mm:ss'
     }
   ]
 };
