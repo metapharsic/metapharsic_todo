@@ -1,5 +1,35 @@
 import { useState, useRef, useMemo, useCallback, useEffect } from "react";
 
+// Shared mobile-viewport hook - components below thread their own isMobile
+// prop when the parent already computes one; these standalone views/modals
+// don't get one passed down, so they detect it themselves.
+function useIsMobile(breakpoint = 768) {
+  const [isMobile, setIsMobile] = useState(typeof window !== 'undefined' && window.innerWidth < breakpoint);
+  useEffect(() => {
+    const onResize = () => setIsMobile(window.innerWidth < breakpoint);
+    window.addEventListener('resize', onResize);
+    return () => window.removeEventListener('resize', onResize);
+  }, [breakpoint]);
+  return isMobile;
+}
+
+// Inject the session token (from login) into every same-origin /api/ request.
+// Backend now requires Authorization: Bearer <token> on all routes except
+// /api/auth/login, /api/auth/forgot-password, /api/auth/reset-password.
+const nativeFetch = window.fetch.bind(window);
+window.fetch = (input, init = {}) => {
+  const url = typeof input === "string" ? input : input?.url || "";
+  if (url.startsWith("/api/") && !url.startsWith("/api/auth/login") && !url.startsWith("/api/auth/forgot-password") && !url.startsWith("/api/auth/reset-password")) {
+    try {
+      const stored = JSON.parse(localStorage.getItem("auth_user") || "null");
+      if (stored?.token) {
+        init = { ...init, headers: { ...(init.headers || {}), Authorization: `Bearer ${stored.token}` } };
+      }
+    } catch { /* no stored session, request goes out unauthenticated and 401s */ }
+  }
+  return nativeFetch(input, init);
+};
+
 // --- TRANSLATIONS ------------------------------------------------------------
 const TRANSLATIONS = {
   en: {
@@ -15,6 +45,7 @@ const TRANSLATIONS = {
     settings: "Settings",
     components: "Components",
     architecture: "DB Schema",
+    mou: "MOU & Meetings",
     project: "Project",
     core: "Core",
     // General
@@ -53,6 +84,7 @@ const TRANSLATIONS = {
     settings: "",
     components: "",
     architecture: " ",
+    mou: "MOU और बैठकें",
     project: "",
     core: "",
     save: " ",
@@ -438,7 +470,7 @@ const S = {
   // Voice Assistant
   voiceBtn: { background: "linear-gradient(135deg, #6366f1, #4f46e5)", color: "#fff", border: "none", borderRadius: "50%", width: 34, height: 34, display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", boxShadow: "0 2px 8px rgba(99, 102, 241, 0.4)", transition: "all 0.15s" },
   voiceBtnActive: { background: "linear-gradient(135deg, #ef4444, #dc2626)", boxShadow: "0 0 15px rgba(239, 68, 68, 0.6)" },
-  voicePanel: { position: "fixed", bottom: 24, right: 24, width: 320, background: "var(--card-bg)", border: "1px solid var(--border)", borderRadius: 16, boxShadow: "0 20px 50px rgba(0,0,0,0.6)", zIndex: 10000, padding: 20, display: "flex", flexDirection: "column", gap: 12, animation: "slideUp 0.3s ease-out" },
+  voicePanel: { position: "fixed", bottom: 16, right: 16, left: 16, width: "auto", maxWidth: 320, marginLeft: "auto", background: "var(--card-bg)", border: "1px solid var(--border)", borderRadius: 16, boxShadow: "0 20px 50px rgba(0,0,0,0.6)", zIndex: 10000, padding: 20, display: "flex", flexDirection: "column", gap: 12, animation: "slideUp 0.3s ease-out" },
   voiceTranscript: { fontSize: 13, color: "var(--text-main)", fontStyle: "italic", background: "var(--bg-main)", padding: 10, borderRadius: 8, minHeight: 50, border: "1px solid var(--border)", lineHeight: 1.5 },
   voiceStatus: { fontSize: 11, fontWeight: 700, color: "var(--text-muted)", textTransform: "uppercase", letterSpacing: "0.05em" },
   voiceHelp: { fontSize: 11, color: "var(--text-muted)", background: "var(--bg-main)", padding: 8, borderRadius: 6, border: "1px dashed var(--border)" }
@@ -668,13 +700,13 @@ export default function App() {
 
   const visibleIssues = useMemo(() => {
     if (!currentUser) return [];
-    const userDepts = currentUser.departments || [currentUser.department] || [];
+    const userDepts = currentUser.departments || (currentUser.department ? [currentUser.department] : []);
 
     return issues.filter(i => {
       const inScope = view === "board" ? i.sprint === sprint : view === "backlog" ? i.sprint === "Backlog" : true;
-      
+
       const taskDept = i.department || 'it';
-      const departmentMatch = isAdmin || userDepts.includes(taskDept) || Number(i.assignee) === currentUser.id;
+      const departmentMatch = isAdmin || userDepts.includes(taskDept) || Number(i.assignee) === currentUser.id || i.reporter === currentUser.id;
       if (!departmentMatch) return false;
 
       const s = debouncedSearch.toLowerCase().trim();
@@ -713,7 +745,7 @@ export default function App() {
           
           const labels = (i.labels || []).join(" ").toLowerCase();
           const epicName = EPICS.find(e => e.id === i.epic)?.name.toLowerCase() || "none";
-          const deptName = DEPARTMENTS[i.department]?.label.toLowerCase() || i.department.toLowerCase();
+          const deptName = DEPARTMENTS[i.department]?.label.toLowerCase() || (i.department || 'it').toLowerCase();
           const typeName = ISSUE_TYPES[i.type]?.label.toLowerCase() || i.type.toLowerCase();
 
           return i.title.toLowerCase().includes(token) || 
@@ -731,9 +763,10 @@ export default function App() {
       
       const byType     = filters.type     === "all" || i.type     === filters.type;
       const byPriority = filters.priority === "all" || i.priority === filters.priority;
-      const byAssignee = filters.assignee === "all" || String(i.assignee) === filters.assignee;
+      const byAssignee = filters.assignee === "all" ||
+                         (filters.assignee === "unassigned" ? !i.assignee : String(i.assignee) === filters.assignee);
       const byEpic     = filters.epic     === "all" || i.epic     === filters.epic;
-      const byDomain   = filters.domain   === "all" || i.department === filters.domain;
+      const byDomain   = filters.domain   === "all" || (i.department || 'it') === filters.domain;
       
       const effectiveScope = debouncedSearch.trim() ? true : inScope;
       return effectiveScope && bySearch && byType && byPriority && byAssignee && byEpic && byDomain;
@@ -817,8 +850,12 @@ export default function App() {
       .catch(err => {
         console.warn("Could not load issues from DB, falling back to local memory seed.", err);
         return fetch('/api/comments')
-          .then(r => r.json())
+          .then(r => {
+            if (!r.ok) throw new Error("Server error");
+            return r.json();
+          })
           .then(dbComments => {
+            if (!Array.isArray(dbComments)) return;
             setIssues(prev => prev.map(issue => {
               const issueComments = dbComments.filter(c => c.issueKey === issue.key);
               if (issueComments.length > 0) {
@@ -878,7 +915,11 @@ export default function App() {
       addNotification({ type:"role_change", userId: id, message:`Your role was updated to ${ROLES[patch.role]?.label}`, issueKey: null });
     }
     if (id === currentUser?.id) {
-      setCurrentUser(p => ({ ...p, ...patch }));
+      setCurrentUser(p => {
+        const updated = { ...p, ...patch };
+        localStorage.setItem('auth_user', JSON.stringify(updated));
+        return updated;
+      });
     }
 
     // 2. Perform background API call
@@ -908,6 +949,7 @@ export default function App() {
       id: tempId,
       ...payload,
       joinDate: new Date().toISOString().split('T')[0],
+      requirePasswordChange: true,
       permissions: data.permissions || ROLES[data.role]?.permissions || []
     };
 
@@ -1003,8 +1045,9 @@ export default function App() {
 
   const createIssue = (data) => {
     if (!currentUser) return;
+    const maxNum = Math.max(0, ...issues.map(i => parseInt(i.key?.replace('PROJ-', '')) || 0));
     const issue = {
-      key: data.key || genKey(),
+      key: data.key || `PROJ-${maxNum + 1}`,
       type: data.type || "task",
       title: data.title,
       status: "To Do",
@@ -1016,7 +1059,7 @@ export default function App() {
       labels: data.labels || [],
       desc: data.desc || "",
       dueDate: data.dueDate || "",
-      sprint: data.sprint || "Sprint 1",
+      sprint: data.sprint || "Backlog",
       created: getCurrentDateTime(),
       recurrence: data.recurrence || "none",
       notification: true,
@@ -1037,12 +1080,15 @@ export default function App() {
       });
     }
 
-    // 2. Perform background database creation
+    // 2. Persist to database and refresh to sync DB state
     fetch('/api/issues', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(issue)
-    }).catch(err => console.warn("Database issue creation failed in background, running in local mode.", err));
+    }).then(res => {
+      if (!res.ok) console.warn("Database issue creation failed:", res.status);
+      else refreshData();
+    }).catch(err => console.warn("Database issue creation failed:", err));
   };
 
   const createDepartment = async (data) => {
@@ -1060,13 +1106,6 @@ export default function App() {
     } catch (err) {
       console.warn("Could not create department in DB", err);
     }
-
-    // 2. Perform background database creation
-    fetch('/api/issues', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(issue)
-    }).catch(err => console.warn("Database issue creation failed in background, running in local mode.", err));
   };
 
   const deleteIssue = (key) => {
@@ -1148,6 +1187,7 @@ export default function App() {
     { id:"settings",    icon:"",  label:t("settings"),    show: true, section: "project" },
     { id:"components",  icon:"",  label:t("components"),  show: true, section: "project" },
     { id:"architecture",icon:"",  label:t("architecture"),   show: isAdmin, section: "project" },
+    { id:"mou",         icon:"🤝", label:t("mou"),            show: isAdmin || hasPermission("view_all"), section: "project" },
   ].filter(n => n.show);
 
   // Set default view per role
@@ -1202,6 +1242,25 @@ export default function App() {
           <div style={S.sidebarSection}>{t("project")}</div>
           {navItems.filter(n => n.section === "project").map(n => <NavItem key={n.id} n={n} />)}
         </nav>
+
+        {/* Company URLs */}
+        <div style={{ margin:"0 10px 8px", padding:"8px 10px", background:"var(--card-bg)", borderRadius:8, border:"1px solid var(--border)" }}>
+          <div style={{ fontSize:10, color:"var(--text-muted)", fontWeight:700, marginBottom:6, textTransform:"uppercase", letterSpacing:"0.05em" }}>Company Apps</div>
+          <a href="https://metapharsic.cloud/" target="_blank" rel="noopener noreferrer"
+            style={{ display:"flex", alignItems:"center", gap:7, padding:"5px 6px", borderRadius:6, textDecoration:"none", color:"var(--accent)", fontSize:12, fontWeight:600, marginBottom:4, background:"transparent", transition:"background 0.15s" }}
+            onMouseEnter={e => e.currentTarget.style.background="var(--border)"}
+            onMouseLeave={e => e.currentTarget.style.background="transparent"}
+          >
+            <span style={{ fontSize:14 }}>🌐</span> Medical Rep Tracker
+          </a>
+          <a href="https://erp.metapharsic.cloud/" target="_blank" rel="noopener noreferrer"
+            style={{ display:"flex", alignItems:"center", gap:7, padding:"5px 6px", borderRadius:6, textDecoration:"none", color:"var(--accent)", fontSize:12, fontWeight:600, background:"transparent", transition:"background 0.15s" }}
+            onMouseEnter={e => e.currentTarget.style.background="var(--border)"}
+            onMouseLeave={e => e.currentTarget.style.background="transparent"}
+          >
+            <span style={{ fontSize:14 }}>🏢</span> Company ERP
+          </a>
+        </div>
 
         {/* Role badge */}
 
@@ -1376,12 +1435,18 @@ export default function App() {
           )}
           {view === "users" && hasPermission("manage_users") && (
             <UserManagement
-              users={users} setUsers={setUsers}
-              currentUser={currentUser} setCurrentUser={setCurrentUser} issues={issues}
+              users={users}
+              currentUser={currentUser}
+              issues={issues}
               addNotification={addNotification}
               isMobile={isMobile}
               setView={setView}
               setFilters={setFilters}
+              updateUser={updateUser}
+              addUser={addUser}
+              toggleActive={toggleActive}
+              deleteUser={deleteUser}
+              isAdmin={isAdmin}
             />
           )}
           {view === "architecture" && <ArchitectureView />}
@@ -1396,6 +1461,7 @@ export default function App() {
           )}
           {view === "settings" && <SettingsView theme={theme} setTheme={setTheme} currentUser={currentUser} updateUser={updateUser} users={users} isMobile={isMobile} t={t} />}
           {view === "components" && <ComponentsView />}
+          {view === "mou" && <MouView users={users} currentUser={currentUser} />}
         </div>
       </div>
 
@@ -1727,6 +1793,7 @@ function NotificationPanel({ notifications, onClose, onMarkAllRead, onDismiss, o
 
 // --- TODO VIEW ----------------------------------------------------------------
 function TodoView({ currentUser, todos, setTodos, issues, users, onSelectIssue }) {
+  const isMobile = useIsMobile();
   const role = currentUser.role;
   const myIssues = issues.filter(i => i.assignee === currentUser.id && i.status !== "Done");
   const overdue  = issues.filter(i => i.assignee === currentUser.id && i.dueDate && new Date(i.dueDate) < new Date("2026-05-19") && i.status !== "Done");
@@ -1747,14 +1814,14 @@ function TodoView({ currentUser, todos, setTodos, issues, users, onSelectIssue }
 
   return (
     <div>
-      <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:20 }}>
+      <div style={{ display:"flex", justifyContent:"space-between", alignItems: isMobile ? "stretch" : "center", marginBottom:20, flexDirection: isMobile ? "column" : "row", gap: isMobile ? 12 : 0 }}>
         <div>
           <h2 style={S.pageH2}>My Task Dashboard</h2>
           <div style={{ fontSize:13, color:"#909dab" }}>
             {ROLES[role]?.label}  {DEPARTMENTS[currentUser.department]?.label} Department
           </div>
         </div>
-        <div style={{ display:"flex", gap:10 }}>
+        <div style={{ display: isMobile ? "grid" : "flex", gridTemplateColumns: isMobile ? "repeat(3, 1fr)" : undefined, gap:10 }}>
           <div style={S.statCard}>
             <div style={{ fontSize:22, fontWeight:700, color:"#46b3cf" }}>{myIssues.length}</div>
             <div style={{ fontSize:11, color:"#909dab" }}>Assigned Issues</div>
@@ -1782,7 +1849,7 @@ function TodoView({ currentUser, todos, setTodos, issues, users, onSelectIssue }
         </div>
       )}
 
-      <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:18 }}>
+      <div style={{ display:"grid", gridTemplateColumns: isMobile ? "1fr" : "1fr 1fr", gap:18 }}>
         {/* Assigned Issues */}
         <div style={S.todoSection}>
           <div style={S.todoSectionHdr}>
@@ -1840,7 +1907,7 @@ function TodoView({ currentUser, todos, setTodos, issues, users, onSelectIssue }
 }
 
 // --- USER MANAGEMENT ----------------------------------------------------------
-function UserManagement({ users, setUsers, currentUser, setCurrentUser, issues, addNotification, isMobile, setView, setFilters, t }) {
+function UserManagement({ users, currentUser, issues, addNotification, isMobile, setView, setFilters, updateUser, addUser, toggleActive, deleteUser, isAdmin }) {
   const [editUser, setEditUser] = useState(null);
   const [showAdd, setShowAdd]   = useState(false);
   const [filterDept, setFilterDept] = useState("all");
@@ -1848,116 +1915,32 @@ function UserManagement({ users, setUsers, currentUser, setCurrentUser, issues, 
   const [search, setSearch] = useState("");
 
   const filtered = users.filter(u => {
-    const matchesDept = filterDept === "all" || (u.departments || [u.department] || []).includes(filterDept);
+    const depts = u.departments && u.departments.length > 0 ? u.departments : [u.department];
+    const matchesDept = filterDept === "all" || depts.includes(filterDept);
     const matchesRole = filterRole === "all" || u.role === filterRole;
     const s = search.toLowerCase().trim();
-    const matchesSearch = !s || 
-      u.name.toLowerCase().includes(s) || 
-      u.email.toLowerCase().includes(s) || 
+    const matchesSearch = !s ||
+      u.name.toLowerCase().includes(s) ||
+      u.email.toLowerCase().includes(s) ||
       (u.phone && u.phone.includes(s)) ||
-      u.department.toLowerCase().includes(s) ||
+      (u.department || "").toLowerCase().includes(s) ||
       ROLES[u.role]?.label.toLowerCase().includes(s);
     return matchesDept && matchesRole && matchesSearch;
   });
 
-  const updateUser = async (id, patch) => {
-    const prev = users.find(u => u.id === id);
-    const updatedUser = { ...prev, ...patch };
-    
-    // 1. Optimistically update local state immediately
-    setUsers(p => p.map(u => u.id === id ? { ...u, ...patch } : u));
-    if (patch.role && prev.role !== patch.role) {
-      addNotification({ type:"role_change", userId: id, message:`Your role was updated to ${ROLES[patch.role]?.label}`, issueKey: null });
+  const handleSaveUser = (id, patch) => {
+    // Block admin self-demotion — would lock out the only admin
+    if (id === currentUser?.id && currentUser.role === "admin" && patch.role && patch.role !== "admin") {
+      alert("You cannot change your own admin role. Ask another admin to do this.");
+      return;
     }
-    if (id === currentUser.id) {
-      setCurrentUser(p => ({ ...p, ...patch }));
-    }
+    updateUser(id, patch);
     setEditUser(null);
-
-    // 2. Perform background API call
-    try {
-      await fetch(`/api/users/${id}`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(updatedUser)
-      });
-    } catch (err) {
-      console.warn("Failed to update user in DB, running in local mode:", err);
-    }
   };
 
-  const addUser = async (data) => {
-    const color = ["#46b3cf","#10b981","#f59e0b","#ef4444","#a855f7","#ec4899"][Math.floor(Math.random()*6)];
-    const avatar = data.name.slice(0,2).toUpperCase();
-    const tempId = Date.now();
-    const payload = {
-      ...data,
-      avatar,
-      color,
-      active: true,
-      password: data.password || 'user123'
-    };
-    const localNewUser = {
-      id: tempId,
-      ...payload,
-      joinDate: new Date().toISOString().split('T')[0],
-      permissions: data.permissions || ROLES[data.role]?.permissions || []
-    };
-
-    // 1. Optimistically add to local state immediately
-    setUsers(p => [...p, localNewUser]);
+  const handleAddUser = (data) => {
+    addUser(data);
     setShowAdd(false);
-
-    // 2. Background API call
-    try {
-      const response = await fetch('/api/users', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload)
-      });
-      if (response.ok) {
-        const resData = await response.json();
-        // Swap tempId with final database ID
-        setUsers(p => p.map(u => u.id === tempId ? { ...u, id: resData.id } : u));
-      }
-    } catch (err) {
-      console.warn("Failed to add user in DB, running in local mode:", err);
-    }
-  };
-
-  const toggleActive = async (id) => {
-    const user = users.find(u => u.id === id);
-    if (!user) return;
-    const updatedUser = { ...user, active: !user.active };
-
-    // 1. Optimistically toggle locally first
-    setUsers(p => p.map(u => u.id === id ? { ...u, active: !u.active } : u));
-
-    // 2. Background API call
-    try {
-      await fetch(`/api/users/${id}`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(updatedUser)
-      });
-    } catch (err) {
-      console.warn("Failed to toggle user active status in DB, running in local mode:", err);
-    }
-  };
-
-  const deleteUser = async (id) => {
-    if (!window.confirm("Are you sure you want to permanently delete this user? This action cannot be undone.")) return;
-    
-    // 1. Optimistic local update
-    setUsers(p => p.filter(u => u.id !== id));
-    addNotification({ type: "system", userId: currentUser.id, message: `User deleted from the roster`, issueKey: null });
-    
-    // 2. Background API call
-    try {
-      await fetch(`/api/users/${id}`, { method: 'DELETE' });
-    } catch (err) {
-      console.warn("Failed to delete user in DB, running locally:", err);
-    }
   };
 
   const getUserIssueCount = (id) => issues.filter(i => i.assignee === id && i.status !== "Done").length;
@@ -1969,7 +1952,7 @@ function UserManagement({ users, setUsers, currentUser, setCurrentUser, issues, 
           <h2 style={S.pageH2}>User Management</h2>
           <div style={{ fontSize:13, color:"#909dab" }}>{users.length} total  {users.filter(u=>u.active).length} active</div>
         </div>
-        <button style={{ ...S.createBtn, width: isMobile ? "100%" : "auto" }} onClick={() => setShowAdd(true)}>+ Add User</button>
+        {isAdmin && <button style={{ ...S.createBtn, width: isMobile ? "100%" : "auto" }} onClick={() => setShowAdd(true)}>+ Add User</button>}
       </div>
 
       {/* Filters */}
@@ -2090,7 +2073,7 @@ function UserManagement({ users, setUsers, currentUser, setCurrentUser, issues, 
                   <td style={S.userTableCell}>
                     <div style={{ display:"flex", gap:6, flexWrap: "wrap" }}>
                       <button style={{ ...S.btnGhost, fontSize:11, padding:"3px 8px" }} onClick={() => setEditUser(u)}>Edit</button>
-                      {!isMe && (
+                      {!isMe && isAdmin && (
                         <>
                           <button style={{ ...S.btnGhost, fontSize:11, padding:"3px 8px", color: u.active ? "#f87171" : "#4ade80" }}
                             onClick={() => toggleActive(u.id)}>
@@ -2113,10 +2096,10 @@ function UserManagement({ users, setUsers, currentUser, setCurrentUser, issues, 
 
       {/* Edit User Modal */}
       {editUser && (
-        <EditUserModal user={editUser} onClose={() => setEditUser(null)} onSave={(patch) => updateUser(editUser.id, patch)} />
+        <EditUserModal user={editUser} onClose={() => setEditUser(null)} onSave={(patch) => handleSaveUser(editUser.id, patch)} />
       )}
       {showAdd && (
-        <AddUserModal onClose={() => setShowAdd(false)} onAdd={addUser} />
+        <AddUserModal onClose={() => setShowAdd(false)} onAdd={handleAddUser} />
       )}
     </div>
   );
@@ -2129,6 +2112,7 @@ function EditUserModal({ user, onClose, onSave }) {
     id:                    user.id,
     name:                  user.name,
     avatar:                user.avatar,
+    avatarUrl:             user.avatarUrl || "",
     email:                 user.email,
     color:                 user.color,
     active:                user.active,
@@ -2220,10 +2204,30 @@ function EditUserModal({ user, onClose, onSave }) {
         <div style={{ ...S.modalBody, gap:14 }}>
           {/* Avatar + info */}
           <div style={{ display:"flex", alignItems:"center", gap:12, padding:"6px 0" }}>
-            <Avatar user={user} size={44} />
+            <div style={{ position:"relative", flexShrink:0 }}>
+              <Avatar user={{ ...user, avatarUrl: draft.avatarUrl }} size={44} />
+              <label title="Upload profile picture" style={{ position:"absolute", bottom:-3, right:-3, width:20, height:20, borderRadius:"50%", background:"var(--accent)", color:"#fff", border:"2px solid var(--card-bg)", fontSize:11, cursor:"pointer", display:"flex", alignItems:"center", justifyContent:"center" }}>
+                ✏
+                <input type="file" accept="image/*" style={{ display:"none" }} onChange={e => {
+                  const file = e.target.files?.[0];
+                  if (!file) return;
+                  if (file.size > 2 * 1024 * 1024) { alert("Image must be under 2MB."); return; }
+                  const reader = new FileReader();
+                  reader.onload = ev => setDraft(p => ({ ...p, avatarUrl: ev.target.result }));
+                  reader.readAsDataURL(file);
+                }} />
+              </label>
+              {draft.avatarUrl && (
+                <button title="Remove photo" onClick={() => setDraft(p => ({ ...p, avatarUrl: "" }))}
+                  style={{ position:"absolute", top:-3, right:-3, width:16, height:16, borderRadius:"50%", background:"#ef4444", color:"#fff", border:"2px solid var(--card-bg)", fontSize:8, cursor:"pointer", padding:0 }}>
+                  ✕
+                </button>
+              )}
+            </div>
             <div>
               <div style={{ fontWeight:600, color:"#e6edf3" }}>{draft.name}</div>
               <div style={{ fontSize:12, color:"#909dab" }}>{draft.email}</div>
+              <div style={{ fontSize:11, color:"var(--text-muted)", marginTop:2 }}>Click ✏ to upload photo</div>
             </div>
           </div>
 
@@ -2829,7 +2833,38 @@ function BoardView({ issues, sprints, sprint, setSprint, search, setSearch, filt
 
         {canCreate && <button style={{ ...S.createBtn, marginLeft:"auto" }} onClick={onCreate}>+ {t("create")}</button>}
       </div>
-      
+
+      {/* User avatar filter row */}
+      <div style={{ display:"flex", alignItems:"center", gap:6, marginBottom:10, flexWrap:"wrap" }}>
+        <span style={{ fontSize:11, color:"var(--text-muted)", fontWeight:600, marginRight:2 }}>Team:</span>
+        {users.filter(u => u.active).map(u => {
+          const isSelected = filters.assignee === String(u.id);
+          return (
+            <div
+              key={u.id}
+              title={`${u.name} — click to filter`}
+              onClick={() => setFilters(prev => ({ ...prev, assignee: isSelected ? "all" : String(u.id) }))}
+              style={{
+                display:"flex", alignItems:"center", gap:5,
+                padding:"3px 8px 3px 3px", borderRadius:20, cursor:"pointer",
+                border: isSelected ? `2px solid ${ROLES[u.role]?.color || "#6366f1"}` : "2px solid transparent",
+                background: isSelected ? (ROLES[u.role]?.color || "#6366f1") + "22" : "var(--card-bg)",
+                transition:"all 0.15s"
+              }}
+            >
+              <Avatar user={u} size={22} />
+              {isSelected && <span style={{ fontSize:11, fontWeight:700, color: ROLES[u.role]?.color || "var(--accent)" }}>{u.name.split(" ")[0]}</span>}
+            </div>
+          );
+        })}
+        {filters.assignee !== "all" && (
+          <button
+            onClick={() => setFilters(prev => ({ ...prev, assignee: "all" }))}
+            style={{ fontSize:11, color:"var(--text-muted)", background:"none", border:"none", cursor:"pointer", padding:"2px 4px", textDecoration:"underline" }}
+          >clear</button>
+        )}
+      </div>
+
       <div style={S.sprintBar}>
         <span style={S.sprintName}>{sprint}</span>
         <span style={S.sprintMeta}>{total} issues  {done} done  {pts} story points</span>
@@ -3401,6 +3436,7 @@ function DetailPanel({ issue, onClose, onUpdate, onDelete, onComment, currentUse
   const [draft, setDraft]     = useState({ ...issue });
   const [historyList, setHistoryList] = useState([]);
   const [currentTime, setCurrentTime] = useState(new Date());
+  const mousedownOnOverlay = useRef(false);
 
   // Keep draft in sync when issue changes or edit mode toggles
   useEffect(() => {
@@ -3586,7 +3622,10 @@ ACTIVITY HISTORY LOG (${historyList.length})
   const canEdit = hasPermission("edit");
 
   return (
-    <div style={S.panelOverlay} onClick={e => e.target === e.currentTarget && onClose()}>
+    <div style={S.panelOverlay}
+      onMouseDown={e => { mousedownOnOverlay.current = e.target === e.currentTarget; }}
+      onClick={e => { if (mousedownOnOverlay.current && e.target === e.currentTarget) onClose(); mousedownOnOverlay.current = false; }}
+    >
       <div style={{ ...S.panel, display: "flex", flexDirection: "column", background: "var(--card-bg)" }}>
         <div style={S.panelHdr}>
           <div style={{ display:"flex", alignItems:"center", gap:8 }}>
@@ -4092,6 +4131,7 @@ ACTIVITY HISTORY LOG (${historyList.length})
 
 // --- CREATE MODAL -------------------------------------------------------------
 function CreateModal({ onClose, onCreate, currentUser, users, initialStatus = "To Do" }) {
+  const isMobile = useIsMobile();
   const [f, setF] = useState({
     title:"", type:"task", priority:"medium", assignee: String(currentUser.id),
     status: initialStatus,
@@ -4112,7 +4152,7 @@ function CreateModal({ onClose, onCreate, currentUser, users, initialStatus = "T
           <Row label="Title *">
             <input style={S.formInput} placeholder="Issue title" value={f.title} onChange={e => set("title",e.target.value)} autoFocus />
           </Row>
-          <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:10 }}>
+          <div style={{ display:"grid", gridTemplateColumns: isMobile ? "1fr" : "1fr 1fr", gap:10 }}>
             <Row label="Department">
               <select style={S.formSel} value={f.department} onChange={e => set("department",e.target.value)} disabled={currentUser.role !== "admin"}>
                 {Object.entries(DEPARTMENTS).map(([k,v]) => <option key={k} value={k}>{v.label}</option>)}
@@ -4207,8 +4247,8 @@ function Filters({ filters, setFilters, users }) {
   const toggleOpen = () => {
     if (!open && btnRef.current) {
       const r = btnRef.current.getBoundingClientRect();
-      const panelW = 420;
-      const left = Math.min(r.left, window.innerWidth - panelW - 12);
+      const panelW = Math.min(420, window.innerWidth - 16);
+      const left = Math.min(r.left, window.innerWidth - panelW - 8);
       setPanelPos({ top: r.bottom + 8, left: Math.max(8, left) });
     }
     setOpen(p => !p);
@@ -4272,8 +4312,9 @@ function Filters({ filters, setFilters, users }) {
       {open && (
         <div ref={panelRef} style={{
           position:"fixed", top:panelPos.top, left:panelPos.left, zIndex:9999,
-          width:420, background:"var(--bg-sidebar)", border:"1px solid var(--border)",
-          borderRadius:14, boxShadow:"0 20px 48px rgba(0,0,0,0.55)", overflow:"hidden",
+          width: Math.min(420, window.innerWidth - 16), maxHeight: "70vh", overflowY: "auto", overflowX: "hidden",
+          background:"var(--bg-sidebar)", border:"1px solid var(--border)",
+          borderRadius:14, boxShadow:"0 20px 48px rgba(0,0,0,0.55)",
         }}>
           {/* Header */}
           <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", padding:"14px 18px", borderBottom:"1px solid var(--border)", background:"var(--bg-header)" }}>
@@ -4377,6 +4418,16 @@ function Filters({ filters, setFilters, users }) {
 
 // --- AVATAR -------------------------------------------------------------------
 function Avatar({ user, size=32 }) {
+  if (user?.avatarUrl) {
+    return (
+      <img
+        src={user.avatarUrl}
+        alt={user.name}
+        title={user.name}
+        style={{ width:size, height:size, borderRadius:"50%", objectFit:"cover", flexShrink:0, userSelect:"none", border:"2px solid var(--border)" }}
+      />
+    );
+  }
   return (
     <div style={{
       width:size, height:size, borderRadius:"50%",
@@ -4519,20 +4570,27 @@ function ChangePasswordScreen({ user, onChange, onLogout }) {
 // PageWrap is defined OUTSIDE LoginScreen so React never treats it as a new
 // component type on re-render (which would unmount the form and steal focus).
 function LoginPageWrap({ children }) {
+  const [isMobile, setIsMobile] = useState(typeof window !== 'undefined' && window.innerWidth <= 480);
+  useEffect(() => {
+    const onResize = () => setIsMobile(window.innerWidth <= 480);
+    window.addEventListener('resize', onResize);
+    return () => window.removeEventListener('resize', onResize);
+  }, []);
   return (
-    <div style={{ minHeight:'100vh', background:'#0d1117', display:'flex', alignItems:'center',
-      justifyContent:'center', fontFamily:"'Inter',system-ui,sans-serif", position:'relative', overflow:'hidden' }}>
+    <div style={{ minHeight:'100dvh', background:'#0d1117', display:'flex', alignItems:'center',
+      justifyContent:'center', fontFamily:"'Inter',system-ui,sans-serif", position:'relative', overflow:'hidden',
+      padding: isMobile ? '16px 12px' : 0 }}>
       <div style={{ position:'absolute', top:'20%', left:'30%', width:600, height:600, borderRadius:'50%',
         background:'radial-gradient(circle, #338ba820 0%, transparent 70%)', pointerEvents:'none' }} />
       <div style={{ position:'absolute', bottom:'10%', right:'20%', width:400, height:400, borderRadius:'50%',
         background:'radial-gradient(circle, #6366f120 0%, transparent 70%)', pointerEvents:'none' }} />
-      <div style={{ width:'100%', maxWidth:420, padding:24, position:'relative', zIndex:1 }}>
-        <div style={{ textAlign:'center', marginBottom:32 }}>
+      <div style={{ width:'100%', maxWidth:420, padding: isMobile ? 0 : 24, position:'relative', zIndex:1 }}>
+        <div style={{ textAlign:'center', marginBottom: isMobile ? 20 : 32 }}>
           <img src="/logo.png" alt="Logo" style={{ width:56, height:56, borderRadius:12, marginBottom:12, objectFit:'contain' }} onError={e=>e.target.style.display='none'} />
-          <div style={{ fontSize:24, fontWeight:800, color:'#e6edf3', letterSpacing:'-0.5px' }}>Metapharsic</div>
+          <div style={{ fontSize: isMobile ? 20 : 24, fontWeight:800, color:'#e6edf3', letterSpacing:'-0.5px' }}>Metapharsic</div>
           <div style={{ fontSize:14, color:'#768390', marginTop:4 }}>ERP Suite  Sign in to continue</div>
         </div>
-        <div style={{ background:'#161b22', border:'1px solid #30363d', borderRadius:16, padding:32 }}>
+        <div style={{ background:'#161b22', border:'1px solid #30363d', borderRadius:16, padding: isMobile ? 20 : 32 }}>
           {children}
         </div>
       </div>
@@ -4543,7 +4601,7 @@ function LoginPageWrap({ children }) {
 // Shared input style (plain function, not a component - safe to define anywhere)
 const loginInp = (extra={}) => ({
   width:'100%', background:'#0d1117', border:'1px solid #30363d', borderRadius:8,
-  padding:'10px 14px', color:'#e6edf3', fontSize:14, outline:'none',
+  padding:'10px 14px', color:'#e6edf3', fontSize:16, outline:'none',
   boxSizing:'border-box', transition:'border-color 0.2s', ...extra,
 });
 
@@ -5340,9 +5398,23 @@ function SettingsView({ theme, setTheme, currentUser, updateUser, users, isMobil
           <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
             <div style={{ position: "relative" }}>
               <Avatar user={currentUser} size={64} />
-              <button style={{ position: "absolute", bottom: -4, right: -4, width: 24, height: 24, borderRadius: "50%", background: "var(--accent)", color: "#fff", border: "2px solid var(--card-bg)", fontSize: 12, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}>
-                
-              </button>
+              <label title="Upload profile picture" style={{ position: "absolute", bottom: -4, right: -4, width: 24, height: 24, borderRadius: "50%", background: "var(--accent)", color: "#fff", border: "2px solid var(--card-bg)", fontSize: 12, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}>
+
+                <input type="file" accept="image/*" style={{ display:"none" }} onChange={e => {
+                  const file = e.target.files?.[0];
+                  if (!file) return;
+                  if (file.size > 2 * 1024 * 1024) { alert("Image must be under 2MB."); return; }
+                  const reader = new FileReader();
+                  reader.onload = ev => updateUser(currentUser.id, { avatarUrl: ev.target.result });
+                  reader.readAsDataURL(file);
+                }} />
+              </label>
+              {currentUser?.avatarUrl && (
+                <button title="Remove photo" onClick={() => updateUser(currentUser.id, { avatarUrl: "" })}
+                  style={{ position:"absolute", top:-4, right:-4, width:18, height:18, borderRadius:"50%", background:"#ef4444", color:"#fff", border:"2px solid var(--card-bg)", fontSize:9, cursor:"pointer", display:"flex", alignItems:"center", justifyContent:"center", lineHeight:1 }}>
+                  ✕
+                </button>
+              )}
             </div>
             <div style={{ flex: 1 }}>
               <input 
@@ -5535,6 +5607,324 @@ function ComponentsView() {
               </div>
             </div>
           </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// --- MOU & MEETINGS VIEW -------------------------------------------------------
+function MouView({ users, currentUser }) {
+  const isMobile = useIsMobile();
+  const blankMou = { title:"", parties:"", sign_date:"", expiry_date:"", status:"Draft", notes:"" };
+  const blankMtg = { title:"", meeting_date:"", meeting_time:"", location:"", agenda:"", attendees:[], notes:"" };
+
+  const [mous, setMous]             = useState([]);
+  const [meetings, setMeetings]     = useState([]);
+  const [mouForm, setMouForm]       = useState(null);
+  const [mtgForm, setMtgForm]       = useState(null);
+  const [tab, setTab]               = useState("mou");
+  const [loading, setLoading]       = useState(true);
+  const [sendingInvite, setSending] = useState(null); // meeting id being sent
+
+  const loadData = useCallback(() => {
+    setLoading(true);
+    Promise.all([
+      fetch('/api/mous').then(r=>r.json()),
+      fetch('/api/meetings').then(r=>r.json())
+    ]).then(([m, mt]) => {
+      setMous(Array.isArray(m) ? m : []);
+      setMeetings(Array.isArray(mt) ? mt : []);
+    }).catch(()=>{}).finally(()=>setLoading(false));
+  }, []);
+
+  useEffect(() => { loadData(); }, [loadData]);
+
+  const submitMou = async () => {
+    if (!mouForm.title) return;
+    const payload = { ...mouForm, created_by: currentUser?.id, updated_by: currentUser?.id,
+      sign_date: mouForm.sign_date||null, expiry_date: mouForm.expiry_date||null };
+    if (mouForm.id) {
+      await fetch(`/api/mous/${mouForm.id}`, { method:'PUT', headers:{'Content-Type':'application/json'}, body:JSON.stringify(payload) });
+    } else {
+      await fetch('/api/mous', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(payload) });
+    }
+    setMouForm(null); loadData();
+  };
+
+  const deleteMou = async (id) => {
+    await fetch(`/api/mous/${id}`, { method:'DELETE', headers:{'Content-Type':'application/json'}, body:JSON.stringify({ deleted_by: currentUser?.id }) });
+    loadData();
+  };
+
+  const submitMtg = async () => {
+    if (!mtgForm.title || !mtgForm.meeting_date) return;
+    const payload = { ...mtgForm, created_by: currentUser?.id, updated_by: currentUser?.id };
+    if (mtgForm.id) {
+      await fetch(`/api/meetings/${mtgForm.id}`, { method:'PUT', headers:{'Content-Type':'application/json'}, body:JSON.stringify(payload) });
+    } else {
+      await fetch('/api/meetings', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(payload) });
+    }
+    setMtgForm(null); loadData();
+  };
+
+  const deleteMtg = async (id) => {
+    await fetch(`/api/meetings/${id}`, { method:'DELETE', headers:{'Content-Type':'application/json'}, body:JSON.stringify({ deleted_by: currentUser?.id }) });
+    loadData();
+  };
+
+  const sendInvite = async (id) => {
+    setSending(id);
+    try {
+      const r = await fetch(`/api/meetings/${id}/send-invite`, {
+        method:'POST', headers:{'Content-Type':'application/json'},
+        body: JSON.stringify({ sent_by: currentUser?.id })
+      });
+      const d = await r.json();
+      alert(d.ok ? `Invite sent to ${d.sent} attendee(s).${d.skipped ? ` ${d.skipped} skipped (no email).` : ""}` : `Error: ${d.error}`);
+    } catch { alert("Failed to send invites."); }
+    setSending(null);
+  };
+
+  const STATUS_COLORS_MOU = { Draft:"#f59e0b", Active:"#22c55e", Expired:"#ef4444", Terminated:"#6b7280" };
+
+  const card = { background:"var(--card-bg)", border:"1px solid var(--border)", borderRadius:10, padding:16, marginBottom:12 };
+  const btn  = (color="#46b3cf") => ({ padding:"6px 14px", borderRadius:6, border:"none", background:color, color:"#fff", cursor:"pointer", fontSize:12, fontWeight:600 });
+  const inp  = { background:"var(--input-bg,#22272e)", border:"1px solid var(--border)", borderRadius:6, padding:"7px 10px", color:"var(--text)", fontSize:13, width:"100%", boxSizing:"border-box" };
+  const lbl  = { fontSize:11, color:"var(--text-muted)", fontWeight:600, marginBottom:4, display:"block" };
+
+  const today = new Date().toISOString().slice(0,10);
+  const upcomingMtgs = [...meetings].filter(m => (m.meeting_date_fmt||m.meeting_date||"") >= today).sort((a,b)=>(a.meeting_date_fmt||a.meeting_date||"").localeCompare(b.meeting_date_fmt||b.meeting_date||""));
+  const pastMtgs     = [...meetings].filter(m => (m.meeting_date_fmt||m.meeting_date||"") <  today).sort((a,b)=>(b.meeting_date_fmt||b.meeting_date||"").localeCompare(a.meeting_date_fmt||a.meeting_date||""));
+
+  return (
+    <div style={{ maxWidth:900 }}>
+      <div style={{ display:"flex", alignItems: isMobile ? "stretch" : "center", justifyContent:"space-between", marginBottom:20, flexDirection: isMobile ? "column" : "row", gap: isMobile ? 12 : 0 }}>
+        <h2 style={S.pageH2}>🤝 MOU & Team Meetings</h2>
+        <div style={{ display:"flex", gap:8 }}>
+          <button style={{ ...btn(tab==="mou"?"#46b3cf":"#444c56") }} onClick={()=>setTab("mou")}>MOUs</button>
+          <button style={{ ...btn(tab==="meetings"?"#46b3cf":"#444c56") }} onClick={()=>setTab("meetings")}>Meetings</button>
+        </div>
+      </div>
+
+      {loading && <div style={{ color:"var(--text-muted)", fontSize:13, textAlign:"center", padding:40 }}>Loading...</div>}
+
+      {/* ---- MOU TAB ---- */}
+      {!loading && tab === "mou" && (
+        <div>
+          <div style={{ display:"flex", justifyContent:"flex-end", marginBottom:12 }}>
+            <button style={btn()} onClick={()=>setMouForm({...blankMou})}>+ New MOU</button>
+          </div>
+
+          {mous.length === 0 && <div style={{ color:"var(--text-muted)", fontSize:13, textAlign:"center", padding:40 }}>No MOUs yet. Add one.</div>}
+
+          {mous.map((m) => (
+            <MouCard key={m.id} m={m} btn={btn} card={card} STATUS_COLORS_MOU={STATUS_COLORS_MOU}
+              onEdit={()=>setMouForm({...m})} onDelete={()=>deleteMou(m.id)}
+              currentUser={currentUser} onReload={loadData} />
+          ))}
+
+          {/* MOU FORM MODAL */}
+          {mouForm && (
+            <div style={{ position:"fixed", inset:0, background:"rgba(0,0,0,0.7)", zIndex:200, display:"flex", alignItems:"center", justifyContent:"center" }}>
+              <div style={{ background:"var(--bg-sidebar)", border:"1px solid var(--border)", borderRadius:12, padding:24, width:480, maxWidth:"95vw" }}>
+                <h3 style={{ margin:"0 0 16px", color:"var(--text)" }}>{mouForm.id?"Edit MOU":"New MOU"}</h3>
+                <div style={{ display:"grid", gap:12 }}>
+                  <div><label style={lbl}>Title *</label><input style={inp} value={mouForm.title||""} onChange={e=>setMouForm(p=>({...p,title:e.target.value}))} /></div>
+                  <div><label style={lbl}>Parties Involved</label><input style={inp} value={mouForm.parties||""} onChange={e=>setMouForm(p=>({...p,parties:e.target.value}))} placeholder="e.g. Kapila Hotel & Vendor XYZ" /></div>
+                  <div style={{ display:"grid", gridTemplateColumns: isMobile ? "1fr" : "1fr 1fr", gap:12 }}>
+                    <div><label style={lbl}>Sign Date</label><input type="date" style={inp} value={mouForm.sign_date||""} onChange={e=>setMouForm(p=>({...p,sign_date:e.target.value}))} /></div>
+                    <div><label style={lbl}>Expiry Date</label><input type="date" style={inp} value={mouForm.expiry_date||""} onChange={e=>setMouForm(p=>({...p,expiry_date:e.target.value}))} /></div>
+                  </div>
+                  <div>
+                    <label style={lbl}>Status</label>
+                    <select style={inp} value={mouForm.status||"Draft"} onChange={e=>setMouForm(p=>({...p,status:e.target.value}))}>
+                      {["Draft","Active","Expired","Terminated"].map(s=><option key={s}>{s}</option>)}
+                    </select>
+                  </div>
+                  <div><label style={lbl}>Notes</label><textarea style={{...inp,minHeight:70,resize:"vertical"}} value={mouForm.notes||""} onChange={e=>setMouForm(p=>({...p,notes:e.target.value}))} /></div>
+                </div>
+                <div style={{ display:"flex", gap:8, marginTop:16, justifyContent:"flex-end" }}>
+                  <button style={btn("#444c56")} onClick={()=>setMouForm(null)}>Cancel</button>
+                  <button style={btn()} onClick={submitMou}>Save MOU</button>
+                </div>
+              </div>
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* ---- MEETINGS TAB ---- */}
+      {!loading && tab === "meetings" && (
+        <div>
+          <div style={{ display:"flex", justifyContent:"flex-end", marginBottom:12 }}>
+            <button style={btn()} onClick={()=>setMtgForm({...blankMtg})}>+ Schedule Meeting</button>
+          </div>
+
+          {meetings.length === 0 && <div style={{ color:"var(--text-muted)", fontSize:13, textAlign:"center", padding:40 }}>No meetings scheduled. Add one.</div>}
+
+          {upcomingMtgs.length > 0 && <div style={{ fontSize:11, color:"var(--text-muted)", fontWeight:700, letterSpacing:"0.08em", textTransform:"uppercase", marginBottom:8 }}>Upcoming</div>}
+          {upcomingMtgs.map((m) => (
+            <MeetingCard key={m.id} m={m}
+              onEdit={()=>setMtgForm({...m, meeting_date: m.meeting_date_fmt||m.meeting_date, meeting_time: m.meeting_time_fmt||m.meeting_time||""})}
+              onDelete={()=>deleteMtg(m.id)}
+              onSendInvite={()=>sendInvite(m.id)}
+              inviteSending={sendingInvite===m.id}
+              users={users} upcoming />
+          ))}
+
+          {pastMtgs.length > 0 && <div style={{ fontSize:11, color:"var(--text-muted)", fontWeight:700, letterSpacing:"0.08em", textTransform:"uppercase", margin:"16px 0 8px" }}>Past</div>}
+          {pastMtgs.map((m) => (
+            <MeetingCard key={m.id} m={m}
+              onEdit={()=>setMtgForm({...m, meeting_date: m.meeting_date_fmt||m.meeting_date, meeting_time: m.meeting_time_fmt||m.meeting_time||""})}
+              onDelete={()=>deleteMtg(m.id)}
+              onSendInvite={()=>sendInvite(m.id)}
+              inviteSending={sendingInvite===m.id}
+              users={users} />
+          ))}
+
+          {/* MEETING FORM MODAL */}
+          {mtgForm && (
+            <div style={{ position:"fixed", inset:0, background:"rgba(0,0,0,0.7)", zIndex:200, display:"flex", alignItems:"center", justifyContent:"center" }}>
+              <div style={{ background:"var(--bg-sidebar)", border:"1px solid var(--border)", borderRadius:12, padding:24, width:520, maxWidth:"95vw", maxHeight:"90vh", overflowY:"auto" }}>
+                <h3 style={{ margin:"0 0 16px", color:"var(--text)" }}>{mtgForm.id?"Edit Meeting":"Schedule Meeting"}</h3>
+                <div style={{ display:"grid", gap:12 }}>
+                  <div><label style={lbl}>Meeting Title *</label><input style={inp} value={mtgForm.title||""} onChange={e=>setMtgForm(p=>({...p,title:e.target.value}))} placeholder="e.g. Q3 MOU Review" /></div>
+                  <div style={{ display:"grid", gridTemplateColumns: isMobile ? "1fr" : "1fr 1fr", gap:12 }}>
+                    <div><label style={lbl}>Date *</label><input type="date" style={inp} value={mtgForm.meeting_date||""} onChange={e=>setMtgForm(p=>({...p,meeting_date:e.target.value}))} /></div>
+                    <div><label style={lbl}>Time</label><input type="time" style={inp} value={mtgForm.meeting_time||""} onChange={e=>setMtgForm(p=>({...p,meeting_time:e.target.value}))} /></div>
+                  </div>
+                  <div><label style={lbl}>Location / Link</label><input style={inp} value={mtgForm.location||""} onChange={e=>setMtgForm(p=>({...p,location:e.target.value}))} placeholder="Room / Google Meet / Zoom link" /></div>
+                  <div>
+                    <label style={lbl}>Attendees</label>
+                    <div style={{ display:"flex", flexWrap:"wrap", gap:6 }}>
+                      {users.map(u => {
+                        const sel = (mtgForm.attendees||[]).includes(u.id);
+                        return (
+                          <div key={u.id} onClick={()=>setMtgForm(p=>({ ...p, attendees: sel ? p.attendees.filter(x=>x!==u.id) : [...(p.attendees||[]), u.id] }))}
+                            style={{ padding:"4px 10px", borderRadius:20, fontSize:11, cursor:"pointer", border:"1px solid", borderColor: sel?"#46b3cf":"var(--border)", background: sel?"#46b3cf22":"transparent", color: sel?"#46b3cf":"var(--text-muted)" }}>
+                            {u.name}
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                  <div><label style={lbl}>Agenda</label><textarea style={{...inp,minHeight:80,resize:"vertical"}} value={mtgForm.agenda||""} onChange={e=>setMtgForm(p=>({...p,agenda:e.target.value}))} placeholder="Meeting agenda..." /></div>
+                  <div><label style={lbl}>Notes / Minutes</label><textarea style={{...inp,minHeight:60,resize:"vertical"}} value={mtgForm.notes||""} onChange={e=>setMtgForm(p=>({...p,notes:e.target.value}))} /></div>
+                </div>
+                <div style={{ display:"flex", gap:8, marginTop:16, justifyContent:"flex-end" }}>
+                  <button style={btn("#444c56")} onClick={()=>setMtgForm(null)}>Cancel</button>
+                  <button style={btn()} onClick={submitMtg}>Save Meeting</button>
+                </div>
+              </div>
+            </div>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function MeetingCard({ m, onEdit, onDelete, onSendInvite, users, upcoming, inviteSending }) {
+  const isMobile = useIsMobile(480);
+  const attendeeUsers = (m.attendees||[]).map(id => users.find(u=>u.id===id)).filter(Boolean);
+  const displayDate = m.meeting_date_fmt || m.meeting_date || "";
+  const displayTime = m.meeting_time_fmt || m.meeting_time || "";
+  const card = { background:"var(--card-bg)", border:"1px solid", borderColor: upcoming?"#46b3cf44":"var(--border)", borderRadius:10, padding:16, marginBottom:10 };
+  const btn  = (color="#46b3cf") => ({ padding:"5px 12px", borderRadius:6, border:"none", background:color, color:"#fff", cursor:"pointer", fontSize:11, fontWeight:600 });
+  return (
+    <div style={card}>
+      <div style={{ display:"flex", justifyContent:"space-between", alignItems:"flex-start", gap:12, flexDirection: isMobile ? "column" : "row" }}>
+        <div style={{ flex:1 }}>
+          <div style={{ fontWeight:700, fontSize:14, color:"var(--text)", marginBottom:4 }}>{m.title}</div>
+          <div style={{ fontSize:12, color: upcoming?"#46b3cf":"var(--text-muted)" }}>
+            📅 {displayDate}{displayTime ? ` at ${displayTime}` : ""}
+            {m.location ? <span style={{ marginLeft:10 }}>📍 {m.location}</span> : null}
+          </div>
+          {attendeeUsers.length > 0 && (
+            <div style={{ fontSize:11, color:"var(--text-muted)", marginTop:4 }}>
+              👥 {attendeeUsers.map(u=>u.name).join(", ")}
+            </div>
+          )}
+          {m.agenda && <div style={{ fontSize:12, color:"var(--text-muted)", marginTop:6, fontStyle:"italic" }}>{m.agenda}</div>}
+          <div style={{ fontSize:10, color:"var(--text-muted)", marginTop:4 }}>Added by {m.created_by_name||"Unknown"} · {(m.created_at_fmt||"").slice(0,10)}</div>
+        </div>
+        <div style={{ display:"flex", flexDirection:"column", gap:6, flexShrink:0, width: isMobile ? "100%" : "auto" }}>
+          <div style={{ display:"flex", gap:6 }}>
+            <button style={{ ...btn("#444c56"), flex: isMobile ? 1 : "initial" }} onClick={onEdit}>Edit</button>
+            <button style={{ ...btn("#ef4444"), flex: isMobile ? 1 : "initial" }} onClick={onDelete}>Delete</button>
+          </div>
+          {attendeeUsers.length > 0 && (
+            <button
+              style={{ ...btn(inviteSending?"#444c56":"#0f766e"), width:"100%", opacity: inviteSending?0.7:1 }}
+              onClick={onSendInvite}
+              disabled={inviteSending}
+            >
+              {inviteSending ? "Sending..." : "📧 Send Invite"}
+            </button>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function MouCard({ m, btn, card, STATUS_COLORS_MOU, onEdit, onDelete, currentUser, onReload }) {
+  const isMobile = useIsMobile(480);
+  const [uploading, setUploading] = useState(false);
+  const fileRef = useRef(null);
+
+  const handleUpload = async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    setUploading(true);
+    const fd = new FormData();
+    fd.append('file', file);
+    fd.append('uploaded_by', currentUser?.id || '');
+    await fetch(`/api/mous/${m.id}/upload`, { method:'POST', body: fd });
+    setUploading(false);
+    onReload();
+  };
+
+  const handleRemoveFile = async () => {
+    await fetch(`/api/mous/${m.id}/file`, { method:'DELETE' });
+    onReload();
+  };
+
+  return (
+    <div style={card}>
+      <div style={{ display:"flex", alignItems:"flex-start", justifyContent:"space-between", gap:12, flexDirection: isMobile ? "column" : "row" }}>
+        <div style={{ flex:1 }}>
+          <div style={{ display:"flex", alignItems:"center", gap:8, marginBottom:4 }}>
+            <span style={{ fontWeight:700, fontSize:14, color:"var(--text)" }}>{m.title}</span>
+            <span style={{ fontSize:11, fontWeight:600, padding:"2px 8px", borderRadius:10, background: STATUS_COLORS_MOU[m.status]+"22", color: STATUS_COLORS_MOU[m.status] }}>{m.status}</span>
+          </div>
+          {m.parties   && <div style={{ fontSize:12, color:"var(--text-muted)", marginBottom:2 }}>Parties: {m.parties}</div>}
+          {m.sign_date && <div style={{ fontSize:12, color:"var(--text-muted)", marginBottom:2 }}>Signed: {m.sign_date}{m.expiry_date ? `  •  Expires: ${m.expiry_date}` : ""}</div>}
+          {m.notes     && <div style={{ fontSize:12, color:"var(--text-muted)", marginTop:4, fontStyle:"italic" }}>{m.notes}</div>}
+          <div style={{ display:"flex", alignItems:"center", gap:8, marginTop:8, flexWrap:"wrap" }}>
+            {m.file_name ? (
+              <>
+                <a href={`/uploads/mou/${m.file_path}`} target="_blank" rel="noreferrer"
+                  style={{ fontSize:12, color:"#46b3cf", display:"flex", alignItems:"center", gap:4, textDecoration:"none" }}>
+                  📎 {m.file_name}
+                </a>
+                <button style={{ ...btn("#ef4444"), padding:"2px 8px", fontSize:10 }} onClick={handleRemoveFile}>Remove</button>
+              </>
+            ) : (
+              <>
+                <input ref={fileRef} type="file" style={{ display:"none" }} accept=".pdf,.doc,.docx,.png,.jpg,.jpeg" onChange={handleUpload} />
+                <button style={{ ...btn("#444c56"), padding:"4px 10px", fontSize:11 }} onClick={()=>fileRef.current?.click()} disabled={uploading}>
+                  {uploading ? "Uploading..." : "📎 Upload MOU File"}
+                </button>
+              </>
+            )}
+          </div>
+          <div style={{ fontSize:10, color:"var(--text-muted)", marginTop:4 }}>Added by {m.created_by_name||"Unknown"} · {(m.created_at_fmt||"").slice(0,10)}</div>
+        </div>
+        <div style={{ display:"flex", gap:6, flexShrink:0, width: isMobile ? "100%" : "auto" }}>
+          <button style={{ ...btn("#444c56"), flex: isMobile ? 1 : "initial" }} onClick={onEdit}>Edit</button>
+          <button style={{ ...btn("#ef4444"), flex: isMobile ? 1 : "initial" }} onClick={onDelete}>Delete</button>
         </div>
       </div>
     </div>
